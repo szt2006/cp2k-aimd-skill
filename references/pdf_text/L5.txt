@@ -1,0 +1,874 @@
+# SOURCE: 庚子计算-AIMD与CP2K讲义-5 - 副本.pdf
+# PAGES: 53
+
+
+
+========== PAGE 1 ==========
+
+研之成理AIMD与CP2K课程学习圈
+声 明
+本讲义和直播视频仅限参加研之成理AIMD与CP2K课程学习圈的学员
+个人学习使用，版权归属于研之成理(杭州)网络科技有限公司。不得以任何
+方式擅自翻录、复制、传播、出售，或将其中内容挪作它用，否则将追究法
+律责任。
+如果您发现盗版和侵权行为，请保留侵权者的聊天记录和收款转账
+记录等。经核实后，我们给予举报者免费正版课程（无线回看视频，讲义，
+计算文件，课程相关资料，无限答疑社群，后续免费专题课），和500元现金
+奖励。
+
+
+========== PAGE 2 ==========
+
+研之成理AIMD与CP2K课程学习圈
+AIMD模拟自由能势能面
+主讲人：刘锦程
+方法一：Potential of mean Force (Blue-moon method)
+方法二：Slow-growth method
+方法三：Metadynamics
+
+
+========== PAGE 3 ==========
+
+研之成理AIMD与CP2K课程学习圈
+自由能势能面
+用CI-NEB或Dimer方法可以找到反应路径上能垒的位置。但是这种
+方法不是万能的：
+• 能量都是基于DFT的电子能量，不是自由能；
+• 过渡态的位置非常依赖于我们的初猜位置；
+• 对于吸附/解离吸附/脱附能垒难以计算；
+• 不容易把环境分子的影响平均化，比如水溶剂分子的影响。
+AIMD可以解决这些问题，模拟出自由能势能面。
+
+
+========== PAGE 4 ==========
+
+研之成理AIMD与CP2K课程学习圈
+稀有事件 (Rare Events)
+快过程：在极小点附近震荡；
+慢过程：翻越势垒从一个极小值到另一个极小值。
+根据阿伦尼乌斯方程估算，
+−𝐸𝑎
+ൗ
+𝑘 = 𝐴𝑒 𝑅𝑇
+指前因子的数量级大约为：1013 s-1 ,
+对于一个 0.75 eV的能垒，在300 K下，
+大约1 s发生一次。而AIMD模拟的时间
+量级~ps，所以正常的AIMD是不可能观察
+这些变化的。
+所以就需要一些加速采样的方法：
+这在研究化学反应，成核机制，晶体生长，迁移过程，相变，表
+面重排等慢过程都比较有用。
+
+
+========== PAGE 5 ==========
+
+研之成理AIMD与CP2K课程学习圈
+正则系综 (canonical ensemble)：每个微观态的体系的个数正比于
+exp(-βE)，其中β = 1/k T，其系综的配分函数可以写为对所有的微
+B
+观态的能量exp(-βE)求和/积分：
+正则系综特征函数是亥姆霍兹自由能 A(N,V,T)，利用自由能和配
+分函数的关系：
+
+
+========== PAGE 6 ==========
+
+研之成理AIMD与CP2K课程学习圈
+限制性 constrained AIMD模拟
+MD模拟的过程中，自由能 A 是所有粒子的3N个坐标和3N个动量
+的函数，对平衡态MD模拟的系综平均可以得到一个定值：
+如果固定其中的一个坐标自由度 ξ
+（比如一个键长），那么同样对系
+综平均得的求自由能 A(ξ) 则是 ξ 的
+函数。
+限制不变
+限制性MD就是固定相空间中某些自
+由度的MD。
+
+
+========== PAGE 7 ==========
+
+研之成理AIMD与CP2K课程学习圈
+从 ξ 到 ξ ，自由能A(ξ)的变化，可以写成对A(ξ)梯度的积分形式：
+0 1
+其中dA(ξ)/dξ是可以通过限制性MD采样模拟得到的，取系综平均
+即为Potential of mean force（PMF）。
+左图是一个经典的PMF结果
+图像。
+• 黑色对应是PMF，<F>；
+• 红色的是PMF的积分，
+即为亥姆霍兹自由能A势
+能面。
+
+
+========== PAGE 8 ==========
+
+研之成理AIMD与CP2K课程学习圈
+方法一：Potential of mean force（PMF）
+PMF的计算需要限制相空间中6N个自由度中的一个自由度和动量，
+做一段MD模拟
+AIMD模拟过程中每一个点都能得到瞬时的梯度dA(ξ)/dξ，把这些
+值做平均，即是该ξ对应的PMF
+原理参考VASP手册Constrained molecular dynamics
+
+
+========== PAGE 9 ==========
+
+研之成理AIMD与CP2K课程学习圈
+collective variables
+限制相空间中自由度 ( ξ )的种类可以多种多样，英文为collective
+variables（CV），比如：
+
+
+========== PAGE 10 ==========
+
+研之成理AIMD与CP2K课程学习圈
+文献案例（研究吸附分子自由能）
+PMF
+Free energy
+由于Cu单原子位点受吸附分子的影响位置发生变化，而且整个吸
+附过程没有能垒，所以难以用NEB方法计算吸附过程，而PMF计
+算自由能则可以非常准确描述这一过程。
+J. Chem. Theory Comput. 2018, 14, 929−938
+
+
+========== PAGE 11 ==========
+
+研之成理AIMD与CP2K课程学习圈
+文献案例（表面电催化步骤的过渡态计算）
+电催化中，溶剂分子对反应自由能
+变化产生影响。但是水分子的构象
+不断变化会对自由能产生影响，NEB
+直接算能垒是不准确的，需要用MD
+方法对溶剂分子的影响平均化。
+PMF就很好的解决了这一问题。
+J. Am. Chem. Soc. 2016, 138, 13802−13805
+
+
+========== PAGE 12 ==========
+
+研之成理AIMD与CP2K课程学习圈
+文献案例（模拟负载Au催化剂的动态变化行为）
+F
+r
+e
+e
+E
+n
+e
+r
+g
+y
+动态单原子催化过程，Au-CO动态生成，发生 CO+O->CO 反应，然后
+2
+Au原子再返回团簇，可以用PMF算出这些关键步骤的自由能垒。
+Nat. Commun. 2015, 6, 6511
+
+
+========== PAGE 13 ==========
+
+研之成理AIMD与CP2K课程学习圈
+VASP中限制性AIMD的文件：ICONST
+基本的VASP模拟有4个文件：
+限制性AIMD模拟还需要多一个ICONST文件，保存被限制的自由
+度模式（collective variables，CV），文件的书写形式如下：
+FLAG atom(1) ... atom(N) STATUS
+STATUS = 0 时，代表固定。
+FLAG为限制的类型：
+限制的类型 例
+R 原子间距离 R 1 2 0
+A 角度 A 1 2 3 0
+T 二面角 T 1 2 3 4 0
+M 原子(1)和原子(2)(3)中间的距离 M 1 2 3 0
+X, Y, Z 坐标 X 1 0
+
+
+========== PAGE 14 ==========
+
+研之成理AIMD与CP2K课程学习圈
+2
+固定其中一个键长C(1) – O(2)：
+R 1 2 0
+1
+5
+固定其中一个键角O(3) – C(1) – O(2) ：
+4
+A 3 1 2 0
+3
+固定其中一个二面角H(5) – O(3) – C(1) – O(2) ：
+6
+T 5 3 1 2 0
+固定其中多个：
+R 1 3 0
+R 4 6 0
+R 3 6 0
+
+
+========== PAGE 15 ==========
+
+研之成理AIMD与CP2K课程学习圈
+VASP中限制性AIMD的文件：ICONST
+2
+ICONST里还可以做几种限制的组合成新CV
+例，固定几个键长的组合，r1 + r2 - r3。 r
+1
+1
+5
+R 1 3 0 4
+定义三
+3
+R 4 6 0 r
+个键长 3 r
+R 3 6 0 2
+6
+前三个键 S 1. 1. -1 0
+长组合
+
+
+========== PAGE 16 ==========
+
+研之成理AIMD与CP2K课程学习圈
+实例：H CO 碳酸分解的自由能势能面模拟(PMF法)
+2 3
+第一步：结构优化初态、末态。（类似NEB过渡态计算）
+第二步：用nebmake.pl脚本插点（最好密集一些），比如：
+nebmake.pl ../opt1/CONTCAR ../opt2/CONTCAR 10
+插10个点，一共12个点。每个文件夹里准备ICONST和其他输入文
+件，一共需要计算12个AIMD模拟。
+
+
+========== PAGE 17 ==========
+
+研之成理AIMD与CP2K课程学习圈
+INCAR文件：
+##### I/O ##### #### Elec Relax #### #### MD ####
+SYSTEM = Au ENCUT = 400 NSW = 10000
+#KPAR = 4 ISMEAR = 0 POTIM = 1
+NCORE = 12 SIGMA = 0.05 SMASS = 0
+ISTART = 1 EDIFF = 1E-6 MDALGO = 2
+ICHARG = 1 NELMIN = 5 TEBEG = 300
+LWAVE = .FALSE. NELM = 300 TEEND = 300
+LCHARG = .FALSE. GGA = PE NBLOCK = 1
+LVTOT = .FALSE. LREAL = Auto LBLUEOUT = .TRUE.
+LVHAR = .FALSE. ISYM = 0
+LELF = .FALSE.
+# LORBIT = 11
+R 1 3 0
+ICONST文件：
+R 4 6 0
+R 3 6 0
+S 1. 1. -1 0
+
+
+========== PAGE 18 ==========
+
+研之成理AIMD与CP2K课程学习圈
+第三步：结果分析处理：
+在REPORT文件里，每一帧都会输出：
+>Const_coord
+cc> S 0.17000 0.17000 0.301200E-05
+>Blue_moon
+lambda |z|^(-1/2) GkT |z|^(-1/2)*(lambda+GkT)
+b_m> -0.137162E+01 0.730324E+00 0.439271E-02 -0.998520E+00
+cc这一行得到就是限制性MD中CV值，b_m这一行得到就是自由
+能A沿着限制自由度上的梯度 (需要做时间平均即得到PMF)
+取lambda值或者{|z|^(-1/2)*(lambda+GkT)} /|z|^(-1/2)值（这俩数
+据基本一样的），取平均即可。在每一个MD任务的文件下，都
+用以下命令提取出来数据导入origin里画图：
+grep b_m REPORT > bm.txt
+
+
+========== PAGE 19 ==========
+
+研之成理AIMD与CP2K课程学习圈
+第四步：用Origin画图
+把生成的bm.txt文件拖入origin里，用Statistics on Column可以对
+lambda一列做统计得出平均值和标准差。把12套数据都做处理，
+然后汇总到一个新的表里。
+对lambda这一列求平均和标准差
+
+
+========== PAGE 20 ==========
+
+研之成理AIMD与CP2K课程学习圈
+对PMF求积分，
+Lambda
+即得到自由能A
+平均值和标准差
+CV值 PMF
+D
+M
+I
+A
+条
+2
+1
+算
+计
+共
+用Y error的方法画图
+
+
+========== PAGE 21 ==========
+
+研之成理AIMD与CP2K课程学习圈
+成品图：红色线最高点到两侧的差就是自由能能垒。此例中，能
+垒~1.3 eV。在最高点附近插点越密集，能垒计算就越准确。
+V
+e
+3
+.
+1
+~
+
+
+========== PAGE 22 ==========
+
+研之成理AIMD与CP2K课程学习圈
+方法二：Slow-growth方法(推荐)
+PMF方法是传统的AIMD计算自由能势能面方法。但是有明显缺点：
+• 计算量太大，需要跑十几条AIMD；
+• 得到的能垒不准确，不能让最高点正好落在鞍点。
+基于PMF方法，Michiel Sprik在1998年改进并提出了Slow-growth
+方法，解决了这两个缺点。其数学思想：只跑一条AIMD让CV非常
+缓慢的变化，同样计算每个点的自由能梯度，再做积分就得到了
+连续平滑的势能面。
+V
+e
+5
+.
+1
+~
+
+
+========== PAGE 23 ==========
+
+研之成理AIMD与CP2K课程学习圈
+2
+第一步：结构优化初态，（末态优化不优化都可以）
+r
+1
+1
+第一步：从初态开始做一条AIMD模拟， 5
+限制CV(r1 + r2 - r3)。从初态开始慢慢增大，
+4
+每一步增大0.0005。一共跑10000步，
+3
+r
+3 r
+即从0.1700 -> 5.1700。INCAR当中只多了一个参数：
+2
+代表每步的CV增量。 6
+INCREM = 0.0005
+第三步：提取CV和lambda。
+grep cc REPORT > cc.txt
+grep b_m REPORT > bm.txt
+第四步：把这两个文件导入Origin里，取cc的变化作为X轴，Lambda
+的变作为Y轴，积分再一起作图即可。
+
+
+========== PAGE 24 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Slow-growth 方法小技巧：
+• CV不但可以从小到大扫，还可以从大到小扫，INCREM设置成
+负值即可。
+• INCREM取值越小，扫的越慢，计算结果越准确。
+• 可以手动调一下结构，让初始的CV更小/更大一些，这样在开
+始的极小值附近也能更多的采样。模拟出来的初态能更准确。
+• 适当对bm.txt里的Lambda值做平均让Lambda值更平滑。
+
+
+========== PAGE 25 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Slow-growth 方法应用：计算Pt表面溶解一个Pt原子的自由能能垒。
+第一步：建模，结构优化，做升温退火(或者预平衡)
+第二步：从初态开始做一条AIMD模拟，限制一个表面Pt原子和其他
+所有Pt原子的配位数CV。从初态开始慢慢增大，每一步增大0.0005。
+一共跑10000步，
+即从6.49822 -> 1.49822。
+第三步：提取CV和lambda。在origin里画图。
+
+
+========== PAGE 26 ==========
+
+研之成理AIMD与CP2K课程学习圈
+方法三：Metadynamics
+
+
+========== PAGE 27 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Metadynamics就是在MD模拟的过程中不断的加上高斯势函数抬高势
+能面，直到把整个势能面填平。
+新的势能面(biased) = 原本的势能面(unbiased) + 高斯势函数，
+CV (ξ)：控制我们要增强采样的自由度。
+每个高斯势函数需要定义高度h和宽度w，t 设定每多少步加一个高
+G
+斯函数；
+
+
+========== PAGE 28 ==========
+
+研之成理AIMD与CP2K课程学习圈
+文献案例（表面电催化步骤的过渡态计算）
+*CHOH + H O+中间体到 *CH + 2H O的过程有两条路径，一条是先变
+3 2
+成CHOH ，另一条是直接一步反应。
+2
+J. Phys. Chem. Lett. 2015, 6, 4767−4773
+
+
+========== PAGE 29 ==========
+
+研之成理AIMD与CP2K课程学习圈
+文献案例（Al3+从表面脱出到溶液中过程计算）
+Al3+从表面脱离到水溶液中的路径和能垒计算。
+Nat. Commun. 2019, 10 (1), 3139.
+
+
+========== PAGE 30 ==========
+
+研之成理AIMD与CP2K课程学习圈
+文献案例（模拟CH 的C-H键活化过程）
+4
+CH 甲烷在Cu8团簇上活化，这个过程比较复杂，直接用NEB计算不容
+4
+易，用C-H的配位数定义CV可以比较直观的得到C-H的解离能垒。
+J. Chem. Phys. 142, 184308 (2015)
+
+
+========== PAGE 31 ==========
+
+研之成理AIMD与CP2K课程学习圈
+INCAR文件：
+##### I/O ##### #### Elec Relax #### #### MD ####
+SYSTEM = Au ENCUT = 400 NSW = 1000000
+#KPAR = 4 ISMEAR = 0 POTIM = 1
+NCORE = 12 SIGMA = 0.05 SMASS = 0
+ISTART = 1 EDIFF = 1E-6 MDALGO = 21
+ICHARG = 1 NELMIN = 5 TEBEG = 300
+LWAVE = .FALSE. NELM = 300 TEEND = 300
+LCHARG = .FALSE. GGA = PE NBLOCK = 1
+LVTOT = .FALSE. LREAL = Auto HILLS_H = 0.02
+LVHAR = .FALSE. ISYM = 0 HILLS_W = 0.1
+LELF = .FALSE. HILLS_BIN = 30
+# LORBIT = 11
+高度h (eV)： HILLS_H
+宽度w (ξ)： HILLS_W
+间隔t (step)： HILLS_BIN
+G
+
+
+========== PAGE 32 ==========
+
+研之成理AIMD与CP2K课程学习圈
+实例：N 解离吸附自由能垒(Metadynamics法)
+2
+Ru(0001) Ru(0001)
+*N
+N
+2
+Fix Fix
+第一步：结构优化，退火升温/预平衡。
+第二步：跑Metadynamics，峰高0.1 eV，峰宽0.2，间隔30步。并设
+置ICONST文件，令我们要求采样的自由度为5，
+CV1采样Ru-N的配位数;
+CV2采样N-N的长度
+
+
+========== PAGE 33 ==========
+
+研之成理AIMD与CP2K课程学习圈
+配位数CV的设定方法：
+首先确定我们关注的原子编号，把相关的有可能生成配位的原
+子对都用R标出来。（VASP不能设置元素之间的配位数，CP2K
+可以，所以VASP需要一个一个的把每个原子对都列出来）
+R 49 1 0
+....
+1. R 49 48 0
+R 50 1 0
+....
+R 50 48 0
+2.
+R 49 50 0
+3.
+D 1.85 ...（共96个1.85） 1.85 0 5
+48个Ru原子 + 2个N原子
+4. S 0 …（共96个0）0 1 5
+1. 列出R(48个Ru和2个N之间的距离)
+2. 列出R(两个N原子间距)
+3. 配位数组合D(Ru-N配位数)
+4. 距离组合S(N-N键长)
+
+
+========== PAGE 34 ==========
+
+研之成理AIMD与CP2K课程学习圈
+D 1.85 ...（共96个1.85） 1.85 0 5
+配位数：代表前面列出的所有自由度按照配位数公式组合。
+ci设定的平衡键长(0代表不计算，这里取1.85为Ru-N平衡键长)，
+qi为当前的键长。
+S 0 …（96个0）0 1 5
+键长线性组合。
+
+
+========== PAGE 35 ==========
+
+研之成理AIMD与CP2K课程学习圈
+模拟配位数CV的经典公式：
+当处于平衡键长的时候，ξ 的数值 = 9/14，即两个指数的比值。所以，
+这个数值不能直接对应于化学里定义的配位数，但是可以反映出配
+位数变化的趋势！
+当c = 1.2 时，
+i
+q 在平衡位置(1.2)
+i
+的配位数值是9/14
+平衡键长
+
+
+========== PAGE 36 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Metadynamics输出文件：HILLSPOT
+如果设定了1个CV，HILLSPOT为三列（CV1值，峰高，峰宽）
+如果设定了2个CV，HILLSPOT为三列（CV1值， CV2值，峰高，峰宽）
+0.15448 1.11035 0.10000 0.10000
+0.16506 1.09978 0.10000 0.10000
+0.18759 1.11093 0.10000 0.10000
+0.21319 1.13834 0.10000 0.10000
+0.24333 1.15418 0.10000 0.10000
+0.30179 1.14532 0.10000 0.10000
+0.45300 1.13987 0.10000 0.10000
+Y画图范围
+0.80116 1.14706 0.10000 0.10000
+…
+X画图范围
+…
+维度
+运行脚本画图：
+Usage: for 1D surface : python gaussian.py 1 x1 x2
+gaussian.py 2 0 7 0 7
+for 2D surface : python gaussian.py 2 x1 x2 y1 y2
+
+
+========== PAGE 37 ==========
+
+研之成理AIMD与CP2K课程学习圈
+7.5 ps 15 ps 30 ps
+45 ps 60 ps 79 ps
+极小值1 TS 极小值2 极小值3
+
+
+========== PAGE 38 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CV值的变化：
+一般我们认为，CV值来回震荡十次以上，体系的势能
+面就被填平了，数据是可用的。
+
+
+========== PAGE 39 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Metadynamics 方法小技巧：
+• CV值选取非常需要技巧，要保证只在我们想要得过程中采样。
+比如：碳酸分解，如果还是按照我们算Slow-growth方法用r1 +
+r2 – r3的话。随着势能面升高会发生 OH 和COOH分离的情况，
+不是我们想要的H2O和CO2
+不符合预期的化学变
+化，影响能垒的计算。
+深入理解CV，建议搜索知乎上：计算化学中的
+metadynamics中的collective varible如何选取？
+
+
+========== PAGE 40 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Metadynamics 方法小技巧：
+• Metadynamics对初态位置没有要求，PMF和slow-growth对初态
+位置有要求
+• 高斯峰高度选取非常重要，要保证计算量可以接受的情况下尽
+量的小。一般选取预估能垒的~1/50，比如1eV的能垒，峰高取
+0.02 eV。（峰高直接决定了能垒计算误差）
+• 高斯峰宽度也很重要，过小的话计算慢，过大则不能还原出势
+能面盆地的形状。
+峰宽过大，不能
+峰宽过小，需要的
+描述陡峭的部分
+峰多，势能面不平
+滑，且计算耗时
+
+
+========== PAGE 41 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Metadynamics 方法小技巧：
+• 峰的高度和宽度和高度可以在AIMD的过程中调整，不同的盆
+地适合不同的峰。
+适合峰平宽的
+)
+长
+键
+N
+-
+N
+(
+2
+V
+C
+适合峰高且窄的
+CV1(Ru-N配位数)
+
+
+========== PAGE 42 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Metadynamics 方法小技巧：
+• 重启计算需要读取之前已经添加的高斯峰(PENALTYPOT文件)，
+cp XDATCAR XDATCAR.bak
+cp POSCAR POSCAR.bak
+cp CONTCAR POSCAR
+cp HILLSPOT PENALTYPOT
+• 可以先加大高斯势函数跑一段时间，然后再重启任务，减小高
+斯势函数继续跑，以平滑势能面。（或者调用Plumed用well-
+temper方法，VASP不能用，CP2K可以）
+• 1D势能面比2D势能面计算量小的多，不要尝试3维势能面，计算
+量太大。
+• Metadynamics和PMF或Slowgrowth方法可以结合使用候互相印证。
+
+
+========== PAGE 43 ==========
+
+研之成理AIMD与CP2K课程学习圈
+练习CP2k：Nanostructures and adsorption on metallic surfaces
+Cyclohexaphenylene
+https://scc.acad.bg/ncsa/articles/library/Library2016_Supercomputers-at-
+Work/CP2K_Publications/Dehydrogenation_of_cyclohexaphenylene_on_Cu_111.pdf
+https://www.cp2k.org/exercises:2015_cecam_tutorial:neb
+A.C. Levi, P.Calvini, Surf. Sci. 601, 1494 (2007)
+
+
+========== PAGE 44 ==========
+
+研之成理AIMD与CP2K课程学习圈
+QM区域，这里用半经验PM6方法
+MM区域，
+Cu：EAM立场
+Cu-C 和 Cu-H：非键相互作用模型
+计算脱氢过程的能垒，采用CI-NEB方法：
+https://scc.acad.bg/ncsa/articles/library/Library2016_Supercomputers-at-
+Work/CP2K_Publications/Dehydrogenation_of_cyclohexaphenylene_on_Cu_111.pdf
+
+
+========== PAGE 45 ==========
+
+研之成理AIMD与CP2K课程学习圈
+cp2k.inp 文件：
+&MULTIPLE_FORCE_EVALS
+指定两个计算方法模块（FORCE_EVAL）
+FORCE_EVAL_ORDER 2 3
+MULTIPLE_SUBSYS T 指定两个计算区域（ MULTIPLE_SUBSYS）
+&END 一共需要3个FORCE_EVAL。
+第一个定义QM和MM区域的范围。
+&FORCE_EVAL
+第二个定义MM计算参数和格子
+METHOD MIXED
+第二个定义QM计算参数和格子
+…
+&MAPPING
+&FORCE_EVAL_MIXED
+&FRAGMENT 1
+1 56
+片段1，包含1..56号原子
+&END
+&FRAGMENT 2 片段2，包含57..2936号原子
+57 2936
+&END
+&END
+&FORCE_EVAL 1
+DEFINE_FRAGMENTS 1 2 MM区域，包括片段1和2
+&END
+&FORCE_EVAL 2
+DEFINE_FRAGMENTS 1 QM区域，包括片段1
+&END
+&END
+…
+
+
+========== PAGE 46 ==========
+
+研之成理AIMD与CP2K课程学习圈
+&FORCE_EVAL
+METHOD FIST
+&MM
+…
+MM的计算参数
+&SUBSYS
+&CELL
+ABC 40.764229 39.715716 70. MM的晶胞区域
+&END CELL
+&TOPOLOGY
+COORD_FILE_NAME ./s
+MM的结构文件
+…
+&END
+&FORCE_EVAL
+METHOD Quickstep
+QM的计算参数
+&DFT
+&QS
+METHOD PM6
+…
+&SUBSYS
+&CELL
+QM的晶胞区域
+ABC 30 30 30
+PERIODIC NONE
+&END CELL
+&TOPOLOGY
+COORD_FILE_NAME ./f QM的结构文件
+&END
+
+
+========== PAGE 47 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Metadynamics：定义CV值
+&COLVAR
+&COMBINE_COLVAR
+&COLVAR
+&DISTANCE
+ATOMS 4 50 L(C-H)
+&END
+&END COLVAR
+&COLVAR
+CV1: L(C-H) + L(C-H)
+&DISTANCE
+ATOMS 7 49 L(C-H)
+&END
+&END COLVAR
+FUNCTION CV1+CV2
+VARIABLES CV1 CV2
+ERROR_LIMIT 1.0E-8
+&END
+&END
+&COLVAR
+&DISTANCE CV1: L(H-H)
+ATOMS 49 50
+&END
+&END
+
+
+========== PAGE 48 ==========
+
+研之成理AIMD与CP2K课程学习圈
+&MOTION &FREE_ENERGY &METAVAR
+&MD &METADYN SCALE 0.3
+ENSEMBLE NVT DO_HILLS COLVAR 2
+STEPS 200000 NT_HILLS 50 &WALL
+TIMESTEP 0.5 WW 3.0e-3 TYPE QUADRATIC
+TEMPERATURE 450.0 &METAVAR POSITION [angstrom] 4.00
+&THERMOSTAT SCALE 0.3 &QUADRATIC
+TYPE CSVR COLVAR 1 DIRECTION WALL_PLUS
+REGION MASSIVE &WALL K [kcalmol] 40.0
+&CSVR TYPE QUADRATIC &END
+TIMECON [fs] 200.0 POSITION [angstrom] 5 &END
+&END &QUADRATIC &WALL
+&END DIRECTION WALL_PLUS TYPE QUADRATIC
+&ENDMD K [kcalmol] 40.0 POSITION [angstrom] 0.6
+&END &QUADRATIC
+&PRINT &END DIRECTION WALL_MINUS
+&TRAJECTORY &WALL K [kcalmol] 40.0
+&EACH TYPE QUADRATIC &END
+MD 50 POSITION [angstrom] 1.0 &END
+&END &QUADRATIC &END METAVAR
+&END DIRECTION WALL_MINUS &PRINT
+&RESTART K [kcalmol] 40.0 &COLVAR
+&EACH &END COMMON_ITERATION_LEVELS 3
+MD 100 &END &END
+&END &END METAVAR &HILLS
+&END COMMON_ITERATION_LEVELS 3
+&RESTART_HISTORYOFF &END
+&END &END
+&END &END METADYN
+… &END FREE_ENERGY
+&ENDMOTION
+
+
+========== PAGE 49 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Cu用VDW
+C和H用VDW和dynamicBonds混合
+
+
+========== PAGE 50 ==========
+
+研之成理AIMD与CP2K课程学习圈
+输出文件：
+cp2k-COLVAR.metadynLog
+cp2k-HILLS.metadynLog
+25.0 4.19568 5.71958 0.30000 0.30000 0.00300
+50.0 4.19083 5.72538 0.30000 0.30000 0.00300
+75.0 4.41007 6.28499 0.30000 0.30000 0.00300
+100.0 4.46961 5.62990 0.30000 0.30000 0.00300
+125.0 4.17640 5.09941 0.30000 0.30000 0.00300
+150.0 4.44472 4.86586 0.30000 0.30000 0.00300
+175.0 4.34165 5.18239 0.30000 0.30000 0.00300
+200.0 4.70476 5.75610 0.30000 0.30000 0.00300
+225.0 4.20109 5.37464 0.30000 0.30000 0.00300
+250.0 4.56989 5.86650 0.30000 0.30000 0.00300
+275.0 4.20762 6.05916 0.30000 0.30000 0.00300
+300.0 4.31164 6.62164 0.30000 0.30000 0.00300
+325.0 4.32969 7.00803 0.30000 0.30000 0.00300
+时间 CV1 CV1 CV1宽度 CV2宽度 峰高
+
+
+========== PAGE 51 ==========
+
+研之成理AIMD与CP2K课程学习圈
+输出文件：
+cp2k-COLVAR.metadynLog
+cp2k-HILLS.metadynLog
+绘制等高线图：
+python ./gaussian.py 2 1 6 0 5
+维度 X范围 Y范围
+)
+C
+-
+C
+(
+L
+/
+2
+V
+C
+CV1 / L(C-H) + L(C-H)
+
+
+========== PAGE 52 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Metadynamics：设置合适的峰高(WW)和峰宽度(SCALE)
+Specifies the scale factor for the following collective variable. The history dependent term
+has the expression:
+WW* Sum_{j=1}^{nhills} Prod_{k=1}^{ncolvar} [EXP[-0.5*((ss-ss0(k,j))/SCALE(k))^2]],
+where ncolvaris the number of defined METAVAR and nhillsis the number of spawned hills.
+不合适的峰宽度 合适的峰宽度
+
+
+========== PAGE 53 ==========
+
+研之成理AIMD与CP2K课程学习圈
+声 明
+本讲义和直播视频仅限参加研之成理AIMD与CP2K课程学习圈的学员
+个人学习使用，版权归属于研之成理(杭州)网络科技有限公司。不得以任何
+方式擅自翻录、复制、传播、出售，或将其中内容挪作它用，否则将追究法
+律责任。
+如果您发现盗版和侵权行为，请保留侵权者的聊天记录和收款转账
+记录等。经核实后，我们给予举报者免费正版课程（无线回看视频，讲义，
+计算文件，课程相关资料，无限答疑社群，后续免费专题课），和500元现金
+奖励。

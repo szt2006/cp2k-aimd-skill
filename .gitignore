@@ -1,0 +1,17 @@
+# OS noise
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# local workspace metadata (not part of the skill)
+.workbuddy/
+
+# dev / test artifacts (kept on disk locally, not published)
+_tmp_*.txt
+_chk_*.inp

@@ -1,0 +1,880 @@
+# SOURCE: 庚子计算-AIMD与CP2K讲义-4 - 副本.pdf
+# PAGES: 64
+
+
+
+========== PAGE 1 ==========
+
+研之成理AIMD与CP2K课程学习圈
+声 明
+本讲义和直播视频仅限参加研之成理AIMD与CP2K课程学习圈的学员
+个人学习使用，版权归属于研之成理(杭州)网络科技有限公司。不得以任何
+方式擅自翻录、复制、传播、出售，或将其中内容挪作它用，否则将追究法
+律责任。
+如果您发现盗版和侵权行为，请保留侵权者的聊天记录和收款转账
+记录等。经核实后，我们给予举报者免费正版课程（无线回看视频，讲义，
+计算文件，课程相关资料，无限答疑社群，后续免费专题课），和500元现金
+奖励。
+
+
+========== PAGE 2 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K振动光谱计算 - TRAVIS
+TRAVIS：Trajectory Analyzer and Visualizer
+轨迹分析和可视化程序
+https://www.cp2k.org
+http://www.travis-analyzer.de
+https://brehm-research.de
+德国Martin Brehm 课题组开发，专门为CP2K的MD模拟数据后处理
+而生，尤其擅长振动光谱的模拟。
+可以计算 infrared (IR), Raman, vibrational circular dichroism (VCD),
+and Raman optical activity (ROA)等
+
+
+========== PAGE 3 ==========
+
+研之成理AIMD与CP2K课程学习圈
+TRAVIS 安装
+http://www.travis-analyzer.de/
+下载原代码
+Win预编译版
+使用教程
+使用GNU的C++编译器就可以，不用修改，直接运行make
+# Your C++ compiler
+CXX = g++
+在 exe 文件夹下生成可执行文件，使用的时候可以直接运行，例如：
+~/apps/travis-src-200504-hf2/exe/travis -p water_wannier.xyz
+
+
+========== PAGE 4 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K + TRAVIS 计算IR光谱
+第一步：进行AIMD模拟，同时输出wannier中心孤对电子的位置
+FORCE_EVAL/DFT/ Section 里设定 LOCALIZE
+&LOCALIZE
+METHOD CRAZY
+&PRINT
+&WANNIER_CENTERS
+在结果的轨迹文件中同时输出wannier中
+IONS+CENTERS
+心，孤对电子的位置
+FILENAME = wannier.xyz
+&EACH
+每个MD步骤都输出wannier中心轨迹
+MD 1
+&END
+&END
+&END
+&END LOCALIZE
+其他参数和正常跑AIMD一样，跑的时间越长计算的光谱就越准确。
+
+
+========== PAGE 5 ==========
+
+研之成理AIMD与CP2K课程学习圈
+wannier.xyz 文件
+以XYZ文件的格式同时输出 原子坐标 和 wannier孤对电子(X)位置，可
+以直接被travis读取用于计算模拟过程中偶极距的变化。
+13
+Particles+Wannier centers. Iteration:1_0
+H 0.8475400000 0.0347400000 1.0345300000
+C 0.3504800000 0.0067500000 0.0608400000
+H 0.6350700000 0.8927600000 -0.5200600000
+H 0.6629400000 -0.8933800000 -0.4828300000
+O -1.0108300000 -0.0082300000 0.3643900000
+H -1.4852000000 -0.0326300000 -0.4568500000
+X -1.2528419315 -0.0215972485 -0.0983108307
+X -1.0589004435 -0.2725462315 0.4997402423
+X -1.0668135257 0.2604099419 0.4875935596
+X 0.5633305803 -0.6060535347 -0.3129155542
+X -0.4892919965 -0.0033936899 0.2128858495
+X 0.5444857259 0.6095972585 -0.3382963438
+X 0.6959346227 0.0255362399 0.7138015652
+
+
+========== PAGE 6 ==========
+
+研之成理AIMD与CP2K课程学习圈
+TRAVIS计算IR光谱
+第二步：进行TRAVIS计算
+运行：
+~/apps/travis-src-200504-hf2/exe/travis -p wannier.xyz
+参考算例中的.log文件，在交互式界面输入选项即可：
+…
+Are the 3 cell vectors of the same size (yes/no)? [yes]
+Enter length of cell vector in pm: 782 输入晶胞大小
+…
+Which functions to compute (comma separated)? Ir 输入光谱的类型
+…
+Enter the physical time distance between successive trajectory frames in fs: [0.5] 0.5
+… 时间步长
+The following dipole modes can be set for all molecules at once: 1, 5, 6, 7, 8
+Which dipole mode to set for all molecules at once? [none] 1 第一种模式
+…
+Enter the correlation depth of the ACF (in trajectory frames): [3115] 自相关的深度
+…
+Compute IR spectrum of whole system (y/n) [no] y 计算整体IR光谱
+
+
+========== PAGE 7 ==========
+
+研之成理AIMD与CP2K课程学习圈
+TRAVIS计算IR光谱
+第二步：进行绘图
+TRAVIS计算完成以后会生成两个文件，
+ir_spectrum_global.csv （Global是整体的红外振动光谱）
+ir_spectrum_H2O.csv （这个是在Travis计算过程中我们指定的分子片
+段的振动光谱）
+导入到origin里绘图即可
+Wavenumber cm-1
+
+
+========== PAGE 8 ==========
+
+研之成理AIMD与CP2K课程学习圈
+注：CP2K官网里还给了一种直接输出体系Dipole计算IR光谱的方法，结果
+并不好用，可以自学尝试一下：
+https://www.cp2k.org/exercises:2018_ethz_mmm:infrared_2018
+https://www.cp2k.org/exercises:2014_ethz_mmm:infra_red
+FORCE_EVAL / DFT / PRINT / MOMENTS
+
+
+========== PAGE 9 ==========
+
+研之成理AIMD与CP2K课程学习圈
+电荷密度(Charge density)
+FORCE_EVAL/DFT/PRINT
+&E_DENSITY_CUBE
+STRIDE 2 2 2
+FILENAME cube 文件名称
+STRIDE 1 1 1
+1 1 1控制每个点
+&END E_DENSITY_CUBE
+都输出，默认参
+数是2 2 2，间隔
+输出的格点密度
+只需要做单点计算就可以了。
+画图粗糙，文件
+计算完成输出两个文件：
+体积小。
+cp2k-cube-ELECTRON_DENSITY-1_0.cube
+STRIDE 1 1 1
+cp2k-cube-SPIN_DENSITY-1_0.cube
+分别是电荷密度，自旋密度。
+直接看电荷密度基本无法看出有用的信息，需要进一步
+处理电荷密度差分，原子电荷布局等。
+
+
+========== PAGE 10 ==========
+
+研之成理AIMD与CP2K课程学习圈
+自旋电荷密度(Spin charge density)
+练习：计算带有H吸附的TiO (110)表面的自旋电荷密度。
+2
+用vesta打开cp2k-cube-SPIN_DENSITY-1_0.cube
+H-TiO (111) Au/CeO (111)
+2 2
+电子从H转移到表面Ti上 电子从Au转移到表面Ce上
+Wang, Y. G., et al. (2015) Nat Commun 6: 6511.
+
+
+========== PAGE 11 ==========
+
+研之成理AIMD与CP2K课程学习圈
+电荷密度差分(Charge density difference)
+两种计算方式：
+（1）体系的密度减去组成它的各个片段的密度。
+∆𝜌 = 𝜌 − 𝜌 − 𝜌
+𝐴𝐵 𝐴 𝐵
+（2）SCF收敛以后体系的电荷密度减去组成它的各个原子
+在自由状态下的球对称的电荷密度，也称为变形电荷密度
+(Deformation charge density)
+∆𝜌 = 𝜌(𝐴𝐵 ) − 𝜌(𝐴𝐵 )
+𝑠𝑒𝑙𝑓−𝑐𝑜𝑛𝑠𝑖𝑠𝑡𝑒𝑛𝑡 𝑎𝑡𝑜𝑚𝑖𝑐
+11
+
+
+========== PAGE 12 ==========
+
+研之成理AIMD与CP2K课程学习圈
+练习： CO/Ni(100)电荷差分
+步骤一：优化CO/Ni(100)的结构。
+步骤二：分别计算CO/Ni(100) 、Ni(100)、CO的单点能
+结构从CO/Ni(100)直接截取，不要再结构优化！计算参数保
+持不变!
+步骤三：用VESTA，依次输入三个片段的cube文件:
+12
+
+
+========== PAGE 13 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CO/Ni(100)电荷差分，r = r(CO/Ni) – r(CO) – r(Ni)
+先导入整体的cube文件
+减去两个片段的cube文件
+
+
+========== PAGE 14 ==========
+
+研之成理AIMD与CP2K课程学习圈
+电荷密度差分(Charge density difference)
+控制电荷密度的等值面 颜色，透明度
+数值 （原子单位e/bohr3）
+
+
+========== PAGE 15 ==========
+
+研之成理AIMD与CP2K课程学习圈
+选择米勒指数和平面距离原点的距离
+或者选定三个原子
+或者数值范围，
+这里是电荷密度
+15
+
+
+========== PAGE 16 ==========
+
+研之成理AIMD与CP2K课程学习圈
+绘制平面平均的电荷差分密度图
+Planar-Average Charge-Density
+python ./cube.py cp2k-cube-ELECTRON_DENSITY-1_0.cube
+对XY平面内的格点文件做平均，画
+出随着Z变化的曲线。
+三个cube都分别做线，ab – a – b 就
+可以得到电荷差分的 Planar-Average
+16
+
+
+========== PAGE 17 ==========
+
+研之成理AIMD与CP2K课程学习圈
+原子电荷(Atomic charge)
+定义：位于原子中心的电荷。
+原子电荷 = 核电荷数 – 原子所带电子数
+意义：把一定空间内的电荷密度都划分给附近的一个原子，
+用一套人为的规则定义每个原子上所带的电荷。
+特点：人为划分，不唯一。
+种类：
+VASP可以做：
+• Bader charge (最常用)
+• Mulliken charge
+• Löwdin charge
+• HIRSHFELD charge
+• NPA charge
+
+
+========== PAGE 18 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Bader电荷的计算
+Bader电荷也称为AIM(atom-in-molecule)电荷。将电子密度的零
+通量面作为分界面，划分原子空间的方法。
+Henkelman课题组开发的Bader程序可以处理VASP，cp2k的
+CHGCAR得到bader电荷。下载地址：
+http://theory.cm.utexas.edu/henkelman/code/bader/
+
+
+========== PAGE 19 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Al的原子盆 O的原子盆 -1.64 |e|
++2.45 |e|
+CO中O的原子盆 CO中C的原子盆
++1.83 |e|
+-1.83 |e|
+
+
+========== PAGE 20 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Bader电荷：
+bader cp2k-cube-ELECTRON_DENSITY-1_0.cube
+运行成功生成：
+ACF.dat, BCF.dat, AVF.dat
+Bader电荷保存在ACF.dat
+总电子数
+自旋电荷布局： bader cp2k-cube-SPIN_DENSITY-1_0.cube
+
+
+========== PAGE 21 ==========
+
+研之成理AIMD与CP2K课程学习圈
+练习： CO/Ni(100)体系的Bader电荷计算
+步骤一：优化CO/Ni(100)的结构。
+步骤二：计算CO/Ni(100) 体系的单点能。输出电荷密度。
+&E_DENSITY_CUBE
+FILENAME Dentity_maybeSpin.cube
+STRIDE 1 1 1
+&END E_DENSITY_CUBE
+步骤三：计算bader电荷
+bader cp2k-cube-ELECTRON_DENSITY-1_0.cube
+得到ACF.dat文件
+
+
+========== PAGE 22 ==========
+
+研之成理AIMD与CP2K课程学习圈
+ACF.dat：
+笛卡尔坐标 电子数 原子盆体积
+C的基组用q4，
+则C净电荷为:
+4-2.36= +1.64 |e|
+O的基组用q6，
+则O净电荷为:
+6-7.86= -1.86 |e|
+Ni的基组用q18，
+则Ni净电荷为:
+18-17.94= +0.06 |e|
+原子核到原子盆边界的最小距离。
+
+
+========== PAGE 23 ==========
+
+研之成理AIMD与CP2K课程学习圈
+补充知识：按照Bader原子电荷着色的结构图
+https://mp.weixin.qq.com/s/BNzjhz8SI_HXkaEnyL29Bg
+
+
+========== PAGE 24 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Hirshfeld、Lowdin、Mulliken电荷的计算
+FORCE_EVAL/DFT/PRINT
+&LOWDIN SILENT
+FILENAME lowdin
+cp2k-lowdin-1.lowdin
+&END
+cp2k-hirshfeld-1.hirshfeld
+&HIRSHFELD SILENT
+cp2k-Mulliken-1.mulliken
+FILENAME hirshfeld
+&END
+&MULLIKEN SILENT
+FILENAME Mulliken
+Net charge Spin moment
+&END MULLIKEN
+净电荷 自旋电荷
+Ni C O
+Bader +0.06 +1.64 -1.86
+lowdin -0.062 +0.239 +0.138
+hirshfeld -0.630 +0.947 -0.240
+mulliken -0.327 +0.443 -0.076
+
+
+========== PAGE 25 ==========
+
+研之成理AIMD与CP2K课程学习圈
+态密度的计算
+FORCE_EVAL/DFT/PRINT
+包括的空轨道总数
+&PDOS
+-1代表全部包括
+NLUMO -1 # print all projected DOS available
+# COMPONENTS # split the density by quantum number
+输出磁量子数
+&LDOS
+S px py pz d….
+LIST 1..26
+合并输出几个原子
+&END LDOS
+的PDOS
+&END PDOS
+生成： cp2k-ALPHA_k1-1.pdos cp2k-BETA_k1-1.pdos … 等每个原子的PDOS
+费米能级
+# Projected DOS for atomic kind Ni1 at iteration step i = 0, E(Fermi) = 0.122425 a.u.
+# MO Eigenvalue [a.u.] Occupation s p d f
+1 -3.773372 1.000000 0.00000092 0.00000001 0.00000076 0.00000284
+2 -3.758844 1.000000 0.00537526 0.00109648 0.00027729 0.00110881
+3 -3.758262 1.000000 0.00000137 0.00000013 0.00007411 0.00002989
+4 -3.758172 1.000000 0.00573623 0.00043612 0.00012329 0.00123964
+5 -3.758033 1.000000 0.00009735 0.00030028 0.00600050 0.01079330
+轨道本征值 占据数 轨道角动量pdos
+
+
+========== PAGE 26 ==========
+
+研之成理AIMD与CP2K课程学习圈
+态密度的计算
+cp2k产生的 cp2k-ALPHA_k1-1.pdos cp2k-BETA_k1-1.pdos … 等态密度文件
+只有轨道能级信息，画态密度图还需要添加高斯展宽:
+python new.py -s 0.01 cp2k-ALPHA_k26-1.pdos cp2k-BETA_k26-1.pdos > dos.txt
+调整展宽的sigma Spin up Spin down
+运行python脚本new.py得到态密度信息，在origin里画图即可：
+
+
+========== PAGE 27 ==========
+
+研之成理AIMD与CP2K课程学习圈
+案例一：研究相互作用模型
+Ce 4f的空轨道
+电荷差分电荷密度
+O-Au作用 Ce 4f占据一
+的态密度 个局域电子
+J. Am. Chem. Soc. 2009, 131, 10473-10483. (共价作用) (电子转移 27 )
+
+
+========== PAGE 28 ==========
+
+研之成理AIMD与CP2K课程学习圈
+案例二：研究缺陷态
+TiO 中的Al缺陷，导致多余空穴在表面O上
+2
+Journal of Magnetism and Magnetic Materials 404 (2016) 7–13 28
+
+
+========== PAGE 29 ==========
+
+研之成理AIMD与CP2K课程学习圈
+案例三：研究表面态(带边位置计算)
+半导体表面存在配位不饱和的原子，比如GaN的表面原子的DOS和体
+相相比会在带隙中出现新的表面态(surface states)
+ACS Appl. Mater. Interfaces 2018, 10, 17419−17426 29
+
+
+========== PAGE 30 ==========
+
+研之成理AIMD与CP2K课程学习圈
+案例四，新材料电子结构分析(对比周期性和孤立体系的DOS)
+反夹心化合物
+DOI: 10.1021/acs.inorgchem.8b02263
+30
+
+
+========== PAGE 31 ==========
+
+研之成理AIMD与CP2K课程学习圈
+案例五，吸附分子和载体的相互作用模型
+DOS也可以用于分析表面吸附模型，CO分子与Ni表面相互作用，导
+致CO的s轨道能量降低，p*轨道能量上升。这是s配位和反馈p键共
+同作用的结果。
+p*
+E
+f
+s
+31
+
+
+========== PAGE 32 ==========
+
+研之成理AIMD与CP2K课程学习圈
+案例六，催化吸附的轨道相互作用模型（部分活化的N ）
+2
+• Fe : low charge state (0.59 |e|); high spin polarization (10 mB)
+3
+• d-p* interaction lead to charge transfer from Fe to N ’s p* orbital.
+3 2
+32
+Nat. Commun., 2018, 9, 1610.
+
+
+========== PAGE 33 ==========
+
+研之成理AIMD与CP2K课程学习圈
+电子定域化函数
+Electron localization function (ELF)
+电子定域化函数(ELF) 能够展现三维实空间中不同位置的电子
+定域程度, 它易于计算和进行图形分析, 是量子化学领域中研
+究电子结构特征的重要工具。
+应用非常广泛：
+有机和无机小分子，晶体，固体表面，配位化合物，团簇，
+二维量子点，芳香性，氢键，金属键，多中心键，反应机理。
+物理化学学报 2011, 27 (12), 2786-2792
+
+
+========== PAGE 34 ==========
+
+研之成理AIMD与CP2K课程学习圈
+数值范围[0, 1]
+当前体系动能密 Weizsacker 泛 函 ， 表 现
+度函数，也称G(r) 了没有Pauli互斥时(如同
+或梯度动能密度 玻色子体系)的动能密度
+D(r)本质上体现的是由于Pauli互斥造成的超额动能密度，
+也称Pauli动能密度，直接体现了费米穴的大小。
+A. D. Becke and K. E. Edgecombe, J. Chem. Phys. 92, 5397 (1990)
+卢天, 陈飞武, 物理化学学报,27,2786-2792 (2011)
+34
+
+
+========== PAGE 35 ==========
+
+研之成理AIMD与CP2K课程学习圈
+D(r)可以描述电子定域情况，其数值越小代表越定域，这和观念
+相反。
+Becke把D(r)数值投影到了[0,1]区间，数值越大表明定域程度越高。
+ELF是表征电子在空间中的局域化程度的重要指标。
+数值范围[0, 1]
+ELF(r) = 0, 等同非相互作用的均匀电子气模型，电子完全离域。
+ELF(r) = 1, 电子完全定域。
+一般来说 ELF(r) > 0.5, 是共价键、孤对电子、内层电子、多中心键
+等出现的区域。对于化学键分析和化学反应中的电子结构变化非
+常有用。
+35
+
+
+========== PAGE 36 ==========
+
+研之成理AIMD与CP2K课程学习圈
+研究表面催化反应过渡态
+电子定域程度高 电子定域程度低
+H 异裂的催化反应，过渡态。
+2
+O-H之间共价键成分高，Ce-H则有更强的离子成分。
+ACS Catal. 2018, 8, 546−554
+36
+
+
+========== PAGE 37 ==========
+
+研之成理AIMD与CP2K课程学习圈
+研究二维材料的电子结构
+电子定域程度高 电子定域程度低
+FeB 二维材料
+6
+中间的三个B之间更红，可能有三中心键存在。
+Fe-B之间有蓝色成分，Fe可能呈现离子状态。
+J. Am. Chem. Soc. 2016, 138, 5644−5651
+37
+
+
+========== PAGE 38 ==========
+
+研之成理AIMD与CP2K课程学习圈
+研究电子化合物
+电子定域程度高 电子定域程度低
+Na He是电子化合物electride，电子对在晶体中可以不依赖于原子
+2
+核孤立存在，形成定域化程度很高的区域。
+ACS Catal. 2018, 8, 546−554
+38
+
+
+========== PAGE 39 ==========
+
+研之成理AIMD与CP2K课程学习圈
+研究缺陷态电子结构
+ZrO HfO ThO 表面氧缺陷导致电子对局域在空穴的位置。
+2 2 2
+J. Phys. Chem. C 2016, 120, 17514−17526
+39
+
+
+========== PAGE 40 ==========
+
+研之成理AIMD与CP2K课程学习圈
+研究分子团簇的电子定域性质
+B +团簇。
+13
+外围的B-B之间存在强共价键，中心的3个B之间可能存在3中心键。
+物理化学学报，2018, 34 (5), 503–513
+40
+
+
+========== PAGE 41 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K计算ELF
+FORCE_EVAL/DFT/PRINT
+&ELF_CUBE
+FILENAME elf cp2k-elf-ELF_S1-1_0.cube
+STRIDE 1 1 1 cp2k-elf-ELF_S2-1_0.cube
+&END
+孤对电子
+配位键
+
+
+========== PAGE 42 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K计算Molecular Orbitals
+FORCE_EVAL/DFT/PRINT
+&MO_CUBES
+cp2k-MO-WFN_00001_1-1_0.cube
+NHOMO -1
+cp2k-MO-WFN_00001_2-1_0.cube
+NLUMO -1
+cp2k-MO-WFN_00002_1-1_0.cube
+FILENAME MO
+cp2k-MO-WFN_00002_2-1_0.cube
+STRIDE 1 1 1
+…
+&END MO_CUBES
+STRIDE 1 1 1控制每个点都输出，默认参数是2 2 2间隔，间隔输出的格点
+密度画图粗糙，文件体积小。1 1 1画图更精细。
+NHOMO 和 NLUMO 看情况输出就可以了，一般不需要-1全部输出，只输
+出费米能级附近就可以。
+
+
+========== PAGE 43 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Energy Level /a. u.
+0.33291
+-0.05825 -0.05822
+-0.30822
+-0.40726 -0.40726
+-0.50286
+-1.04822
+
+
+========== PAGE 44 ==========
+
+研之成理AIMD与CP2K课程学习圈
+静电势 (Electrostatic potential, ESP)
+功函数(Work function)
+衡量 r 处的单位点电荷与体系的静电相互作用势。
+第一性原理计算中，接近原子核的位置是负值，在远离原子
+核的真空中为0
+44
+
+
+========== PAGE 45 ==========
+
+研之成理AIMD与CP2K课程学习圈
+N N
+电子占主导的区域
+原子核占主导的区域
++
+氮气分子范德华表面的静电势分布： N N -
+-
+VASP算得真空能级不为0，需要把真
++
+空能级位置shift到0，静电势绝对值
+才有意义。
+45
+
+
+========== PAGE 46 ==========
+
+研之成理AIMD与CP2K课程学习圈
+功函数(Work Function)
+功函数（又称功函、逸出功，英语：Work function）是指要使一
+粒电子立即从固体表面中逸出，所必须提供的最小能量（通常以
+eV为单位）。
+功函数不是材料体相的本征性质，更准确的说法应为材料表面的
+性质（比如表面暴露晶面情况和受污染程度）功函数是金属的重
+要属性。
+46
+
+
+========== PAGE 47 ==========
+
+研之成理AIMD与CP2K课程学习圈
+从计算角度看：功函就是真空能级减去费米能级能量，在第一
+性原理程序里都把VBM当作费米能级，和实验有些许不同，所
+以功函算出来也会有一点差别。
+Φ = E – E
+vac F
+Slab 模型z方向
+Slab 的z方向
+E
+vac
+势
+面 E
+F
+电
+平
+静
+y
+x
+的 均
+平
+b
+a
+的
+l
+S
+47
+
+
+========== PAGE 48 ==========
+
+研之成理AIMD与CP2K课程学习圈
+计算功函就是计算静电势在slab法向上的分布(z方向的分布)。
+在INCAR里LVHAR = .TRUE. 输出静电势文件LOCPOT，和CHGCAR
+的格式是完全一样的。
+注：如果设置LVTOT = .TRUE.， LVHAR = .FALSE. 则输出的LOCPOT
+文件是包含静电势和交换相关势能的总势能。
+静电势 总势
+48
+
+
+========== PAGE 49 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K计算静电势与功函数
+&DFT
+SURFACE_DIPOLE_CORRECTION T
+SURF_DIP_DIR Z
+…
+&PRINT
+&V_HARTREE_CUBE
+FILENAME hartree
+STRIDE 1 1 1
+&END V_HARTREE_CUBE
+…
+真空能级 = 0.3158 a.u.
+真空层静电势不平，代表上下表面
+不对称，如果严重需要做偶极校正
+grep Fermi cp2k.out
+费米能级 = 0.12242 a.u. 做pdos的时
+候会输出费米能级。
+功函 Φ = E – E = 5.26 eV
+vac F
+
+
+========== PAGE 50 ==========
+
+研之成理AIMD与CP2K课程学习圈
+分析异质结静电势
+静电势不仅仅可以用作计算功函数。也是分析表面电子结构的利器。
+比如：分析异质结模型的静电势高低预测电子流向：
+Φ = 5.22 eV Φ = 6.43 eV
+50
+Phys. Chem. Chem. Phys., 2016, 18, 31175--31183
+
+
+========== PAGE 51 ==========
+
+研之成理AIMD与CP2K课程学习圈
+静电势得计算结果和电荷差分的结果
+一致，当TiO /g-C N 异质结形成的时
+2 3 4
+候部分电子会从g-C N 转移到TiO 上。
+3 4 2
+51
+
+
+========== PAGE 52 ==========
+
+研之成理AIMD与CP2K课程学习圈
+静电势分析表面负载团簇的电子流向
+J. Am. Chem. Soc., 2013, 135, 10673-1052683.
+
+
+========== PAGE 53 ==========
+
+研之成理AIMD与CP2K课程学习圈
+分子表面的静电势分布（扩展内容）
+最常用的分子表面是范德华表面。定义是一定电荷密度的表面。
+对于气相分子：r = 0.001 a.u. = 0.00675 e/Å3
+对于凝聚相： r = 0.002 a.u. = 0.0135 e/Å3
+1 a.u. = 1 e/Bohr3 = 6.748 e/Å3
+注意，VESTA导入的
+N 分子的范德华表面静电势分布，
+2
+0.001 e/Bohr3
+可以反应分子和材料表面的电子结构特
+征，和电荷分布。比如：孤对电子，离
+域p键。
+53
+
+
+========== PAGE 54 ==========
+
+研之成理AIMD与CP2K课程学习圈
+范德华表面的静电势分布，例如：受阻路易斯酸碱对，异裂活化H
+2
+Ce是亲电位点，O是亲核位点。当H 分子靠近的时候，会发生极化。
+2
+Nature communications, 2017, 8: 15266.
+54
+
+
+========== PAGE 55 ==========
+
+研之成理AIMD与CP2K课程学习圈
+练习：绘制O/Au(111)-p(2×2)表面的静电势分布：
+在VESTA中：
+（1）先导入cp2k-cube-ELECTRON_DENSITY-1_0.cube，选择Edit-Lattice Planes，
+（2）再在surface coloring里导入cp2k-hartree-v_hartree-1_0.cube
+55
+
+
+========== PAGE 56 ==========
+
+研之成理AIMD与CP2K课程学习圈
+在Properties Isosurface 中调节电荷密
+度表面的数值： 0.002 e/Bohr3
+越红的地方静电势更低，越
+容易受到亲电试剂的进攻。
+越蓝的地方静电势更高，越
+容易受到亲核试剂的进攻。
+56
+
+
+========== PAGE 57 ==========
+
+研之成理AIMD与CP2K课程学习圈
+
+
+========== PAGE 58 ==========
+
+研之成理AIMD与CP2K课程学习圈
+
+
+========== PAGE 59 ==========
+
+研之成理AIMD与CP2K课程学习圈
+
+
+========== PAGE 60 ==========
+
+研之成理AIMD与CP2K课程学习圈
+
+
+========== PAGE 61 ==========
+
+研之成理AIMD与CP2K课程学习圈
+WARNING| Particles: 208 31 at distance [au]: 0.00000058 less than: 0.01889726; increase
+EMAX_SPLINE.
+*******************************************************************************
+* ___ *
+* / \ *
+* [ABORT] *
+* \___/ GEOMETRY wrong or EMAX_SPLINE too small! *
+* | *
+* O/| *
+* /| | *
+* / \ fist_neighbor_lists.F:607 *
+*******************************************************************************
+
+
+========== PAGE 62 ==========
+
+研之成理AIMD与CP2K课程学习圈
+*** WARNING in qs_initial_guess.F:280 :: User requested to restart the ***
+*** wavefunction from the file named: ./cp2k-RESTART.wfn. This file does ***
+*** not exist. Please check the existence of the file or change properly ***
+*** the value of the keyword WFN_RESTART_FILE_NAME. Calculation continues ***
+*** using ATOMIC GUESS. ***
+
+
+========== PAGE 63 ==========
+
+研之成理AIMD与CP2K课程学习圈
+&OT T
+# MINIMIZER DIIS
+用DIIS可能速度更快
+MINIMIZER CG
+速度比默认STRICT快5-20%，但是有时候稳定性不好
+# ALGORITHM IRAC
+LINESEARCH 2PNT 大多数时候2PNT就可以了，但是有时候大体系需要用3PNT
+PRECONDITIONER FULL_ALL 极难收敛的体系可能需要用到GOLD
+# ENERGY_GAP 0.001
+&END OT
+
+
+========== PAGE 64 ==========
+
+研之成理AIMD与CP2K课程学习圈
+声 明
+本讲义和直播视频仅限参加研之成理AIMD与CP2K课程学习圈的学员
+个人学习使用，版权归属于研之成理(杭州)网络科技有限公司。不得以任何
+方式擅自翻录、复制、传播、出售，或将其中内容挪作它用，否则将追究法
+律责任。
+如果您发现盗版和侵权行为，请保留侵权者的聊天记录和收款转账
+记录等。经核实后，我们给予举报者免费正版课程（无线回看视频，讲义，
+计算文件，课程相关资料，无限答疑社群，后续免费专题课），和500元现金
+奖励。

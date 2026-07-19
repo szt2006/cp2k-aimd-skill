@@ -1,0 +1,1000 @@
+# SOURCE: 庚子计算-AIMD与CP2K讲义-2 - 副本.pdf
+# PAGES: 69
+
+
+
+========== PAGE 1 ==========
+
+研之成理AIMD与CP2K课程学习圈
+声 明
+本讲义和直播视频仅限参加研之成理AIMD与CP2K课程学习圈的学员
+个人学习使用，版权归属于研之成理(杭州)网络科技有限公司。不得以任何
+方式擅自翻录、复制、传播、出售，或将其中内容挪作它用，否则将追究法
+律责任。
+如果您发现盗版和侵权行为，请保留侵权者的聊天记录和收款转账
+记录等。经核实后，我们给予举报者免费正版课程（无线回看视频，讲义，
+计算文件，课程相关资料，无限答疑社群，后续免费专题课），和500元现金
+奖励。
+
+
+========== PAGE 2 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K简介
+主讲人：刘锦程
+
+
+========== PAGE 3 ==========
+
+研之成理AIMD与CP2K课程学习圈
+速度/
+力场
+尺度
+黑科技
+后HF
+已经灭绝的程序
+精度
+
+
+========== PAGE 4 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K编译（预编译版本）
+下载CP2K预编译版本：cp2k-6.1-Linux-x86_64.ssmp
+https://github.com/cp2k/cp2k/releases/
+预编译版，单核。
+预编译版，单节点内并行。
+可用于编译的版本
+CP2K编译教程：http://bbs.keinsci.com/thread-19009-1-1.html
+CP2K编译视频：https://www.bilibili.com/video/BV1Y54y1e7Yx
+
+
+========== PAGE 5 ==========
+
+研之成理AIMD与CP2K课程学习圈
+预编译版本直接上传就能使用，用的OpenMP的并行：
+把cp2k-7.1-Linux-x86_64.ssmp加入到~/bin目录，chmod +x 可
+执行权限。
+用如下脚本提交任务即可：
+export OMP_NUM_THREADS = 使用的核数，该版本只能节点
+内运行，不可跨节点。效率比正常编译低30% - 50%
+export OMP_NUM_THREADS=28
+cp2k-6.1-Linux-x86_64.ssmp cp2k.inp 1>cp2k.out 2>cp2k.err
+
+
+========== PAGE 6 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K编译
+目前，CP2K最近稳定版是7.1版本，master版本有8.0（暂时不建议用）
+一般只需要编译popt版本或者psmp版本就行了，这两个版本可以跨
+节点并行。psmp采用MPI+OpenMP混编，内存效率高，计算速度两个
+基本一样。
+预编译版本用ssmp
+
+
+========== PAGE 7 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K编译（/tools/toolchain方法）
+方法 效率 能否跨节 方便程度
+点并行
+懒人法1 直接使用官网上预编译好的ssmp版本 1.3-1.5 不能 方便
+懒人法2 Ubuntu系统里直接用apt-get install cp2k 1.1（数 能 方便，但是不
+（GNU+openmpi+OpenBLAS+ScaLAPACK）学库稍慢） 能安装各种插
+件
+正常方 直接从源码开始，修改arch里的模板文 1 能 麻烦，需要手
+法 件编译 动安装各种库
+和插件
+最好方 /tools/toolchain方法 1 能 正常，自动安
+法 装各种库和插
+件
+懒人法3 静态库版本： 1 能 方便
+一次编译生成静态库的cp2k二进制文件，
+对于其他机器，只要intelmkl版本一样，
+直接上传二进制文件就可使用。
+
+
+========== PAGE 8 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K编译（/tools/toolchain方法）
+为什么要用toolchain方法？
+• 一键配置所需编译环境
+• 安装各种扩展库，(比如ELPA，QUIP，PLUMED，PEXIS等)
+• 编译出来的文件计算速度快，(Intel mkl库 + openMPI)
+可以替换成OPENblas, scalapack，速度可能稍慢
+install_fftw
+install_elpa
+install_cmake
+toolchain ./scripts ./build ./install
+install_libvdwxc
+install_libxc
+install_mkl
+等…
+https://www.cp2k.org/static/downloads/
+
+
+========== PAGE 9 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K编译（/tools/toolchain方法）
+第一步：下载
+下载CP2K
+https://github.com/cp2k/cp2k/releases/
+也可用git直接获取，方便后续更新submodule
+git clone -b support/v7.1 https://github.com/cp2k/cp2k.git cp2k
+git submodule update --init --recursive
+
+
+========== PAGE 10 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K编译（/tools/toolchain方法）
+第二步：准备GNU编译器和intel mkl
+• 这俩必须是提前准备的，其他的都不用。
+• GNU必须是5版本以上的，7.3，7.5，8.3，9.3。
+• Intel是需要mkl库就可以，不需要编译器
+https://www.cp2k.org/dev:compiler_support
+
+
+========== PAGE 11 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K编译（/tools/toolchain方法）
+第二步：准备GNU编译器和intel mkl
+（1）升级gcc g++ gfortran （注：centos7默认gcc4.8.5，如果是安装cp2k7.1必须
+升级，其他版本不需要升级）
+方法一：gcc源码编译 https://www.liuhaolin.com/linux/535.html
+安装centos-release-scl
+yum install centos-release-scl
+安装 devtoolset
+方法二：scl加载，简单
+yum install devtoolset-9-gcc*
+激活
+scl enable devtoolset-9 bash
+
+
+========== PAGE 12 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K编译（/tools/toolchain方法）
+第二步：准备GNU编译器和intel mkl
+（2）升级intel mkl数学库（注：inte mkl库免费）
+方法一：如果系统中已经有了intel编译器可以直接加载，
+source /opt/intel/mkl/bin/mklvars.sh intel64
+方法二：如果系统中没有，或者想用最近的2020.2版本，
+添加intel的源：
+yum-config-manager --add-repo https://yum.repos.intel.com/mkl/setup/intel-mkl.repo
+下载并安装MKL：
+yum install -y intel-mkl
+source /opt/intel/compilers_and_libraries_2020/linux/mkl/bin/mklvars.sh intel64
+使用OpenBlas，Scalapack数学库(toolchain自动安装)也可以，但是没有Intel mkl库效率高。
+
+
+========== PAGE 13 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K编译（/tools/toolchain方法）
+第三步：toolchain安装各种库文件
+./install_cp2k_toolchain.sh \
+--with-openmpi=install \
+cd tools/toolchain
+--math-mode=mkl \
+./install_cp2k_toolchain.sh -h 查看帮助文件
+--with-scalapack=no
+查看默认的设置，一定要注意所用的变量，默认为
+./install_cp2k_toolchain.sh \
+system/install/no
+--math-mode=mkl \
+--with-openmpi=install \
+我们系统环境变量里已经有的库用--with-****=system，
+--with-scalapack=no \
+会自动在系统环境路径里寻找。如果没有的库用--
+--with-ptscotch=install \
+with-****=install，脚本会自动联网下载安装。如果不
+--with-parmetis=install \
+想安装的库--with-****=no
+--with-metis=install \
+--with-superlu=install \
+一般来说系统默认的配置方案就是合理的。一定需要
+--with-pexsi=install \
+写的有一下几点：
+--with-quip=install \
+--with-plumed=install
+
+
+========== PAGE 14 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K编译（/tools/toolchain方法）
+第四步：编译cp2k
+Done!
+Now copy:
+cp /opt/cp2k710/tools/toolchain/install/arch/* to the cp2k/arch/ directory
+To use the installed tools and libraries and cp2k version
+compiled with it you will first need to execute at the prompt:
+source /opt/cp2k710/tools/toolchain/install/setup
+To build CP2K you should change directory:
+cd cp2k/
+make -j 112 ARCH=local VERSION="sopt sdbg ssmp popt pdbg psmp"
+第三步完成以后，会有上述提示，这时候编译cp2k所需要的所有库文件就都准备
+好了。按照提示：
+cp /opt/cp2k710/tools/toolchain/install/arch/* ../../arch/
+source /opt/cp2k710/tools/toolchain/install/setup
+cd ../../
+make -j 112 ARCH=local VERSION=“popt psmp”
+完成之后测试：
+make -j 112 ARCH=local VERSION=“popt psmp” test
+
+
+========== PAGE 15 ==========
+
+研之成理AIMD与CP2K课程学习圈
+在文件里可以查看测试的错误结果，其中的WRONG是因为我们
+计算结果不精确，比如，下面的测试任务要求数值精度在1e-13，
+而我们的计算误差是4.27e-10。
+这个误差只要在可接受范围之内就没问题，我们计算一般最高
+也就要求SCF精度收敛在1e-8
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+/opt/cp2k/cp2k-6.1/regtesting/local/popt/TEST-local-popt-2019-09-
+15_20-51-46/QS/regtest-gpw-5/si8_pulay.inp.out :
+Total energy: : ref = -31.160585460161109 new = -31.16058544684736
+relative error : 4.27262458e-10 > numerical tolerance = 1e-13
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+至此，编译和测试完成！
+提交任务命令(脚本)：
+source /opt/cp2k710/tools/toolchain/install/setup
+source /opt/intel/mkl/bin/mklvars.sh intel64
+export PATH=$PATH:/opt/cp2k-7.1/exe/local
+mpirun -n 56 cp2k.popt cp2k.inp 1>cp2k.out 2>cp2k.err
+
+
+========== PAGE 16 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K简介
+主讲人：刘锦程
+
+
+========== PAGE 17 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K简介
+CP2K是一种量子化学和固态物理第一性原理计算软件包，可以
+执行固态，液态，分子，和生物系统的计算模拟。 CP2K为不
+同的建模方法提供了一般框架，例如使用混合高斯和平面波基
+组GPW和GAPW的DFT方法。支持的理论水平包括DFTB，LDA，
+GGA，杂化泛函，MP2，RPA，半经验方法（AM1，PM3，PM6，
+RM1，MNDO，......）和经典力场（AMBER，CHARMM，......）。
+CP2K有强大的分子动力学，metadynamics，Monte Carlo，
+Ehrenfest dynamics，振动分析，core level光谱，能量最小化和
+NEB或dimer方法计算过渡态过渡态优化。
+功能的详细概述： https://www.cp2k.org/features
+
+
+========== PAGE 18 ==========
+
+研之成理AIMD与CP2K课程学习圈
+维基百科上对上百种计算程序做了对比，其中CP2K算是最全
+面的程序了，支持周期性和非周期性计算，支持分子动力学模
+拟，半经验方法，HF，后HF，DFT，GPU加速。
+https://en.wikipedia.org/wiki/List_of_quantum_chemistry_a
+nd_solid-state_physics_software
+但这并不代表cp2k所有功能都很好用。后面我会讲到
+cp2k最有用的特长，AIMD。
+
+
+========== PAGE 19 ==========
+
+研之成理AIMD与CP2K课程学习圈
+那么CP2K的优势在哪呢？
+快
+就是算的 ！尤其是他的quickstep模块，也就是DFT计算模块。
+算的快在理论计算领域是一个无比巨大的优势，当有的文章用
+cp2k可以模拟几千个原子复杂催化体系的动态变化过程，
+而有的文章只能计算一百个原子左右的体系静态反应路径，那
+么这效果对比之下，就大概能明白为什么有的计算文章可以发
+JACS了吧！
+
+
+========== PAGE 20 ==========
+
+研之成理AIMD与CP2K课程学习圈
+那么CP2K为什么算的快呢？
+用的高斯基组+平面波基组
+代码写的好，CP2K是2000年左右由Parrinello和他的学生Hutter
+一起写的，由于是开源免费程序，后有好多人都帮助CP2K的
+发展一起做出了积极的贡献。（对比VASP的开发者就Kresse一
+个课题组，闭关锁国，方法几乎不更新已经逐渐失去优势。 ）
+由于代码比较新，所以代码不存在历史遗留问题，计算速度极
+快，使用混合高斯和平面波基组GPW和GAPW的DFT方法比平
+面波基组计算更快。可以轻松做到千核并行，计算速度随体系
+成线性增长。（VASP使用平面波方法，计算的scaling比较差，
+无法处理大体系，代码较老。）
+
+
+========== PAGE 21 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K 用 到 好 多 非 常 新 和 前 沿 的 算 法 。 比 如 OT (Orbital
+Transformation) ， ASPC(Always stable predictor corrector) ，
+ADMM(Auxiliary Density Matrix Methods)算杂化泛函，PIMD( path-
+integral Molecular Dynamics)， adaptive buffered QM/MM，都是黑
+科技级别的等等。任何一个黑科技都可以在JACS疯狂灌水。
+一小部分用cp2k发表的文章总结在了：
+https://www.cp2k.org/science
+文章成果展示
+主要功能介绍
+相关的博后位置
+历史版本，最新
+7.0，稳定6.1
+
+
+========== PAGE 22 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K经典文章介绍：第二代CPMD模拟Sc Sb Te 结晶
+0.2 2 3
+一种DFT-based molecular dynamics，一般人们喜欢称为第二代
+CPMD方法。不需要SCF收敛，用一项Langeivin-type Dynamic近似
+推的SCF收敛的结果。
+对于这种三四百原子的体系可以跑600 ps的MD。
+Phys. Rev. Lett. 98, 066401
+Science 358, 1423–1427 (2017)
+
+
+========== PAGE 23 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K经典文章介绍：AIMD模拟动态单原子催化
+Dynamic single atom catalysis
+(DSAC)
+Au (CO)
+20 n
+CeO
+2-x
+CO adsorption leads to the dynamic formation of Au(I)CO at the interface.
+23
+Wang Y.-G. et al. Nat. Commun. 2015, 6, 6511
+
+
+========== PAGE 24 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K经典文章介绍：AIMD模拟水促O 活化生成OOH
+2
+473 K, Time step = 0.5 fs
+Movie 1. AIMD simulation for O adsorption on Au /α-Al O (0001) surface
+2 7 2 3
+with 20 H O during 5 – 8 ps.
+2 ACS Catal. 2016, 6 (4), 2525-2535.
+
+
+========== PAGE 25 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K经典文章介绍：adaptive buffered QM/MM 模拟Criegee 反应
+J. Am. Chem. Soc. 2016, 138 (35), 11164-9.
+
+
+========== PAGE 26 ==========
+
+研之成理AIMD与CP2K课程学习圈
+分子晶体的模拟
+五唑盐(Pentazolate Salt)的加氢与脱氢，在低温下（123K）五唑盐倾向
+于脱氢，在高温下（390K）五唑盐倾向于加氢。
+J. Am. Chem. Soc. 2019, 141, 2984−2989
+
+
+========== PAGE 27 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K经典文章介绍： Metadynamics模拟Al3+水合反应势能面
+Metadynamics可以加速取样，可以直接得到自由能势能面，看起
+来非常炫酷，类似的还有伞形采样，PMF等方法。
+Nat. Commun. 2019, 10 (1), 3139.
+
+
+========== PAGE 28 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K经典文章介绍：Metadynamics模拟S 2/S 1 反应势能面
+N N
+J. Comput. Chem. 2015, 36 (11), 785-94.
+
+
+========== PAGE 29 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K经典文章介绍：固液界面AIMD模拟
+电极电势影响H O在界面
+2
+处的分子取向。通过调
+整Na+离子的个数，调节
+电极电势。
+Nature Materials volume 18, 697–701(2019)
+
+
+========== PAGE 30 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K经典文章介绍：处理催化反应
+计算Fe O STM 实验Fe O STM
+3 4 3 4
+ACS Catal. 2019, 9 (9), 7876-7887
+
+
+========== PAGE 31 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K入门学习
+CP2K的tutorials：
+https://www.cp2k.org/exercises
+https://www.cp2k.org/howto
+CP2K手册：http://manual.cp2k.org/trunk/
+CP2K的google group：https://groups.google.com/group/cp2k
+Zevan的博客：http://kenshin325.lofter.com/tag/cp2k
+兰一的知乎专栏：https://zhuanlan.zhihu.com/cp2k-tutorial
+CP2K有用的工具： https://www.cp2k.org/tools
+CP2K在线输入文件生成器(最高支持4.0)：
+http://cp2k-www.epcc.ed.ac.uk/cp2k-input-editor/#/
+python编写的cp2k输入文件生成器(最高支持5.1)：
+https://github.com/avishart/CP2K_Editor
+
+
+========== PAGE 32 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K优缺点
+CP2K 功能太多太多了，我们这里只能讲一点CP2K最牛的功能，也
+就是Quickstep模块
+https://www.cp2k.org/quickstep
+其他的功能等待大家开发。
+这里我们的知道CP2K擅长什么，CP2K不擅长什么，只有扬长避短
+才能用好这个核武器。
+CP2K优点已经讲了很多了，总结一下：
+• CP2K 最大的优势在于计算速度很快。
+• 免费开源
+• 功能全面且更新快
+• AIMD相关功能极为强大
+• 适合计算大体系(>200个原子)，大规模并行
+
+
+========== PAGE 33 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K优缺点
+缺点：
+• 对导体计算较慢，CP2K之所以算的快是因为OT算法，对有带隙
+的体系可以迅速SCF迭代收敛。但是此法原理上不适用于导体。
+所以导体一般用较慢的对角化方法。
+• 对于磁性体系处理比较麻烦，因为CP2K计算需要提前指定自旋
+多重度，不像VASP一样可以自动寻找合适的磁矩。
+• K点功能不完善，只有用Gamma点计算比较好用。这意味着对
+大体系可以，但是小体系计算不准确。
+• 高斯基组带来巨大的BSSE，基组不完备误差，不适合计算结合
+能。VASP使用平面波基组就不存在这个问题。
+
+
+========== PAGE 34 ==========
+
+研之成理AIMD与CP2K课程学习圈
+所以说不要做一个程序的无脑吹，CP2K再强大也有他的缺点，而
+VASP正好可以弥补CP2K的缺点。所以，我个人做计算的时候，在
+针对不同的情况我会选择最适合的程序去做，一般会选择VASP，
+CP2K，JDFTx 这几个互补性比较好的程序，量化计算一般也是
+Gaussian，ORCA和ADF看情况使用。
+比如：J. Am. Chem. Soc. 2017, 139 (17), 6190-6199.
+• 这篇文章中AIMD部分是CP2K算的，这样得到了很有价值的动态
+变化信息（无人为操控因素），VASP是算不动几百个原子的
+CeO 体系的AIMD的。
+2
+• 主要部分是VASP算的，这样相对能量计算更准确，也方便后续
+电子结构和化学键分析。
+• SI里有一部分片段分析用ADF算的。
+
+
+========== PAGE 35 ==========
+
+研之成理AIMD与CP2K课程学习圈
+建模
+主讲人：刘锦程
+
+
+========== PAGE 36 ==========
+
+研之成理AIMD与CP2K课程学习圈
+复杂模型建模
+一、正确认识表面不同的terminal
+二、悬挂键
+三、晶格矢量的旋转与根号表面wood标记法
+四、异质结建模
+五、负载催化剂团簇模型
+六、优化模型显示效果
+七、显示溶剂模型的构建
+八、Packmol
+
+
+========== PAGE 37 ==========
+
+研之成理AIMD与CP2K课程学习圈
+一、正确认识表面不同的terminal
+练习1：a-Al O (0001)面的构建和悬挂基团
+2 3
+构建表面必然会导致表面原子的不饱和配位，有的表面会发
+生重构来增加表面原子的饱和度，或者表面吸附一些基团来
+饱和表面原子，最常见的就是-OH和-H。
+步骤一：用自带的Al O 晶体cif文件，Structures\metal-oxides
+2 3
+里Al O
+2 3
+(1)切面Build - surface - cleave surface,
+切面用 0 0 1切出来的就是(0001)面，厚度1.0即可。这里注意
+一点，调整Top，可以得到不同暴露的表面，一种是O-
+terminated，一种是Al-terminated。
+37
+
+
+========== PAGE 38 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Al-terminated O-terminated
+d-
+d+
+Al-terminated Al-terminated-2
+上下对称的，有不饱和Al3+金 上下不对称。产生表面
+属暴露，需要添加悬挂基团。 偶极，计算的时候需要
+（金属氧化物一般都是O或OH 加IDIPOL，LDIPOL参数消
+暴露的，除非超高真空条件） 除偶极。
+38
+
+
+========== PAGE 39 ==========
+
+研之成理AIMD与CP2K课程学习圈
+注意：
+移动表面Top的时候上/下表面会同时发生变化，Slab有两个表面。
+无法在满足化学计量比的前提下，满足上下表面都是O暴露的。
+在搭建模型的时候，脑子里要时刻记得上/下两个表面，不要只关注
+上表面了，对于下表的结构忽视了，
+O-terminated
+O-terminated
+Al-terminated-2 O-terminated
+O/Al = 18/12 = 2/3 O/Al = 21/12，不符合化学计量比
+39
+
+
+========== PAGE 40 ==========
+
+研之成理AIMD与CP2K课程学习圈
+悬挂键
+：
+由于表面产生了配位不饱和的Al，所以我们可以用OH基团饱和这些Al，
+使用这个sketch Atom工具添加原子， 给原本Al-
+terminated 的表面饱和OH基团。
+OH-terminated
+Al-terminated
+由于OH基团是-1价的，为了平衡表
+main的电荷还需要额外引入一个H基
+团，相当于引入了一个解离的H O分
+2
+子。
+这样产生的表面是最符合常温大气
+条件下的a-Al O (0001)表面实际情
+2 3
+况的。
+(3)最后一步再加上真空层扩胞就可
+Al-terminated
+以了。
+OH-terminated
+40
+
+
+========== PAGE 41 ==========
+
+研之成理AIMD与CP2K课程学习圈
+怎么构建表面要参考前人的计算和实验文献，弄明白表面最可能是
+怎么截断的，可能会有什么样吸附分子。推荐Hoffmann的一篇文章，
+里面详细阐述了计算化学工作者经常搞不懂的表面模型的构建各种
+问题。
+注意好多计算的文章里截取的表面模型都是有问题的，自然界根本
+不存在的表面做催化计算。
+R. Hoffmann, Angew. Chem. Int. Ed., 2013, 52, 93-103.
+41
+
+
+========== PAGE 42 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Wood表面标记法
+FCC(100)-p(1×1)这里的p是primitive的意思，如果不写p默认是
+p。重构的表面结构的单胞矢量的方向与未重构的表面的单胞
+矢量的方向不一致时怎么办？对于下图的c(2×2)结构， 其矢
+量与未重构时的单胞矢量成45o夹角。 重构的结构，按Wood
+𝑜
+记法，可表示为( 2 × 2)𝑅45
+c是center的意思，代表表面cell的中心有一个单元。如下图，
+fcc(100)-c(2×2)
+𝑜
+fcc(100)-( 2 × 2)𝑅45
+两种表示方式是一样的。
+• 2代表边长，
+• R代表旋转，
+• 45o是旋转的角度。
+42
+
+
+========== PAGE 43 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Redefine Lattice：改变晶格的矢量
+可以改变晶胞的形状、方向，对于构建有形状要求、异质
+结材料非常有用。
+1 0 0 𝑎 𝑎 1 1 0 𝑎 𝑎 + 𝑏 2 0 0 𝑎 2𝑎
+0 1 0 𝑏 = 𝑏 0 1 0 𝑏 = 𝑏 0 1 0 𝑏 = 𝑏
+0 0 1 𝑐 𝑐 0 0 1 𝑐 𝑐 0 0 1 𝑐 𝑐
+43
+
+
+========== PAGE 44 ==========
+
+研之成理AIMD与CP2K课程学习圈
+旋转晶格矢量
+𝑜
+Slab模型：根号的表面Au(111) − ( 3 × 3)𝑅30
+B
+b
+a
+A
+需要提前计算
+把新的晶格矢量用旧的晶格矢量组合而成.
+𝑜
+用A，B表示Au(111) − ( 3 × 3)𝑅30 的晶格矢量，
+用a，b表示Au(111) − (1 × 1)的晶格矢量，
+A = a – b
+B = 2a + b
+44
+
+
+========== PAGE 45 ==========
+
+研之成理AIMD与CP2K课程学习圈
+𝑜
+Slab模型：根号的表面Au(111) − ( 3 × 3)𝑅30
+1 −1 0 𝑎 𝑎 − 𝑏
+Au(111) − p(1 × 1)
+2 1 0 𝑏 = 2𝑎 + 𝑏 Au(111) − ( 3 × 3)𝑅30𝑜
+0 0 1 𝑐 𝑐
+45
+
+
+========== PAGE 46 ==========
+
+研之成理AIMD与CP2K课程学习圈
+补充内容：魔角石墨烯模型构建
+(-1, 19)
+(20, 1)
+(0,0)
+46
+
+
+========== PAGE 47 ==========
+
+研之成理AIMD与CP2K课程学习圈
+例如：建（11, 1）的扭转石墨烯：
+第一步：导入石墨结构，去掉对称性，去掉一层，保留单层。
+第二步：redefine lattice.
+11 1 0
+−1 10 0
+0 0 1
+47
+
+
+========== PAGE 48 ==========
+
+研之成理AIMD与CP2K课程学习圈
+第三步：重新导入一个石墨结构，去掉对称性，去掉一层，保留
+单层。建立11×11×1超胞。
+第四步：Build Layers 建立双层结构。晶格失配率4.2 %，如果第三
+步用10×10×1超胞，则晶格失配率5.1 %。再扩包后能看到明显的
+摩尔纹。的晶胞
+48
+
+
+========== PAGE 49 ==========
+
+研之成理AIMD与CP2K课程学习圈
+m n Angle
+运行magicAngle.py脚本，计算扭转角 5 1 10.89339
+10 1 5.208719
+python3 ~/bin/magicAngle.py 11 1
+15 1 3.417981
+20 1 2.542924
+import math, sys 25 1 2.024447
+a = int(sys.argv[1]) 30 1 1.681537
+b = int(sys.argv[2]) 35 1 1.437947
+C = math.pi/3 40 1 1.255991
+45 1 1.114906
+魔角
+c = a**2 + b**2 - 2*a*b*math.cos(C) 50 1 1.002314
+55 1 0.910375
+sinB = b*math.sin(C)/math.sqrt(c) 60 1 0.833884
+65 1 0.76925
+print(math.asin(sinB)*180/(math.pi)) 70 1 0.713914
+75 1 0.666005
+80 1 0.624121
+85 1 0.587194
+90 1 0.554392
+95 1 0.52506
+49
+100 1 0.498677
+105 1 0.474818
+
+
+========== PAGE 50 ==========
+
+研之成理AIMD与CP2K课程学习圈
+练习3：构建g-C N /TiO 的界面材料：
+3 4 2
+g-C N /TiO 复合材料例子：
+3 4 2
+Phys. Chem. Chem. Phys., 2016, 18, 31175
+50
+
+
+========== PAGE 51 ==========
+
+研之成理AIMD与CP2K课程学习圈
+(1)导入TiO 的anatase CIF文件。切表面TiO (100)surface，厚度3层。
+2 2
+在 lattice里调整 在U方向显示4个周期，方便调整
+晶格矢量。
+Top view Side view
+51
+
+
+========== PAGE 52 ==========
+
+研之成理AIMD与CP2K课程学习圈
+(2) 在build – symmetry – redefine lattice里按照文献调整表面晶格矢量
+52
+
+
+========== PAGE 53 ==========
+
+研之成理AIMD与CP2K课程学习圈
+(3) 导入C N 的anatase CIF文件，需要到Materials project上下载。
+3 4
+mp-567885
+按照文献显示2*4的晶胞。
+Top view
+Side view
+53
+
+
+========== PAGE 54 ==========
+
+研之成理AIMD与CP2K课程学习圈
+(4)在build – symmetry – redefine lattice里按照文献调整表面晶格矢量
+54
+
+
+========== PAGE 55 ==========
+
+研之成理AIMD与CP2K课程学习圈
+(5) Build - Build layers, 建立异质结结构.
+Layer 1 用TiO (100)
+2
+Layer 2 用C N
+3 4
+在matching里查看mismatch的程度, a矢量8.88%，b矢量4.21%，角度
+4.60%，这个值在异质结的构建里算是很大了，但是由于单层的二维
+材料可塑性往往很好，所以经过一定的变形C N 可以匹配TiO (100)的
+3 4 2
+晶格常数。
+matching选layer1(或Average)，build，弹出提示晶格不匹配yes即可。
+55
+
+
+========== PAGE 56 ==========
+
+研之成理AIMD与CP2K课程学习圈
+(6) 删掉最上面一层C N 建立真空层。
+3 4
+build – crystal – rebuild crystal, 把c矢量的长度增大15埃。就得到
+了我们需要的异质结模型。
+注意：用这种方法建出来的slab可以考虑对a，b晶格矢量做选择
+性优化，即在水平的方向上对晶体进行优化的到更合理的结构。
+Top view Side view
+56
+
+
+========== PAGE 57 ==========
+
+研之成理AIMD与CP2K课程学习圈
+结构的构建案例4：画论文里炫酷的示意图(扩展内容)
+用MS，vesta，VMD，origin，illustrator相互配合可以画出质量非常
+高的图，可以用于文章的示意图配图，虽然没有专业的作图的人画
+的炫酷，但是可以基本满足文章的投稿需求。下面就讲一下这个示
+意图怎么画的：
+步骤一：在案例3的基础上添加一个Fe3团簇模型(用优化好的模型最
+好)，在display style里调整Fe的颜色为橙色。 调整原子的半径为0.8。
+右键Display Options里调整背景颜色为白色.
+57
+
+
+========== PAGE 58 ==========
+
+研之成理AIMD与CP2K课程学习圈
+步骤二：建立超胞，5 5 1。Edit – atom selection 选中所有的Fe原子
+调整为橙色。
+步骤三：右键，Display Options里调整projection为perspective（透视
+图），
+Depth cue intensity 调整高一点。
+步骤四：右键Lighting，勾选上原子的第二高光。
+58
+
+
+========== PAGE 59 ==========
+
+研之成理AIMD与CP2K课程学习圈
+步骤五：调整视角截图即可
+59
+
+
+========== PAGE 60 ==========
+
+研之成理AIMD与CP2K课程学习圈
+练习：Cu/H2O界面构建。
+用MS里的Modules-Amorphous cell计算任务，
+Construction给水盒子做预优化。
+再用build layers把水盒子和Cu表面摞起来即
+可。
+
+
+========== PAGE 61 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Cu(100) + 46H O
+2
+1. 晶胞优化（略）
+2. 切100面，建水/金属模型
+3. 优化表面：输入文件见模板
+4. 读取最后能量结果
+添加显示溶剂水分子的方法有很多，最简单就是用手动不断复制，然
+后调整分子间距和取向。（手摆的构型往往初始构型不好）
+还有就是用现有程序，比如Packmol，这个程序适合给生物体系添加水
+分子。给slab模型添加水分子比较好用的使用Modules-Amorphous Cell
+模块。
+Proc. Natl. Acad. Sci. U. S. A. 2017, 114 (8), 1795-1800.
+
+
+========== PAGE 62 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Modules-Amorphous Cell模块添加溶剂化层
+第一步：新建一个文件，非周期性的
+模型构建一个H O分子。
+2
+第二步：
+新建一个Amorphous cell计算任务，
+construction。选中水分子，Add，修改
+读2D-slab模型
+数量。
+的晶胞的边长
+密度1 g/cm3
+Specify a,b， 边长10.2425（自动判断
+出c方向长度）
+
+
+========== PAGE 63 ==========
+
+研之成理AIMD与CP2K课程学习圈
+第三步：运行任务，约计算1
+分钟，结束后得到一个
+Molecule.xtd文件。用In-Cell显
+示lattice。
+第四步：建立异质结方法。
+Build-build layer
+
+
+========== PAGE 64 ==========
+
+研之成理AIMD与CP2K课程学习圈
+第五步：调整水和slab的距离(建立异质结程
+序会自动空出一定距离)，
+注：接近表面的水分子不一定密度严格 =
+1g/cm3，因为如果发生化学吸附，这一部分
+水的密度就和液里不一样了。所以要根据实
+际情况自己算一下Cu原子的半径，需要给水
+留出多少空间。
+注：AIMD由于原子数少，基本不可能做NPT
+与平衡盒子大小，只能做NVT，或NVE，所
+以要提前把体积算好。
+方法：
+1. 选中所有水，点
+2. 调整盒子的z方向大小，rebuild crystal
+Proc. Natl. Acad. Sci. U. S. A. 2017, 114 (8), 1795-1800.
+
+
+========== PAGE 65 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Packmol
+Packmol是经典动力学模拟经常用的建模程序。非常时刻做液相建模，
+比MS – Amorphous Cell 更灵活，不好做固体表面。
+j. comput. Chem. 30, 2157 (2009)
+下载：http://m3g.iqm.unicamp.br/packmol/download.shtml
+安装：
+tar -zxvf packmol.tar.gz
+cd packmol/
+./configure
+make
+即产生packmol文件
+使用手册：http://m3g.iqm.unicamp.br/packmol/userguide.shtml
+案例：http://m3g.iqm.unicamp.br/packmol/examples.shtml
+
+
+========== PAGE 66 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Packmol案例:产生水与尿素混合体系
+#
+# A mixture of water and urea
+#
+tolerance 2.0 分子间距大于2A
+filetype pdb
+输出文件pdb
+output mixture.pdb
+structure water.pdb 输入文件water.pdb
+number 1000
+inside box 0. 0. 0. 40. 40. 40. 在40*40*40的格子里随机摆放
+end structure
+structure urea.pdb 输入文件urea.pdb
+number 400
+inside box 0. 0. 0. 40. 40. 40. 在40*40*40的格子里随机摆放
+end structure
+
+
+========== PAGE 67 ==========
+
+研之成理AIMD与CP2K课程学习圈
+
+
+========== PAGE 68 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Hormone in an interface of water and chloroform
+tolerance 2.0 分子间距大于2A
+filetype xyz
+输出文件xyz
+output interface.xyz
+structure water.xyz
+number 1019
+inside box -20. 0. 0. 0. 39. 39. 在20*39*39的格子里随机摆放
+end structure
+分层
+structure chlor.xyz
+number 199
+inside box 0. 0. 0. 21. 39. 39. 在20*39*39的格子里随机摆放
+end structure
+structure t3.xyz
+centerofmass
+fixed 0. 20. 20. 1.57 1.57 1.57 把t3.xyz分子
+end structure 的质心固定
+平移 旋转
+
+
+========== PAGE 69 ==========
+
+研之成理AIMD与CP2K课程学习圈
+声 明
+本讲义和直播视频仅限参加研之成理AIMD与CP2K课程学习圈的学员
+个人学习使用，版权归属于研之成理(杭州)网络科技有限公司。不得以任何
+方式擅自翻录、复制、传播、出售，或将其中内容挪作它用，否则将追究法
+律责任。
+如果您发现盗版和侵权行为，请保留侵权者的聊天记录和收款转账
+记录等。经核实后，我们给予举报者免费正版课程（无线回看视频，讲义，
+计算文件，课程相关资料，无限答疑社群，后续免费专题课），和500元现金
+奖励。

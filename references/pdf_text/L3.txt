@@ -1,0 +1,2561 @@
+# SOURCE: 庚子计算-AIMD与CP2K讲义-3 - 副本.pdf
+# PAGES: 156
+
+
+
+========== PAGE 1 ==========
+
+研之成理AIMD与CP2K课程学习圈
+声 明
+本讲义和直播视频仅限参加研之成理AIMD与CP2K课程学习圈的学员
+个人学习使用，版权归属于研之成理(杭州)网络科技有限公司。不得以任何
+方式擅自翻录、复制、传播、出售，或将其中内容挪作它用，否则将追究法
+律责任。
+如果您发现盗版和侵权行为，请保留侵权者的聊天记录和收款转账
+记录等。经核实后，我们给予举报者免费正版课程（无线回看视频，讲义，
+计算文件，课程相关资料，无限答疑社群，后续免费专题课），和500元现金
+奖励。
+
+
+========== PAGE 2 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K计算流程
+主讲人：刘锦程
+
+
+========== PAGE 3 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K计算流程
+准备输入文件
+*.inp文件
+赝势 输出文件 分析处理
+基组
+.xyz 坐标 VESTA
+坐标
+.out 输出 Origin
+提交脚本
+.cube 格点 Jmol
+CP2K计算
+.wfn 波函数 VMD
++
+.ener 动力学 TRAVIS
+.err 报错 脚本..
+其他辅助
+…
+文件…
+
+
+========== PAGE 4 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K.inp输入文件
+CP2K的手册就是所有关键词讲解：
+https://manual.cp2k.org/trunk/index.html
+最直接的例子是源码中的 tests 文件。 CP2K 源码包中的 tests 目录包
+含了各种方法的输入文件。这些输入文件并不是最适合计算的，其
+中测参数设置没有经过优化。但这些输入文件给了我们了解输入文
+件结构的途径。
+当你想了解 CP2K 的某个关键词（ keyword）时，使用
+grep –iR keyword tests/
+命令来查看使用了该关键词的测试输入文件。
+比如想要看和ADMM相关的输入文件，使用:
+grep –iR ADMM tests/
+会打印出所有的包含ADMM关键词的所有文件。
+
+
+========== PAGE 5 ==========
+
+研之成理AIMD与CP2K课程学习圈
+cp2k.inp 文件格式
+CP2K的输入文件一般以.inp结尾，我喜欢把所有输入文件都写成
+cp2k.inp
+关键词以section和subsection的形式，一环套一环，每一个section都
+是以【&section_name】开头的，以【&END section_name 】结尾的。
+(顺序随意，嵌套不能乱)
+每一行只写一个关键词，关键词后面写参数 ，大小写和空格不敏感
+CP2K输入文件在线生成器（不好用）：
+http://cp2k-www.epcc.ed.ac.uk/cp2k-input-editor/#/edit
+&FORCE_EVAL
+F
+O
+METHOD Quickstep keyword
+R
+D C
+&DFT
+F E
+T _
+BASIS_SET_FILE_NAME BASIS_SET keyword s E
+u V
+POTENTIAL_FILE_NAME GTH_POTENTIALS keyword b A
+s L
+e
+… c s
+e
+t
+i c
+&END DFT o t
+n o i
+&END FORCE_EVAL n
+
+
+========== PAGE 6 ==========
+
+研之成理AIMD与CP2K课程学习圈
+cp2k.inp 文件格式
+CP2K 的功能很多，其输入文件的结构也比 Gaussian 或者 VASP 等常见
+的计算化学软件更加复杂。动辄上百行，所以最好用辅助工具来帮我
+们整理输入文件。
+vim plugin file工具，非常好用帮助我们检查CP2K输入文件的语法错误。
+https://www.cp2k.org/tools:vim
+mkdir -p ~/.vim/syntax
+wget -O ~/.vim/syntax/cp2k.vim http://manual.cp2k.org/trunk/cp2k.vim
+在 ~/.vim 文件夹里添加 一个filetype.vim 文件，编辑内容如下：
+if exists("did_load_filetypes")
+finish
+endif
+augroup filetypedetect
+au! BufNewFile,BufRead *.inp setf cp2k
+augroup END
+
+
+========== PAGE 7 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件例子—Si晶体单点能计算
+计算“力”和“能量” section
+&FORCE_EVAL
+METHOD Quickstep
+用Quickstep模块（DFT）
+&SUBSYS
+&KIND Si
+SUBSYS，控制原子坐标，
+ELEMENT Si
+BASIS_SET DZVP-GTH-PADE 晶胞参数，元素/原子的
+基组赝势类型
+POTENTIAL GTH-PADE-q4 基组赝势等信息。
+&END KIND
+&CELL
+A 5.430697500 0.000000000 0.000000000
+晶格矢量，同POSCAR
+B 0.000000000 5.430697500 0.000000000
+C 0.000000000 0.000000000 5.430697500
+&END CELL
+&COORD
+Si 0.000000000 0.000000000 0.000000000
+Si 0.000000000 2.715348700 2.715348700
+坐标,单位[Angstrom]
+…
+Si 1.357674400 4.073023100 4.073023100
+Si 4.073023100 4.073023100 1.357674400
+&END COORD
+&END SUBSYS
+接下一页… https://www.cp2k.org/howto:static_calculation
+
+
+========== PAGE 8 ==========
+
+研之成理AIMD与CP2K课程学习圈
+DFT，控制DFT计
+…接上一页
+算的各种参数。
+&DFT
+BASIS_SET_FILE_NAME BASIS_SET
+读取基组赝势的文件
+POTENTIAL_FILE_NAME GTH_POTENTIALS
+&QS
+整体的计算精度
+EPS_DEFAULT 1.0E-10
+&END QS
+&MGRID
+NGRIDS 4
+多重网格数，
+CUTOFF 300
+截断能，
+REL_CUTOFF 60
+&END MGRID
+&XC
+泛函信息
+&XC_FUNCTIONAL PADE
+&END XC_FUNCTIONAL
+&END XC
+接下一页…
+
+
+========== PAGE 9 ==========
+
+研之成理AIMD与CP2K课程学习圈
+…接上一页
+SCF计算参数
+&SCF
+SCF_GUESS ATOMIC
+初猜，收敛精度，
+EPS_SCF 1.0E-7
+MAX_SCF 300 最大循环圈数
+&DIAGONALIZATION ON
+ALGORITHM STANDARD 对角化方法，(OT
+&END DIAGONALIZATION
+方法计算更快)
+&MIXING T
+METHOD BROYDEN_MIXING
+电荷密度混合方法
+ALPHA 0.4
+NBROYDEN 8
+控制计算任务的类型
+&END MIXING
+&END SCF
+&END DFT
+&GLOBAL
+&PRINT
+PROJECT Si_bulk8
+&FORCES ON
+RUN_TYPE ENERGY_FORCE
+&END FORCES
+&END PRINT PRINT_LEVEL LOW
+&END FORCE_EVAL &END GLOBAL
+
+
+========== PAGE 10 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K提交第一个计算任务
+https://www.cp2k.org/howto:static_calculation
+准备输入文件（在官网上的第一个例子）:
+Si_bulk8.inp
+输入文件 (坐标可以单独写，也可以直接写到.inp里)
+GTH_POTENTIALS
+赝势基组文件（在 cp2k-7.1/data/文件夹里有）
+BASIS_SET
+sub_cp2k 提交脚本自己准备
+(队列相关控制)
+source /home/test/opt/cp2k-7.1/tools/toolchain/install/setup
+source /opt/intel/compilers_and_libraries_2020/linux/mkl/bin/mklvars.sh intel64 ilp64
+export PATH=$PATH:/home/test/opt/cp2k-7.1/exe/local/
+mpirun -n 4 cp2k.popt Si_bulk8.inp 1>cp2k.out 2>cp2k.err
+输出文件（.out等）
+
+
+========== PAGE 11 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件
+主讲人：刘锦程
+
+
+========== PAGE 12 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件 – 简单思维导图（1）
+CELL 晶胞参数
+COORD 原子坐标
+SUBSYS
+TOPOLOGY 坐标文件，力场
+GLOBAL KIND
+元素赝势/基组/磁性/+U/质量
+KPOINTS K点
+QS 网格
+MGRID 精度与外推算法
+FORCE_EVAL
+DFT POISSON 周期性与分子体系控制
+SCF SCF参数
+XC 交换相关泛函
+MOTION PRINT 输出电子结构信息
+PRINT
+
+
+========== PAGE 13 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件-- GLOBAL Section
+GLOBAL section 对计算任务做整体的控制，常用的关键词：
+PROJECT，计算任务名 (取名cp2k即可)
+RUN_TYPE，计算任务的类型，例如以下常用的功能：
+• MD：分子动力学模拟
+• GEO_OPT：几何优化
+&GLOBAL
+• ENERGY_FORCE：单点能和受力
+PROJECT cp2k
+• ENERGY：单点能
+RUN_TYPE GEO_OPT
+• CELL_OPT：晶胞优化
+PRINT_LEVEL LOW
+• BAND：NEB计算
+&END GLOBAL
+• PINT：Path integral，PIMD
+• VIBRATIONAL_ANALYSIS：振动频率
+PRINT_LEVEL，打印内容的详细程度：LOW (MD)，MEDIUM
+
+
+========== PAGE 14 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件-- FORCE_EVAL Section
+&FORCE_EVAL
+METHOD Quickstep
+STRESS_TENSOR None
+…
+&END FORCE_EVAL
+FORCE_EVAL是计算能量和受力的部分，在关键词METHOD里定义
+方法，比如常用的：
+• FIST：分子动力学模拟
+• QMMM：QM/MM方法计算
+• QUICKSTEP：DFT，DFTB，SE，XTB，RPA，HF，post-HF等量化或
+第一性原理计算方法
+STRESS_TENSOR是否计算晶胞的应力，对于晶胞体积/形状变化的
+计算需要打开这个参数，一般计算不用写。
+
+
+========== PAGE 15 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件– FORCE_EVAL/DFT
+&DFT
+是包含在FORCE_EVAL里的subsection，控制DFT的参数。
+BASIS_SET_FILE_NAME BASIS_MOLOPT
+POTENTIAL_FILE_NAME GTH_POTENTIALS
+提交计算任务之前，准备基组文件和赝势文件
+基组和赝势库在cp2k/data文件里，
+赝势文件一般用GTH_POTENTIALS
+基组文件的选择比较多，常用的是BASIS_MOLOPT ，也可以用
+BASIS_MOLOPT_UCL 比 BASIS_MOLOPT的可选元素种类更多。
+GTH赝势是Goedecker, Teter and Hutter (GTH)三个人在1996年发展的，
+在赝势文件的开头可以看到引用信息和发展历程。
+Phys. Rev. B 54, 1703 (1996)
+BASIS_MOLOPT基组是高斯形式的基组，尽量减小BSSE误差，针对完
+全的分子体系进行优化的，和针对凝聚态周期性体系优化的基组都
+有。J. Chem. Phys. 127, 114105 (2007)
+
+
+========== PAGE 16 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件– FORCE_EVAL/DFT
+&DFT
+里还包含一些其他的有用的参数比如：
+UKS T，开启开壳层计算
+BASIS_SET_FILE_NAME /opt/cp2k/cp2k-6.1/data/BASIS_MOLOPT
+POTENTIAL_FILE_NAME /opt/cp2k/cp2k-6.1/data/GTH_POTENTIALS
+ROKS T ，开启限制性开壳层计算
+WFN_RESTART_FILE_NAME ./RESTART.wfn，读取波函数，需要同时在DFT/&SCF
+中开启SCF_GUESS RESTART
+MULTIPLICITY 体系的整体自旋多重度，2n+1
+RELAX_MULTIPLICITY >0 允许整体多重度自动优化反转（不建议开）
+CHARGE 体系整体电荷，
+PLUS_U_METHOD DFT + U方法，（U值在 &KIND 里控制）
+SURFACE_DIPOLE_CORRECTION T ，表面偶极校正，类似于vasp中LDIPOL
+SURF_DIP_DIR 表面偶极校正的方向，Z，类似于vasp中IDIPOL
+EXCITATIONS TDDFPT，激发态计算
+
+
+========== PAGE 17 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件– FORCE_EVAL/DFT/QS
+&DFT
+&QS （也可以写成Quickstep）
+是包含在FORCE_EVAL/DFT里的subsection，控制DFT等计算的一些参
+数精度的。
+&QS
+EPS_DEFAULT 1.0E-14
+EXTRAPOLATION ASPC
+EXTRAPOLATION_ORDER 3
+&END QS
+默认使用的 EPS_DEFAULT 为 1.0E-10。根据 Google Group 中的建议，
+在进行比较高精度计算时，需要将 EPS_DEFAULT 设为 1.0E-14。
+CP2K 中有多个参数依赖 EPS_DEFAULT，包括 所有EPS_***，
+EPS_CORE_CHARGE，EPS_GVG_RSPACE， EPS_PGF_ORB，
+EPS_KG_ORB等参数的精度调节。
+https://groups.google.com/forum/?fromgroups#!topic/cp2k/IIp-D6AA7ME
+
+
+========== PAGE 18 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件– FORCE_EVAL/DFT/QS
+&DFT
+&QS （也可以写成Quickstep）
+EXTRAPOLATION 是控制波函数外推的方法，在做结构优化/MD
+的时候，下一个离子步的波函数用前几个离子步的波函数经行
+组合可以得到非常快的SCF收敛。
+建议用ASPC(Always stable predictor corrector)，注：不能和K点
+设置同时使用。
+EXTRAPOLATION_ORDER是ASPC extrapolation order。一般用默
+认值3。
+这两个参数可以促进AIMD的时候的每一离子步的SCF收敛，默
+认打开使用。这也是cp2k算AIMD比较快的一个原因。
+
+
+========== PAGE 19 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件– FORCE_EVAL/DFT/MGRID
+&MGRID
+NGRIDS 4
+CUTOFF 300
+REL_CUTOFF 60
+&END MGRID
+CP2K使用的是多重网格一起叠加做FFT的方法，NGRIDS控制的就是几套
+网格，每套网格的截断能不一样。这样做可以减少计算量，用的网格套
+数越多，计算速度越快(越不精确)，一般用默认值NGRIDS 4
+
+
+========== PAGE 20 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件– FORCE_EVAL/DFT/MGRID
+&MGRID
+NGRIDS 4
+CUTOFF 300
+REL_CUTOFF 60
+CP2K的网格从粗糙到精细4个级别，
+&END MGRID
+CUTOFF是整体网格精度的最高值，
+单位为是 Ry (Rydberg)， REL_CUTOFF 参数控制有多少网格点落到最
+精细的级别。
+CUTOFF 的设置取决于体系中元素的种类，默认280 Ry，但对于有些
+原子远远不够。
+REL_CUTOFF 默认为40 Ry，一般设置到50 或 60 Ry，除此之外，还有
+USE_FINER_GRID参数等，用于提高网格的精细度。
+
+
+========== PAGE 21 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件– FORCE_EVAL/DFT/MGRID
+CP2K论坛中建议给不同的原子使用不同的CUTOFF。下图给出了对于
+不同原子建议使用的CUTOFF大小。可见，对于Na, O, F, Ne, Fe, Ni, Zn,
+Ga等元素计算需要 > 800 Ry的CUTOFF。
+我们在计算量允许的条件下尽量把CUTOFF取大。现在一般CP2K文章
+都 > 400 Ry。注意这里的CUTOFF数值和VASP的ENCUT没有可比性。
+
+
+========== PAGE 22 ==========
+
+研之成理AIMD与CP2K课程学习圈
+
+
+========== PAGE 23 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件– FORCE_EVAL/DFT/XC
+&XC
+&XC_FUNCTIONAL PBE
+&END XC_FUNCTIONAL
+&END XC
+&XC 控制交换相关泛函的使用。杂化泛函，HF方法，后HF方法，范
+德华校正等内容都在这里设定，最基本的就只写泛函名称就可以了。
+也可以使用LIBXC里的交换相关泛函。
+有的时候看到如下写法，效果是一样的：
+&XC
+&XC_FUNCTIONAL NO_SHORTCUT
+&PBE T
+&END PBE
+&END XC_FUNCTIONAL
+&END XC
+
+
+========== PAGE 24 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件– FORCE_EVAL/DFT/SCF
+&SCF 控制SCF相关的一些参数。
+这也是cp2k比较核心的一部分 &SCF
+SCF_GUESS RESTART
+参数。
+EPS_SCF 1.0E-6
+MAX_SCF 300
+SCF_GUESS，波函数的初猜方式，
+…
+常用的有两种： …
+• ATOMIC，用原子的电荷密度 &END SCF
+和波函数初猜。
+• RESTART，读取已经存在的
+波函数文件。如果文件不存
+在则用ATOMIC
+EPS_SCF 1.0E-7，SCF收敛能量标准，默认是1.0E-5,单位 hartree，一般
+设置要 < 1.0E-5。
+MAX_SCF 300，控制SCF迭代最大次数。注意和Gaussian不同的是即使
+SCF不收敛CP2K也会继续计算下一个离子步，计算的时候要注意一下。
+
+
+========== PAGE 25 ==========
+
+研之成理AIMD与CP2K课程学习圈
+对角化方法
+把解KS方程，转化为解
+本征方程问题，用
+SCALAPACK数学库求解。
+做对角化
+得到本征值(轨道能量ε)
+得到本征矢(系数矩阵C)，
+即波函数的展开系数。
+
+
+========== PAGE 26 ==========
+
+研之成理AIMD与CP2K课程学习圈
+对角化方法
+收敛判据为输入输
+出密度矩阵的差别
++
+
+
+========== PAGE 27 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件– FORCE_EVAL/DFT/SCF（DIAG方法）
+&SCF
+SCF_GUESS RESTART 波函数初猜方法
+EPS_SCF 1.0E-6 收敛标准
+MAX_SCF 500
+ADDED_MOS 500 添加额外轨道
+CHOLESKY INVERSE CHOLESKY分解 矩阵运算
+&SMEAR ON
+METHOD FERMI_DIRAC
+电子展宽/温度
+ELECTRONIC_TEMPERATURE [K] 300
+&END SMEAR
+&DIAGONALIZATION
+ALGORITHM STANDARD
+对角化方法
+EPS_ADAPT 0.01
+&END DIAGONALIZATION
+&MIXING
+METHOD BROYDEN_MIXING
+ALPHA 0.1
+电子密度混合
+BETA 1.5
+NBROYDEN 8
+&END MIXING
+&END SCF
+
+
+========== PAGE 28 ==========
+
+研之成理AIMD与CP2K课程学习圈
+温度对Fermi-Dirac分布的影响：
+在绝对0度下，电子占据在费米能级附近由1突变成0，这对第一性原
+理计算的积分处理很不方便，所以大多数周期性计算程序都会人为
+的在费米能级附近对电子分布做一个展宽，使得电子占据连续变化。
+这个展宽越大SCF收敛约容易，计算越不精确。
+
+
+========== PAGE 29 ==========
+
+研之成理AIMD与CP2K课程学习圈
+通过把占据空间部分参数化，用轨道转化
+的方法，降低了一部分空轨道的计算量。
+
+
+========== PAGE 30 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Diagonalization和OT方法对比
+Diagonalization Orbital transformation
+• Expensive • Cheap
+• Smearing • No smearing
+• Mixing • Poor convergence for metallic system
+• Doesn‘t support DFT+U • DFT + U method
+• Support KPOINTS sampling • No KPOINTS sampling
+计算量： 计算量：
+O(M3) O(MN2)
+M: Number of basis functions M: Number of basis function
+N: Number of occupied orbitals
+内存消耗：O(MN)
+
+
+========== PAGE 31 ==========
+
+研之成理AIMD与CP2K课程学习圈
+
+
+========== PAGE 32 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件– FORCE_EVAL/DFT/SCF（OT方法）
+&SCF
+MAX_SCF 100
+EPS_SCF 1E-06
+SCF_GUESS RESTART
+MINIMIZER CG
+&OT T 这俩方法需要测试
+MINIMIZER DIIS
+MINIMIZER CG
+MINIMIZER BROYDEN
+LINESEARCH 3PNT
+PRECONDITIONER FULL_SINGLE_INVERSE
+超大体系(编译了CUDA)添加：
+&END OT
+PRECOND_SOLVER INVERSE_UPDATE
+&OUTER_SCF T
+EPS_SCF 1.0E-05 不要求一次SCF就收敛，
+MAX_SCF 100 重新做preconditioner，再做SCF，
+&END OUTER_SCF
+可以加速收敛。
+&END SCF
+PRECONDITIONER FULL_SINGLE_INVERSE（推荐）
+如果体系难以收敛，可以用FULL_ALL（稳定，耗时）
+
+
+========== PAGE 33 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件–PRINT
+CP2K程序中的&PRINT无处不在，在好多的section里都有相应的内容
+可以输出，比如
+FORCE_EVAL/，FORCE_EVAL/DFT，FORCE_EVAL/DFT/SCF里都有相应
+的PRINT section我们用到的时候会慢慢的讲
+FORCE_EVAL/ FORCE_EVAL/DFT/SCF
+&PRINT &PRINT
+&FORCES ON &RESTART
+&END FORCES FILENAME =RESTART.wfn
+&END PRINT &END RESTART
+&END PRINT
+这里有两个例子，第一个是打印每个原子的受力信息，默认的CP2K
+计算结束不打印原子受力，想要看的话需要手动打开。
+第二个是波函数的信息，默认是打印的，如果想要修改输出的波函
+数文件名字，需要添加FILENAME =[文件名]
+
+
+========== PAGE 34 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K基组，赝势，坐标读入
+主讲人：刘锦程
+
+
+========== PAGE 35 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件-- FORCE_EVAL/SUBSYS/KIND
+&KIND
+描述原子/元素的信息。这个section内容非常的多，我们先讲最基本
+的内容，后面用到详细的内容我们再具体的讲。
+&KIND Si
+ELEMENT Si
+BASIS_SET DZVP-GTH-PADE
+POTENTIAL GTH-PADE-q4
+&END KIND
+Section名称本身就是个关键词，后面跟定义的名称，&KIND Si，注意，
+这里的名称也可以是自己在&COORD里自定义的名称，比如我们有两
+种原子的坐标写成:
+Fe_2 0.000000000 0.000000000 0.000000000
+Fe_3 2.000000000 0.000000000 0.000000000
+这样我们就写两个：&KIND Fe_2 和 &KIND Fe_3
+
+
+========== PAGE 36 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件– FORCE_EVAL/SUBSYS/KIND
+&KIND
+真正定义元素种类是ELEMENT关键词，比如：ELEMENT Si，如果不写
+ELEMENT关键词，则使用元素的就是KIND后面的名称对应的元素。
+KIND里最重要的关键词是定义基组和赝势，不同于VASP等平面波程序
+只需定义赝势，cp2k由于采用了混合基还需要定义高斯基组。
+比如，我们练习的例子中使用的：
+BASIS_SET DZVP-GTH-PADE
+POTENTIAL GTH-PADE-q4
+这两个关键词定义的是基组和赝势的名字，保存基组和赝势的文件路
+径需要在&DFT section里定义。这里有一些技巧，后面找一节课专门
+详细说明如何选择合理的基组和赝势。
+
+
+========== PAGE 37 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件– 基组/赝势
+基组和赝势文件在使用的时候，需要拷贝到当前文件夹下，
+也可以使用绝对路径指定，这样每次的计算的时候，就不用拷贝了：
+BASIS_SET_FILE_NAME /opt/cp2k/cp2k-6.1/data/BASIS_MOLOPT
+POTENTIAL_FILE_NAME /opt/cp2k/cp2k-6.1/data/GTH_POTENTIALS
+也可以把这个路径写作变量的形式，方便修改：
+@SET DATAPATH /opt/cp2k/cp2k-6.1/data
+BASIS_SET_FILE_NAME ${DATAPATH}/BASIS_SET
+POTENTIAL_FILE_NAME ${DATAPATH}/GTH_POTENTIALS
+用 @SET VAR value 语法可以在cp2k.inp文件里定义变量，这样把变
+量写在最前面方便修改。调用变量用 ${VAR}
+
+
+========== PAGE 38 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件– 基组
+&KIND 查看元素所有的可选基组/赝势用：
+grep Si BASIS_MOLOPT
+Si SZV-MOLOPT-GTH SZV-MOLOPT-GTH-q4
+Si DZVP-MOLOPT-GTH DZVP-MOLOPT-GTH-q4
+Si TZVP-MOLOPT-GTH TZVP-MOLOPT-GTH-q4
+Si TZV2P-MOLOPT-GTH TZV2P-MOLOPT-GTH-q4
+Si TZV2PX-MOLOPT-GTH TZV2PX-MOLOPT-GTH-q4
+Si SZV-MOLOPT-SR-GTH SZV-MOLOPT-SR-GTH-q4
+Si DZVP-MOLOPT-SR-GTH DZVP-MOLOPT-SR-GTH-q4
+对于一些重元素用：
+grep La BASIS_MOLOPT_UCL
+La DZVP-MOLOPT-SR-GTH DZVP-MOLOPT-SR-GTH-q11
+La TZVP-MOLOPT-SR-GTH TZVP-MOLOPT-SR-GTH-q11
+La TZV2P-MOLOPT-SR-GTH TZV2P-MOLOPT-SR-GTH-q11
+
+
+========== PAGE 39 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件– 基组
+SZV，DZVP，TZVP…代表基组的劈裂和极化函数情况，这里是
+量化计算的一些基本知识。
+比如最常用DZVP全称： double-ζ Valence Polarized，(double- ζ
+with polarisation basis optimised for Geodecker-Teter-Hutter
+pseudopotential)
+对价电子做劈裂，用两个收缩的高斯基函数表示，用的高斯
+基函数越多，计算越准确，但是计算量越大。
+VP表示Valence Polarized同时添加极化函数。计算量SZV <
+DZVP < TZVP < TZV2P < TZV2PX，对于大体系最常用的是DZVP，
+如果对计算的精度要求高用TZVP。
+Usage hint : ‘NGRIDS 5’ (section &MGRID)对带有弥散部分的基组计算更快(×2)
+
+
+========== PAGE 40 ==========
+
+研之成理AIMD与CP2K课程学习圈
+基组重叠误差
+Basis Set Superposition Error (BSSE)
+VASP等程序使用的是平面波基组，对于不同的体系，只要设
+定了相同的平面波截断能（ENCUT），那么用到的基组都是
+一样的。
+但是对于高斯基组的程序来说就不一样的，基组是跟着原子
+走的，比如我们计算AB体系和A体系使用的基组不一样的，
+相比于单纯的A体系，AB体系中B的一些基组也贡献于描述A
+原子。所以AB体系算出来的能量一定是被低估的。(即，计算
+吸附能、结合能等都会偏负，E(AB) – E(A) – E(B))
+A B A
+
+
+========== PAGE 41 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件– 基组
+基组大小对BSSE误差的影响非常大，越大的基组BSSE误差越小。我
+们文献中最常用的DZVP基组的BSSE误差约为5 kcal/mol ~0.22 eV。
+
+
+========== PAGE 42 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件– 基组
+MOLOPT代表基组的类型的是Phys. Rev. B 54, 1703 (1996)文章里的
+molecularly optimized basis functions.
+处理周期性固体或者表面slab用SR标志的这种基组:
+SZV-MOLOPT-SR-GTH，DZVP-MOLOPT-SR-GTH等，砍掉了一些弥散基
+组的贡献，对材料性质计算影响很小，计算速度有所提升（2-3倍）。
+但是BSSE误差会有所增大（~50%）。
+Most affected is BSSE, which increases to 0.32, 0.16, 0.31, 0.24 from 0.23,
+0.11, 0.41, 0.20 kcal/mol (DZVP-MOLOPT-SR-GTH vs. DZVP-MOLOPT-GTH)
+计算时间：while for a box with 64 molecules timings are 25 and 111 s
+respectively.
+
+
+========== PAGE 43 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件– 基组
+-q4是价电子数，每种元素都有好多种可选的基组。基组包含的价
+电子越多，越精确但是计算速度越慢。比如：
+grep Ce ./BASIS_MOLOPT_UCL
+Ce DZVP-MOLOPT-SR-GTH DZVP-MOLOPT-SR-GTH-q12
+Ce DZVP-MOLOPT-SR-GTH-q30
+注意这里的价电子数一定要和赝势统一：
+grep Ce /opt/cp2k/cp2k-6.1/data/GTH_POTENTIALS
+Ce GTH-PBE-q12 GTH-PBE
+Ce GTH-PBE-q30
+
+
+========== PAGE 44 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件 – 赝势
+grep Si GTH_POTENTIALS
+Si GTH-BLYP-q4 GTH-BLYP
+Si GTH-BP-q4 GTH-BP
+Si GTH-PADE-q4 GTH-LDA-q4 GTH-PADE GTH-LDA
+Si GTH-PBE-q4 GTH-PBE
+BLYP，PBE等，表示该赝势是针对相应的泛函开发的。这个种类
+比较少，如果是用其他的一些泛函（比如SCAN，HSE）也可以用
+PBE的赝势。
+-q4还是价电子数目，注意要和基组统一。
+
+
+========== PAGE 45 ==========
+
+研之成理AIMD与CP2K课程学习圈
+晶胞参数-- FORCE_EVAL/SUBSYS/CELL
+&SUBSYS
+是包含在FORCE_EVAL里的subsection。控制原子坐标，晶胞参数，
+元素/原子的基组赝势等信息。
+&CELL
+定义晶胞边长，两种方法，一种是和VASP的POSCAR一样的三个矢量
+组成，需要分别写A，B，C三个晶胞矢量。(默认单位[Angstrom])
+A 5.430697500 0.000000000 0.000000000
+B 0.000000000 5.430697500 0.000000000
+C 0.000000000 0.000000000 5.430697500
+第二种方法是定义三个晶胞的边长和夹角。
+ABC 5.4306975 5.4306975 5.4306975
+ALPHA_BETA_GAMMA 90 90 90
+
+
+========== PAGE 46 ==========
+
+研之成理AIMD与CP2K课程学习圈
+晶胞参数-- FORCE_EVAL/SUBSYS/CELL
+&CELL
+也可以从其他文件里读取晶胞的信息，比如CIF，XSF文件，通过
+CELL_FILE_FORMAT，和 CELL_FILE_NAME
+PERIODIC周期性的方向，默认：XYZ。
+可选X，Y，Z，XY，YZ，XZ，XYZ，NONE。
+&COORD
+控制原子坐标。
+ATOMIC_KIND X Y Z MOLNAME
+写成元素名称 X Y Z 坐标的形式，最后一些是原子或分子名(一般不写)
+例如：
+Si 0.000000000 0.000000000 0.000000000
+Si 0.000000000 2.715348700 2.715348700
+默认是笛卡尔坐标，如果用分数坐标则, SCALED .TRUE.
+
+
+========== PAGE 47 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件 – 坐标读入
+在FORCE_EVAL/SUBSYS/COORD读入原子坐标可以另外附加文件。
+使用@INCLUDE ‘文件名‘即可。
+&COORD
+@INCLUDE 'coord.inc'
+&END COORD
+我习惯于命名为coord.inc，格式是.xyz(去掉前两行)。
+用MS构建好模型，保存成.car格式的文件。使用脚本把.car格式转化
+成.xyz格式的文件。
+dmolcar2xyz.py ***.car
+如果要对z坐标从小到大进行重排，则用-s选项。
+dmolcar2xyz.py –s ***.car
+最后把生成的***.xyz 复制成 coord.inc 并去掉其前两行即可。
+
+
+========== PAGE 48 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件 – 坐标读入
+在FORCE_EVAL/SUBSYS/TOPOLOGY读入原子坐标可以另外附
+加XYZ文件。
+&TOPOLOGY
+COORD_FILE_NAME coord.xyz
+COORD_FILE_FORMAT XYZ
+&END TOPOLOGY
+除了XYZ格式，还可以读入cif，pdb，xtl，等格式的文件。用
+这种方式读入原子坐标就不需要在COORD里写原子坐标了。
+
+
+========== PAGE 49 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件 – 坐标读入
+在FORCE_EVAL/SUBSYS/CELL读入晶胞参数，可以使用如下命令查看car
+文件里的晶胞参数，复制到.inp文件里即可。
+grep PBC *.car
+注意做AIMD的时候尽量把晶胞做成正交晶系的，方便后续的分析。
+对于常见的六方晶系的材料可以通过选择晶格矢量做成正交晶系的，
+比如：石墨。Build-symmetry-Redefine lattice
+
+
+========== PAGE 50 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件–小结
+• 至少需要3个输入文件，分别是 .inp，基组，赝势文件。
+• .inp包含所有计算参数。通过&GLOBAL控制计算任务的类型。
+&FORCE_EVAL控制计算能量的具体方法和参数。
+• 提交任务用方法如下
+• 单机： mpirun -n 56 cp2k.popt cp2k.inp 1>cp2k.out 2>cp2k.err
+-n或-np 跟使用的物理核心数，cp2k.popt是可执行文件，必须要
+在系统路径内。
+• 服务器module + 队列系统（slurm为例）：
+module ava查看所有的可调用程序，找到cp2k （所有天河超算
+和并行科技超算上都有cp2k）
+module load cp2k/intel17/4.1-v2
+srun -p pg2_64_pool -n 20 -N 1 cp2k.popt cp2k.inp 1>cp2k.out 2>cp2k.err
+
+
+========== PAGE 51 ==========
+
+研之成理AIMD与CP2K课程学习圈
+J. Chem. Phys. 152, 194103 (2020); https://doi.org/10.1063/5.0007045
+
+
+========== PAGE 52 ==========
+
+研之成理AIMD与CP2K课程学习圈
+
+
+========== PAGE 53 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输出文件
+主讲人：刘锦程
+
+
+========== PAGE 54 ==========
+
+研之成理AIMD与CP2K课程学习圈
+.out是输出文件，
+.err是报错文件(一般报错信息在.out的最后找)，
+.wfn是波函数文件，默认会有.wfn.bak-1等一共四个保存文件。.wfn文
+件每次产生，会先把上一个.wfn保存成 .bak-n。超过4个就不断地覆
+盖。我一般把波函数打印成 RESTART.wfn 名字的。
+FORCE_EVAL/DFT/SCF/SCF_GUESS RESTART，
+FORCE_EVAL/DFT/WFN_RESTART_FILE_NAME ./RESTART.wfn
+可以读取波函数。
+注: 如果没有指定输出文件名，则所有的输出文件都是以
+GLOBAL/PROJECT 的名字命名的，比如：
+GLOBAL/PROJECT cp2k
+波函数文件写成： cp2k-RESTART.wfn
+
+
+========== PAGE 55 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输出文件 – .out
+.out文件开始会打印一些基础信息，比如数学库，CP2K版本，
+计算类型，时间，内存等信息。这些我们暂时都不用去管。
+之后会打印出一个大大的Quickstep, 然后是一些基本的计算参数。
+
+
+========== PAGE 56 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Number of electrons: 32 总电子数
+Number of occupied orbitals: 16
+占据轨道数
+Number of molecular orbitals: 16
+基函数数量
+Number of orbital functions: 104
+Number of independent orbital functions: 104
+Extrapolation method: initial_guess 波函数初猜
+SCF WAVEFUNCTION OPTIMIZATION Broyden拟牛顿法对角化方法做SCF
+Step Update method Time Convergence Total energy Change 重点观察
+------------------------------------------------------------------------------
+收敛情况
+1 NoMix/Diag. 0.40E+00 0.6 0.75558724 -32.2320848878 -3.22E+01
+2 Broy./Diag. 0.40E+00 1.1 0.05667976 -31.1418135481 1.09E+00
+3 Broy./Diag. 0.40E+00 1.1 0.09691469 -31.1974003416 -5.56E-02
+…
+…
+10 Broy./Diag. 0.40E+00 1.1 5.6405E-09 -31.2978852054 -1.66E-06
+*** SCF run converged in 10 steps ***
+运行10步收敛，达到我们设置的EPS_SCF
+
+
+========== PAGE 57 ==========
+
+研之成理AIMD与CP2K课程学习圈
+ENERGY| Total FORCE_EVAL ( QS ) energy (a.u.): -31.297885372811002
+ATOMIC FORCES in [a.u.]
+# Atom Kind Element X Y Z
+1 1 Si 0.00000000 0.00000000 0.00000000
+2 1 Si 0.00000000 0.00000001 0.00000001
+3 1 Si 0.00000001 0.00000001 0.00000000
+4 1 Si 0.00000001 0.00000000 0.00000001
+5 1 Si -0.00000001 -0.00000001 -0.00000001
+6 1 Si -0.00000001 -0.00000001 -0.00000001
+7 1 Si -0.00000001 -0.00000001 -0.00000001
+8 1 Si -0.00000001 -0.00000001 -0.00000001
+SUM OF ATOMIC FORCES -0.00000000 -0.00000000 -0.00000000
+0.00000000
+最终能量：-31.2978853 Hartree * 27.211 = -851.659 eV
+ATOMIC FORCES in [a.u.] 所有原子受力。
+
+
+========== PAGE 58 ==========
+
+研之成理AIMD与CP2K课程学习圈
+结构优化
+主讲人：刘锦程
+
+
+========== PAGE 59 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K输入文件 – 简单思维导图（2）
+GLOBAL
+CELL_OPT 晶胞优化（对称性/收敛标准/算法/固定部分矢量）
+FORCE_EVAL
+GEO_OPT 几何结构优化（收敛标准/算法）
+FREE_ENERGY 自由能
+MOTION
+MD 分子动力学模拟
+BAND NEB过渡态
+CONSTRAIN 固定原子
+
+
+========== PAGE 60 ==========
+
+研之成理AIMD与CP2K课程学习圈
+几何结构优化
+Geometry Optimization
+
+
+========== PAGE 61 ==========
+
+研之成理AIMD与CP2K课程学习圈
+&GLOBAL 开启几何优化
+RUN_TYPE GEO_OPT
+OPTIMIZER LBFGS（适合超大体系）
+&END GLOBAL
+OPTIMIZER BFGS（常用，适合中等体系）
+&MOTION OPTIMIZER CG （稳定，一个离子步要算
+&GEO_OPT 数个SCF，速度慢）
+MAX_ITER 400
+MAX_DR 0.003 （最大位移）
+OPTIMIZER BFGS
+RMS_DR 0.0015 （根均方位移）
+MAX_FORCE 6.0E-4
+MAX_FORCE 0.0006 （最大受力a.u./bohr）
+# &LBFGS
+RMS_FORCE 0.0003 （根均方受力）
+# MAX_H_RANK 30
+# &END LBFGS
+LBFGS收敛算法细节设置
+&END GEO_OPT
+&CONSTRAINT
+&FIXED_ATOMS
+LIST 1..54
+COMPONENTS_TO_FIX控制固定的方向，
+LIST 289..324
+LIST选择要固定的原子
+&END FIXED_ATOMS
+&END CONSTRAINT
+&END MOTION
+
+
+========== PAGE 62 ==========
+
+研之成理AIMD与CP2K课程学习圈
+结构优化每一步输出的结构都写在cp2k-pos-1.xyz
+查看每一步的能量：
+判断标准可以
+grep = cp2k-pos-1.xyz 考虑适当放宽：
+MAX_DR
+查看每一步的受力：
+MAX_FORCE
+grep Max\.\ g cp2k.out
+RMS_DR
+RMS_FORCE
+只有当四个判断标准全都YES才收敛：
+未收敛 已收敛
+用Jmol或者vmd可以看每一步的结构变化。
+
+
+========== PAGE 63 ==========
+
+研之成理AIMD与CP2K课程学习圈
+练习一：Cu(100) + 46H O 结构优化（Diag方法）
+2
+1. 晶胞优化（略）
+2. 切100面，建水/金属模型
+3. 优化表面：输入文件见模板
+4. 读取最后能量结果
+添加显示溶剂水分子的方法有很多，最简单就是用手动不断复制，然
+后调整分子间距和取向。（手摆的构型往往初始构型不好）
+还有就是用现有程序，比如Packmol，这个程序适合给生物体系添加水
+分子。给slab模型添加水分子比较好用的使用Modules-Amorphous Cell
+模块。
+Proc. Natl. Acad. Sci. U. S. A. 2017, 114 (8), 1795-1800.
+
+
+========== PAGE 64 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Modules-Amorphous Cell模块添加溶剂化层
+第一步：新建一个文件，非周期性的
+模型构建一个H O分子。
+2
+第二步：
+新建一个Amorphous cell计算任务，
+construction。选中水分子，Add，修改
+读2D-slab模型
+数量。
+的晶胞的边长
+密度1 g/cm3
+Specify a,b， 边长10.2425（MS自动判
+断出c方向长度）
+
+
+========== PAGE 65 ==========
+
+研之成理AIMD与CP2K课程学习圈
+第三步：运行任务，约计算1
+分钟，结束后得到一个
+Molecule.xtd文件。用In-Cell显
+示lattice。
+第四步：建立异质结方法。
+Build-build layer
+
+
+========== PAGE 66 ==========
+
+研之成理AIMD与CP2K课程学习圈
+第五步：调整水和slab的距离(建立异质结程
+序会自动空出一定距离)，
+注：接近表面的水分子不一定密度严格 =
+1g/cm3，因为如果发生化学吸附，这一部分
+水的密度就和液里不一样了。所以要根据实
+际情况自己算一下Cu原子的半径，需要给水
+留出多少空间。
+注：AIMD由于原子数少，基本不可能做NPT
+与平衡盒子大小，只能做NVT，或NVE，所
+以要提前把体积算好。
+方法：
+1. 选中所有水，点
+2. 调整盒子的z方向大小，rebuild crystal
+Proc. Natl. Acad. Sci. U. S. A. 2017, 114 (8), 1795-1800.
+
+
+========== PAGE 67 ==========
+
+研之成理AIMD与CP2K课程学习圈
+第六步：提交任务，保存成.car文件，运行
+dmolcar2xyz.py -s Layer.car -s是按照z方向的顺序排序
+生成Layer.xyz，并去掉前两行，在@INCLUDE里读入坐标
+套用.inp模板，修改CELL里的晶格矢量。grep PBC *.car
+&CELL
+ABC 10.242489 10.242489 21.0
+ALPHA_BETA_GAMMA 90 90 90
+&END CELL
+&COORD
+@INCLUDE 'coord.inc'
+&END COORD
+固定最下两层Cu原子：
+&CONSTRAINT
+&FIXED_ATOMS
+LIST 139..170
+&END FIXED_ATOMS
+&END CONSTRAINT
+提交任务
+
+
+========== PAGE 68 ==========
+
+研之成理AIMD与CP2K课程学习圈
+第七步：查看结果。
+结构优化或者分子动力学模拟的任务都可以用Jmol或者VMD
+直接打开cp2k-pos-1.xyz文件，看轨迹。
+查看每个离子步的能量：
+grep = cp2k-pos-1.xyz
+最大原子受力
+能量收敛
+
+
+========== PAGE 69 ==========
+
+研之成理AIMD与CP2K课程学习圈
+生成的轨迹文件可以用VMD或者Jmol打开观察。默认输出的为
+xyz文件格式，可以修改&MOTION&PRINT 输出PDB格式文件。
+&MOTION
+…
+&PRINT
+&TRAJECTORY
+FORMAT PDB 默认是输出XYZ（不带有晶胞参数信息）
+&END TRAJECTORY
+&END PRINT
+VMD： Jmol：
+
+
+========== PAGE 70 ==========
+
+研之成理AIMD与CP2K课程学习圈
+练习二：Al O (0001)表面上H O分子的吸附能
+2 3 2
+第一步：建模Al O (0001)、 H O-Al O (0001)
+2 3 2 2 3
+第二步：优化
+（1）孤立水分子；
+（2）Al O (0001) 表面；
+2 3
+（3）H O分子吸附；
+2
+（4）H O解离吸附。
+2
+第三步：提取计算吸附能:
+grep = cp2k-pos-1.xyz | tail -1
+E(cp2k) /a. u. E /eV
+ads
+H O -17.2199443926
+2
+Al O -1261.3349412419
+2 3
+H O-Al O -1278.5963247321 -1.13
+2 2 3
+OH-H-Al O -1278.6116891175 -1.54
+2 3
+
+
+========== PAGE 71 ==========
+
+研之成理AIMD与CP2K课程学习圈
+给输出xyz结构加晶胞边界：
+cp2k默认输出的是cp2k-pos-1.xyz 格式的文件，只包含原子坐标信
+息，需要手动加上晶胞边界：
+方法一：在ms里build - build crystal
+
+
+========== PAGE 72 ==========
+
+研之成理AIMD与CP2K课程学习圈
+方法二：在vmd里添加
+pbc set {7.820 7.821 7.823 90 90 120} –all (设定晶胞参数)
+pbc box (显示盒子边界)
+pbc wrap –all (把整个轨迹转化成周期性)
+方法三：cp2k直接PRINT PDB格式的结构
+&MOTION
+…
+&PRINT
+&TRAJECTORY
+FORMAT PDB
+&END TRAJECTORY
+&END PRINT
+
+
+========== PAGE 73 ==========
+
+研之成理AIMD与CP2K课程学习圈
+课后练习：Au /TiO (110) 表面的优化
+20 2
+要点：
+套用OT的inp模板
+固定最下面一层O-Ti-O，
+修改晶胞参数，
+添加相应的赝势和基组
+添加DFT+U
+Science 2003, 299 (5608), 864-867.
+J. Am. Chem. Soc. 2013, 135 (29), 10673-83.
+
+
+========== PAGE 74 ==========
+
+研之成理AIMD与CP2K课程学习圈
+晶胞优化
+Cell Optimization
+
+
+========== PAGE 75 ==========
+
+研之成理AIMD与CP2K课程学习圈
+晶胞优化是在几何结构优化的基础上，同时优化晶胞参数。
+&FORCE_EVAL
+STRESS_TENSOR ANALYTICAL
+&MOTION
+&CELL_OPT
+EXTERNAL_PRESSURE 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 晶体的外压力
+KEEP_ANGLES T
+固定晶格角度
+KEEP_SYMMETRY T
+和对称性
+OPTIMIZER CG
+# CONSTRAINT Z
+固定Z方向
+# TYPE DIRECT_CELL_OPT 同时原子/晶胞优化
+&CG or GEO_OPT交替优化
+&LINE_SEARCH
+TYPE 2PNT
+CG收敛算法
+&END LINE_SEARCH
+&END CG
+&END CELL_OPT
+&GEO_OPT
+同时优化原子位置
+&END
+&MOTION
+
+
+========== PAGE 76 ==========
+
+研之成理AIMD与CP2K课程学习圈
+由于原包一般比较小，直接优化计算不准确。
+（1）扩胞
+（2）设置k点（只能用于diag方法）
+晶胞优化结果查看：
+grep CELL cp2k.out
+CELL| Volume [angstrom^3]: 49.918
+CELL| Vector a [angstrom]: 3.682 0.000 0.000 |a| = 3.682
+CELL| Vector b [angstrom]: 0.000 3.682 0.000 |b| = 3.682
+CELL| Vector c [angstrom]: 0.000 0.000 3.682 |c| = 3.682
+CELL| Angle (b,c), alpha [degree]: 90.000
+CELL| Angle (a,c), beta [degree]: 90.000
+CELL| Angle (a,b), gamma [degree]: 90.000
+CELL| Numerically orthorhombic: YES
+可以输出PDB格式的文件自带晶胞参数
+
+
+========== PAGE 77 ==========
+
+研之成理AIMD与CP2K课程学习圈
+练习：优化FCC结构Cu的晶胞
+注意加一下K点的设置：
+&FORCE_EVAL
+&DFT
+&KPOINTS
+SCHEME MONKHORST-PACK 3 3 3
+# SYMMETRY T
+# VERBOSE T
+# FULL_GRID T
+优化前：3.6147 Å
+&END KPOINTS
+…
+优化后：3.682 Å
+
+
+========== PAGE 78 ==========
+
+研之成理AIMD与CP2K课程学习圈
+K点设置
+&KPOINTS
+和vasp设置规则类似
+SCHEME MONKHORST-PACK 3 3 3
+SYMMETRY T
+识别晶体对称性
+VERBOSE T
+FULL_GRID T
+&END KPOINTS
+&CELL_OPT
+EXTERNAL_PRESSURE 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 晶体的外压力
+KEEP_ANGLES T
+固定晶格角度
+KEEP_SYMMETRY T
+和对称性
+OPTIMIZER CG
+# CONSTRAINT Z
+固定Z方向
+# TYPE DIRECT_CELL_OPT 同时原子/晶胞优化
+&CG or GEO_OPT交替优化
+&LINE_SEARCH
+CG收敛算法
+TYPE 2PNT
+&END LINE_SEARCH
+&END CG
+&END CELL_OPT
+
+
+========== PAGE 79 ==========
+
+研之成理AIMD与CP2K课程学习圈
+过渡态搜索
+主讲人：刘锦程
+79
+
+
+========== PAGE 80 ==========
+
+研之成理AIMD与CP2K课程学习圈
+过渡态（transition state）搜索，优化到一阶鞍点。是MEP路径上能
+量最高的点(一阶鞍点)。在过渡态位置上，仅在沿着反应路径上是
+能量极大点，而在于之正交的其他所有方向上都是能量极小点。
+极大点(全局最大)
+过渡态
+过渡态
+极小点 过渡态
+(局部极小)
+极大点(局部极大)
+极小点
+(全局最小)
+80
+
+
+========== PAGE 81 ==========
+
+研之成理AIMD与CP2K课程学习圈
+化学反应的过程就像人爬山，走能量最低的路径
+过渡态，
+一阶鞍点
+81
+
+
+========== PAGE 82 ==========
+
+研之成理AIMD与CP2K课程学习圈
+一些化学过程没有过渡态。如：
+• 离子键断裂成为阴阳离子(或阴阳离子结合)
+• 共价键断裂成为两个自由基(或自由基的复合反应)
+• 一些表面吸附/脱附的过程
+• 一些吸附/脱附过程静态计算不出过渡态，但是模拟自由能
+势能面存在过渡态，这是熵效应的影响。
+2 ·CH
+3
+CH CH
+3 3
+82
+
+
+========== PAGE 83 ==========
+
+研之成理AIMD与CP2K课程学习圈
+寻找过渡态方法
+根据方法所需要的初猜不同，可以分为以下几类：
+（1）基于单个初猜结构的方法，（DIMER）
+（2）基于反应物与产物结构的方法，（CI-NEB）
+（3）基于反应物结构的方法，
+（4）势能面扫描
+目前过渡态搜索方法多达几十种，其中不好用的方法已经被逐
+渐淘汰，有不断的有新的高效方法被开发出来
+过渡态搜索方法一览：
+http://sobereva.com/44
+VASP(VTST)支持的最好用的两种：
+DIMER，CI-NEB
+要用到的VTST包，是一个VASP的插件，需要在编译VASP的时
+候导入。http://theory.cm.utexas.edu/vasp/index.html
+83
+
+
+========== PAGE 84 ==========
+
+研之成理AIMD与CP2K课程学习圈
+NEB (Nudged Elastic Band)
+NEB是chain-of-states搜索方法的一种，经过长时间的发展形成现
+在的准确性好，稳定性好的CINEB方法。
+做法就是在反应物到产物之间插入一系列结构，共插入P-1个，
+反应物编号为0，产编号物为P。不同的是优化不是对每个点孤立
+地优化，而是优化一个函数，每一步所有点一起运动。
+84
+
+
+========== PAGE 85 ==========
+
+研之成理AIMD与CP2K课程学习圈
+85
+
+
+========== PAGE 86 ==========
+
+研之成理AIMD与CP2K课程学习圈
+这P+1点保持第一和最后一个点不动，其他的点受到两个力的作
+用：1. 来自势能面的力；2. chain方向上的弹簧力
+第一项，相当于让一串珠子上的每个点都在势能面上向着最稳定
+的方向上移动。
+第二项，含有弹簧力常数，相当于每个珠子之间的拉力和排斥力，
+86
+避免珠子之间的距离过短或者过长。
+
+
+========== PAGE 87 ==========
+
+研之成理AIMD与CP2K课程学习圈
+传统PEB方法(plain elastic band)方法遇到的问题：
+• 反应路径偏离minimum energy path(MEP)
+• 难以找到最高点，需要插入非常多的点，浪费计算资源。
+
+
+========== PAGE 88 ==========
+
+研之成理AIMD与CP2K课程学习圈
+NEB中称为nudge过程
+在势能面拐点的地方会出现两个珠子距离过远的问题，
+• 弹簧力垂直于路径的分量就被投影掉，
+• 弹簧力平行于路径的分量完全保留；
+• 势能力在路径方向上的分量被投影掉，
+• 势能力垂直于路径上的分量将会引导
+结构点地正确移动。
+解决第一个问题的方法，在NEB中称为nudge过程。
+(1) 每个点在平行于路径切线上的受力只等于弹簧力在这个方向分
+量，(2) 每个点在垂直于路径切线方向的受力只等于势能力在此方
+向上分量。这样优化收敛后结构点就能正确描述真实的
+88
+MEP(Minimum energy pathway)，矛盾得到解决。
+
+
+========== PAGE 89 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CINEB (Climbing Image-Nudged Elastic Band)
+以上过程讲述的是VASP原版中使用的NEB。但是此方法仍有很
+多致命的缺点：
+(1) 要插入足够多的点才可能找到近似的过渡态，计算资源消
+耗极大。
+(2) 因为珠子不可能到鞍点的顶端，计算出的过渡态能量总是
+被低估的，又因为本来LDA，GGA泛函就经常低估过渡态
+能量，所以误差叠加，此方法不太准确。
+所以后来，G. Henkelman(VTST的开发者)又发展出了CI-NEB方
+法，它专门考虑到了定位过渡态问题。CI-NEB与NEB的关键区
+别是能量最高的点受力的定义，在CI-NEB中这个点不会受到相
+邻点的弹簧力，避免位置被拉离过渡态，而且将此点平行于
+路径方向的势能力分量的符号反转，促使此点沿着路径往能
+量升高的方向上爬到过渡态。
+89
+
+
+========== PAGE 90 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CI-NEB方法只需要很少的点，比如包含初、末态总共5个甚至3个点
+就能准确定位过渡态，是最有效率的寻找过渡态的方法之一。
+如果初态和末态之间的距离较远，可以考虑多插一些点，比如6-8个。
+90
+
+
+========== PAGE 91 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K的CINEB输入文件
+第一步：优化初态和末态
+tail -[原子数+2] cp2k-pos-1.xyz > is.xyz 提取最后一帧的结构得到 is.xyz 和 fs.xyz
+第二步：插点。如果要插入4个点，则输入：
+./xyz2neb.pl is.xyz fs.xyz 5
+自动生成0.xyz 1.xyz 2.xyz 3.xyz 4.xyz 5.xyz，这6个结构文件，0.xyz
+和5.xyz就是我们优化后的初态和末态。中间的4个结构是要计算的。
+另外，在 &SUBSYS 还要和结构优化一样准备一个结构，这个结构用
+不到，但是要有。
+
+
+========== PAGE 92 ==========
+
+研之成理AIMD与CP2K课程学习圈
+第三步：准备输入文件&MOTION
+&REPLICA
+&MOTION COORD_FILE_NAME ./1.xyz
+&BAND &END
+NPROC_REP 28 &REPLICA
+BAND_TYPE CI-NEB COORD_FILE_NAME ./2.xyz
+ALIGN_FRAMES F &END
+ROTATE_FRAMES F &REPLICA
+NUMBER_OF_REPLICA 6 COORD_FILE_NAME ./3.xyz
+K_SPRING 0.08 &END
+&CONVERGENCE_CONTROL &REPLICA
+MAX_DR 0.01 COORD_FILE_NAME ./4.xyz
+MAX_FORCE 0.001 &END
+RMS_DR 0.02 &REPLICA
+RMS_FORCE 0.001 COORD_FILE_NAME ./5.xyz
+&END &END
+&CI_NEB &PROGRAM_RUN_INFO
+NSTEPS_IT 5 &END
+&END &CONVERGENCE_INFO
+&OPTIMIZE_BAND &END
+OPT_TYPE DIIS &END BAND
+OPTIMIZE_END_POINTS F &END MOTION
+&END
+
+
+========== PAGE 93 ==========
+
+研之成理AIMD与CP2K课程学习圈
+关键词 示例中的设置 解释
+NPROC_REP 28 进行 BAND 计算时，每个结构使用的 CPU
+数目
+NUMBER_OF_REPLICA 6 总共的结构数目（包括初态和末态），注：
+NUMBER_OF_REPLICA * NPROC_REP可以
+大于总核数。例如：总共56核机器，28 *
+6 = 168，则每次只会并行计算两个点
+（56/28=2），并且依次计算。
+BAND_TYPE CI-NEB NEB的计算方法
+ALIGN_FRAMES / F 禁止结构整体平移和选择
+ROTATE_FRAMES
+K_SPRING 0.08 BAND 计算中使用的弹簧劲度系数。
+K_SPRING 越大， NEB 计算收敛越快，但
+计算不准确。 K_SPING 越小，计算收敛越
+慢，但计算较为准确。在初步计算中，可
+以将 K_SPRING 设置为 0.08 左右，然后再
+放松至 0.02以获得精确结果。
+NSTEPS_IT 5 在启用CI算法之前，先用IT算法的步数
+OPTIMIZE_END_POINTS F 是否优化初态和末态，否。（注：仍然需
+要计算，没法和vasp一样，不算初末态）
+
+
+========== PAGE 94 ==========
+
+研之成理AIMD与CP2K课程学习圈
+第四步：跟踪收敛状态
+在计算的过程中跟踪计算收敛状况：
+最后一个BAND结构
+grep -1 MAX cp2k-BAND6.out
+..
+暂时没有收敛
+…
+达到&CONVERGENCE_CONTROL的收敛标准
+
+
+========== PAGE 95 ==========
+
+研之成理AIMD与CP2K课程学习圈
+跟踪NEB结构状态：
+for i in {1..6} ; do tail -n 125 "cp2k-pos-Replica_nr_${i}-1.xyz" > neb.xyz ; done
+总帧数 [原子数+2] xyz结构文件名 输出结构
+导入到jmol或者VMD中
+
+
+========== PAGE 96 ==========
+
+研之成理AIMD与CP2K课程学习圈
+查看能量并画图：
+单位 a.u.
+E = 0.21 eV
+a
+DE = -0.42 eV
+
+
+========== PAGE 97 ==========
+
+研之成理AIMD与CP2K课程学习圈
+频率计算
+主讲人：刘锦程
+97
+
+
+========== PAGE 98 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Hessian矩阵
+https://en.wikipedia.org/wiki/Hessian_matrix
+在数学中，海森矩阵𝐇 （Hessian matrix 或 Hessian）是一个3N
+维 的 实 值 函 数 的 二 阶 偏 导 数 组 成 的 方 块 矩 阵 ， 即 能 量
+𝐸 𝑹 , 𝑹 , … , 𝑹 对原子坐标的二阶导数（3N维）。
+1 2 𝑁
+2
+𝜕 𝐸
+𝐻 =
+𝑖,𝑗
+𝜕𝑥 𝜕𝑥
+𝑖 𝑗
+Hessian matrix是对称矩阵。
+原子坐标{𝑥}
+98
+
+
+========== PAGE 99 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Hessian矩阵的一般形式：
+把Hessian矩阵从笛卡尔坐标{𝑥}转换到了质量权重坐标{q}下：
+−1/2 −1/2
+𝚯 = 𝐌 𝐇𝐌
+质量矩阵M为3N维的对角矩阵.
+对角化力常数矩阵𝚯就得到振动频率。
+99
+
+
+========== PAGE 100 ==========
+
+研之成理AIMD与CP2K课程学习圈
+力常数矩阵
+质量权重的(mass-weighted) Hessian矩阵也称为力常数
+矩阵(Force constant matrix)，相当于把Hessian矩阵从笛
+卡尔坐标{𝑥}转换到了质量权重坐标{q}下：
+−1/2 −1/2
+𝚯 = 𝐌 𝐇𝐌
+𝐻 𝜕 2 𝐸
+𝑖,𝑗
+𝛩 = =
+𝑖,𝑗
+𝑀 𝑀 𝜕𝑞 𝜕𝑞
+𝑖,𝑖 𝑗,𝑗 𝑖 𝑗
+𝑞 = 𝑚 𝜉 𝑖 ∈ 𝑋
+𝑖 𝑋 𝑖
+质量矩阵M为3N维的对角矩阵，对于前例
+A A B B
+x y x y
+𝑚 𝑚
+1 𝐴
+𝑚 𝑚
+2 𝐴
+𝑀 = =
+𝑚 𝑚
+3 𝐵
+𝑚 𝑚
+4 𝐵
+100
+
+
+========== PAGE 101 ==========
+
+研之成理AIMD与CP2K课程学习圈
+分子振动
+非线性分子有3N-6种振动模式，线性分子有3N-5种。
+将力常数矩阵𝚯对角化就得到了3N个本征失，和相应的3N个本征
+值。
+• 本征值{λ}则对应于相应振动方向上的力常数，根据谐振子公式
+𝜆
+𝑖
+𝑣 = 换算出振动频率；
+𝑖
+2𝜋
+• 本征矢则为该频率的振动方向。
+其中6个本征值，对应于平动和转动模式在振动模式上的投影，
+对于气态、液态分子可以忽略。剩下的3N-6个本征矢称为正则坐
+标，每个都对应于分子的一种振动模式。
+注：对于表面吸附分子，由于难以计算平动能和转动能，所以可
+以近似的认为分子平动转动的贡献耦合到了这6个振动中，故可
+以按照3N计算分子的振动能量。
+101
+
+
+========== PAGE 102 ==========
+
+研之成理AIMD与CP2K课程学习圈
+极小点和过渡态的验证
+我们计算的结构优化和过渡态搜索任务只能保证得到的结
+构是驻点，即能量的一阶导数(原子受力)为零，还要进一步
+计算频率来确定虚频的个数。
+一般计算频率都是用的谐振子模型。只需要计算能量的二
+阶导数。它假设在平衡结构（极小点结构）下振动方向上
+的势能曲线可以用谐振势近似描述。
+102
+
+
+========== PAGE 103 ==========
+
+研之成理AIMD与CP2K课程学习圈
+零点振动能(Zero point vibrational energy, ZPVE)
+2 2
+ℏ 𝑑 1
+෡ 2
+𝐸𝛹 = 𝐻𝛹 = (− + 𝑘𝑥 )𝛹
+2𝑚 𝑑𝑥2 2
+k为力常数。振动能量写为
+1
+𝐸 = 𝑛 + ℎ𝑣 n = 0, 1, 2, 3 …
+𝑣𝑖𝑏
+2
+v为谐振频率，n为振动量子数。
+n=0为对应振动基态，振动能量为hv/2，称为零点振动能
+(Zero point vibrational energy, ZPVE)，或简称零点能(ZPE)，相
+当于0K下的振动能量，n>0对应振动激发态。（基于谐振近
+似）
+hv/2
+103
+
+
+========== PAGE 104 ==========
+
+研之成理AIMD与CP2K课程学习圈
+有限位移法计算频率
+有限位移法计算频率：在3N个自由度上每个自由度做两次微
+调结构计算，求频率的数值解，单独VASP只计算Gamma点的
+振动频率。必须结合phononpy才能计算声子谱。
+在每个自由度上位移两次
+CP2K 计算频率使用的是数值算法，即对每个原子向+x, -x, +y,
+-y, +z, -z 6 个方向分别进行移动，用数值的方法得到能量的二
+阶导（即力常数），然后计算频率。所以，如果有 N 个原子
+要进行移动，总共要进行 6N+1 次 SCF 收敛计算。
+104
+
+
+========== PAGE 105 ==========
+
+研之成理AIMD与CP2K课程学习圈
+计算频率的输入文件
+&GLOBAL
+RUN_TYPE VIBRATIONAL_ANALYSIS 开启频率计算
+…
+&GLOBAL
+&VIBRATIONAL_ANALYSIS
+DX 0.01 DX 每次移动原子时的步长
+INTENSITIES F INTENSITIES 是否计算IR强度
+NPROC_REP 7 NPROC_REP每个结构使用的 CPU 数目
+FULLY_PERIODIC T FULLY_PERIODIC是否周期性体系
+&END VIBRATIONAL_ANALYSIS
+&MOTION
+&CONSTRAINT
+固定原子(还有一种方法MODE_SELECTIVE)
+&FIXED_ATOMS
+LIST 1..120
+&END FIXED_ATOMS
+注意：固定原子计算频率的时候，一定要多
+&END CONSTRAINT
+的并行结构，也就是说把NPROC_REP设置的
+&END MOTION
+小一些，比如56核的机器，设置NPROC_REP 7,
+则结构数 = 总核数/ NPROC_REP = 56/7 = 8
+
+
+========== PAGE 106 ==========
+
+研之成理AIMD与CP2K课程学习圈
+一般对于表面吸附体系，如果slab原子不参与化学反应，可以把slab模型都固
+定住，只允许吸附原子振动。
+第一步：进行结构优化/过渡态搜索。
+第二步：新建文件夹mkdir freq，把上一步计算的最后一帧结构
+文件得到：
+tail –[原子数] ../cp2k-pos-1.xyz > coord.inc
+准备频率计算的.inp文件提交任务。
+第三步：分析计算结果：
+./cp2kfreq.pl cp2k.out
+130.033994 cm^{-1} ... 0 所有频率，一共3N个
+350.664678 cm^{-1} ... 0
+410.163741 cm^{-1} ... 0
+实频…0，虚频…1
+519.345245 cm^{-1} ... 0
+注：如果有固定原子，需要
+631.108996 cm^{-1} ... 0
+固定
+用尽量多的并行结构，否则
+687.239855 cm^{-1} ... 0
+会出现不可理的虚频。
+1604.035395 cm^{-1} ... 0
+3545.823450 cm^{-1} ... 0
+3701.884294 cm^{-1} ... 0
+
+
+========== PAGE 107 ==========
+
+研之成理AIMD与CP2K课程学习圈
+计算水分子的频率 与 振动模式：
+对于分子体系只有3N-6个振动模式，在计算的时候需要FULLY_PERIODIC F，把
+转动模式去掉，同时也把平动模式去掉：
+最后得到3个振动频率：
+./cp2kfreq.pl cp2k.out
+1617.250372 cm^{-1} ... 0
+3716.935835 cm^{-1} ... 0
+3822.025957 cm^{-1} ... 0
+观察振动模式：
+首先要准备结构优化最后一帧的xyz文件：
+tail –[原子数] ../cp2k-pos-1.xyz > last.xyz
+然后生成生动模式xyz文件：
+./cp2kfreq2mov.pl cp2k.out last.xyz 生成mode-1.xyz …等文件，用Jmol打开，
+选择Tool – animate – parlindrome 观察
+
+
+========== PAGE 108 ==========
+
+研之成理AIMD与CP2K课程学习圈
+输出IR振动强度：
+&VIBRATIONAL_ANALYSIS
+DX 0.01
+开启INTENSITIES
+INTENSITIES T
+NPROC_REP 7
+FULLY_PERIODIC T
+&END VIBRATIONAL_ANALYSIS
+…
+&FORCE_EVAL
+&DFT
+&PRINT
+&MOMENTS 同时打开MOMENTS打印
+&END
+&END PRINT
+&END DFT
+&END DFT
+grep -E "Freq|Intensities" cp2k.out 即可输出所有的振动强度和振动频率
+VIB|Frequency (cm^-1) 1617.250372 3716.935835 3822.025957
+VIB|Intensities 0.006627 0.003664 0.007903
+
+
+========== PAGE 109 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K计算AIMD
+主讲人：刘锦程
+
+
+========== PAGE 110 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K AIMD参数(NVT系综)
+GLOBAL/ RUN_TYPE MD
+&MOTION &PRINT
+&MD &TRAJECTORY
+系综 输出
+ENSEMBLE NVT &EACH
+STEPS 500000 时间 MD 1 轨迹
+TIMESTEP 0.5 温度 &END EACH
+TEMPERATURE 600.0 &END TRAJECTORY
+退火
+# ANNEALING 0.98 &VELOCITIES
+输出
+&THERMOSTAT &EACH
+速度
+TYPE NOSE MD 1
+# REGION MASSIVE &END EACH
+&NOSE 热浴 &END VELOCITIES
+LENGTH 3 &RESTART_HISTORY
+YOSHIDA 3 &EACH
+保存可用于
+MTS 2 MD 500
+重启的文件
+TIMECON [wavenumber_t] 1000 &END EACH
+&END NOSE &END RESTART_HISTORY
+&END THERMOSTAT &END PRINT
+&END MD &END MOTION
+
+
+========== PAGE 111 ==========
+
+研之成理AIMD与CP2K课程学习圈
+关键词 示例中的设置 解释
+ENSEMBLE NVT 如果AIMD模拟体系较小一般用NVT，如果体
+系比较大可以用NVE，NPT等
+STEPS / TIMESTEP 500000 / 0.5 总步数 / 时间步长 [fs]
+TEMPERATURE 600 温度
+ANNEALING 0.98 模拟退火的温度系数，每一步的基准温度都
+是前一步*0.98
+THERMOSTAT/TYPE NOSE Nose-Hoover 热浴，可选AD_LANGEVIN/CSVR
+THERMOSTAT/REGION GLOBAL 所有原子和一个热浴耦合。
+MASSIVE：每个自由度和一个热浴耦合
+NOSE/TIMECON [wavenumber_ 热浴链的时间常数。一般和体系的振动频率
+t] 1000 差不多就行，参数不敏感，大多数情况下取
+1000 cm-1就可以，默认单位是[fs]。
+PRINT/TRAJECTORY/MD 1 每几步打印一次坐标
+PRINT/VELOCITIES/MD 1 每几步打印一次速度
+PRINT/RESTART_HISTO 500 每几步单独保存一次restart文件
+RY/MD
+
+
+========== PAGE 112 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K AIMD注意事项
+• cp2k的轨迹输出文件就是xyz格式的cp2k-pos-1.xyz 分析处
+理轨迹的方式和VASP一样，尽量用正交格子。
+• 在&MOTION里可以同时保留GEO_OPT，和MD的section和关
+键词，通过控制&GLOBAL RUN_TYPE来切换任务类型。
+• 每1步保存轨迹/速度/cp2k-1.restart，设置每500步保存一次，
+cp2k-1_****.restart，
+• 重启AIMD计算直接把cp2k-1.restart当作输入文件提交就行
+了，这个文件里保存了当前的轨迹，速度，和热浴信息。
+• 可以在&SCF 里把波函数输出关掉，避免I/O浪费时间。
+&PRINT
+&RESTART OFF
+&END
+&END PRINT
+
+
+========== PAGE 113 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K AIMD输出文件
+cp2k-1.ener文件：
+Step Nr. Time[fs] Kin.[a.u.] Temp[K] Pot.[a.u.] Cons Qty[a.u.] UsedTime[s]
+0 0.0 1.200381356 700.0000000 -13691.0728216 -13689.8713318 0.000000000
+1 1.0 1.187299946 692.3716020 -13691.0669600 -13689.8763794 1046.22192546
+2 2.0 1.154719762 673.3725324 -13691.0358841 -13689.8757789 168.600112862
+3 3.0 1.108493862 646.4159906 -13690.9912172 -13689.8753827 139.940780630
+4 4.0 1.053960872 614.6151863 -13690.9381697 -13689.8751488 134.075383838
+5 5.0 0.994279400 579.8120544 -13690.8798156 -13689.8750708 126.180976577
+6 …
+MD时间 动能 势能 动能+势能+热浴 计算用时
+cp2k-pos-1.xyz 轨迹文件
+cp2k-vel-1.xyz
+速度文件
+cp2k-1_****.restart 重启计算文件
+
+
+========== PAGE 114 ==========
+
+研之成理AIMD与CP2K课程学习圈
+
+
+========== PAGE 115 ==========
+
+研之成理AIMD与CP2K课程学习圈
+
+
+========== PAGE 116 ==========
+
+研之成理AIMD与CP2K课程学习圈
+
+
+========== PAGE 117 ==========
+
+研之成理AIMD与CP2K课程学习圈
+DOI: 10.1063/1.2408420
+
+
+========== PAGE 118 ==========
+
+研之成理AIMD与CP2K课程学习圈
+练习：Au /TiO (110) AIMD模拟
+20 2
+Science 2003, 299 (5608), 864-867.
+J. Am. Chem. Soc. 2013, 135 (29), 10673-83.
+
+
+========== PAGE 119 ==========
+
+研之成理AIMD与CP2K课程学习圈
+&MOTION &KIND Au
+&MD MASS 19.7
+ENSEMBLE NVT
+BASIS_SET DZVP-MOLOPT-SR-GTH
+STEPS 100000
+POTENTIAL GTH-PBE-q11
+TIMESTEP 2
+&END KIND
+TEMPERATURE 600.0
+&THERMOSTAT
+TYPE NOSE
+# REGION MASSIVE
+改变元素的质量，Au(197 -> 19.7)
+&NOSE
+• 优点：使得Au模拟运动速度加快，在有限
+LENGTH 3
+时间内得到有统计意义的足够信息。
+YOSHIDA 3
+• 缺点：模拟在一定程度上失真
+MTS 2
+TIMECON [wavenumber_t] 1000
+&END NOSE
+&END THERMOSTAT
+&END MD
+&CONSTRAINT
+&FIXED_ATOMS
+固定最
+LIST 1..54
+下面O-
+LIST 289..324
+Ti-O层
+&END FIXED_ATOMS
+&END CONSTRAINT
+&END MOTION
+
+
+========== PAGE 120 ==========
+
+研之成理AIMD与CP2K课程学习圈
+后处理分析（1）：画能量（势能），温度曲线：
+
+
+========== PAGE 121 ==========
+
+研之成理AIMD与CP2K课程学习圈
+后处理分析（2）：观察运动轨迹，保存成movie文件：
+cp2k-pos-1.xyz导入VMD
+pbc set {17.7540 19.4907 27.2817} -all
+pbc box
+pbc wrap -all
+display depthcue off
+color Display Background white
+display rendermode GLSL
+
+
+========== PAGE 122 ==========
+
+研之成理AIMD与CP2K课程学习圈
+后处理分析（3）径向分布函数RDF
+VMD – Analysis – Radial pair distribution function g(r)
+计算RDF要先加pbc set，否则计算RDF，没法考虑周期性镜像，计算不准确。
+2.77
+4.91
+Ti-O
+Au-Ti Au-O
+因为有固定的原子，
+所以会出现尖峰
+
+
+========== PAGE 123 ==========
+
+研之成理AIMD与CP2K课程学习圈
+通过RDF可以进一步推算出原子对断裂/成键的能垒，
+Journal of the American Chemical Society 138(33): 10467-10476.
+
+
+========== PAGE 124 ==========
+
+研之成理AIMD与CP2K课程学习圈
+后处理分析（4）质心到原子的分布函数
+运行脚本:
+python masscenter-TiO2.py newpos.xyz
+
+
+========== PAGE 125 ==========
+
+研之成理AIMD与CP2K课程学习圈
+后处理分析（5）计算金原子MSD（RMSD）：
+VMD – Analysis – RMSD Trajactory TOOL
+RMSD计算最好不要加pbc set之前，否则原子穿越边界计算可能不对。
+
+
+========== PAGE 126 ==========
+
+研之成理AIMD与CP2K课程学习圈
+练习：金属/水界面分子取向模拟
+电极电势影响H O在界面处的分子取向
+2
+Nature Materials volume 18, 697–701(2019)
+
+
+========== PAGE 127 ==========
+
+研之成理AIMD与CP2K课程学习圈
+练习：金属/水界面模拟
+电极电势影响H O在界面处的分子取向
+2
+Nature Materials volume 18, 697–701(2019)
+
+
+========== PAGE 128 ==========
+
+研之成理AIMD与CP2K课程学习圈
+第一步：建模，优化结构，AIMD预平衡。
+第二步：跑10ps的AIMD，（看原文献SI计算方法部分）
+
+
+========== PAGE 129 ==========
+
+研之成理AIMD与CP2K课程学习圈
+
+
+========== PAGE 130 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Au/H O异质结建模，在H O层和Au slab之间添加几个Na原子。计算的时候会自
+2 2
+发的电荷转移，从而改变电极的静电势，模拟不同电极电势条件下的水分子的
+取向。
+pbc set {8.6507 9.9899 31.000} -all
+pbc box
+pbc wrap -all
+display depthcue off
+color Display Background white
+display rendermode GLSL
+
+
+========== PAGE 131 ==========
+
+研之成理AIMD与CP2K课程学习圈
+计算统计 O 和 H在 z方向上的分布，运行脚本： python zdistr.py cp2k-pos-1.xyz H
+H
+O
+H
+O
+
+
+========== PAGE 132 ==========
+
+研之成理AIMD与CP2K课程学习圈
+计算统计 Cu-O和 Cu-H的径向分布函数函数
+忽略前500帧，当作预平衡
+
+
+========== PAGE 133 ==========
+
+研之成理AIMD与CP2K课程学习圈
+练习：CP2K AIMD模拟固液界面constant potential
+标准氢电极SHE相对于真空的绝对电位是4.44 V，通过模拟固液体
+系的功函(真空能级和固液体系的差值)，可以得到当前体系算出的
+能量相当于在什么constant potential发生的。
+• 2.40 V(vs Vacuum) 相当于 -2.04 V(vs SHE)
+• 3.81 V(vs Vacuum) 相当于 -0.63 V(vs SHE)
+Chem. Commun., 2017, 53, 2594--2597
+
+
+========== PAGE 134 ==========
+
+研之成理AIMD与CP2K课程学习圈
+第一步：建模，优化结构，AIMD预平衡。
+第二步：跑20ps的AIMD，每1ps取出一个结构计算单点，拿到功函
+把20个功函做平均，即得到当前组分的平均功函。
+-2.4 V (vs SHE)
+
+
+========== PAGE 135 ==========
+
+研之成理AIMD与CP2K课程学习圈
+练习：VASP计算Li GeP S 锂离子的迁移过程
+10 2 12
+对于电极材料，Li+嵌入脱出速度决定了倍率性能。AIMD可以模拟Li+
+的扩散常数。（注：NEB计算也可以得到扩散常数）
+Chem. Mater. 2012, 24, 15−17
+
+
+========== PAGE 136 ==========
+
+研之成理AIMD与CP2K课程学习圈
+第一步：优化结构；
+第二步：模拟退火升温从100 K提高到（600/800/1000/1200/1400 K）;
+第三步：经行80ps的AIMD模拟，用最后的60ps分析。
+第四步：后处理分析：
+退火升温（可以不做）：
+打开annealing 1.001
+
+
+========== PAGE 137 ==========
+
+研之成理AIMD与CP2K课程学习圈
+AIMD的后处理，均方位移
+均方位移（Mean square displacement, MSD ）是相对于参考位置
+的粒子位置随时间变化的度量。它是对随机运动的空间范围最普
+遍的度量，可以认为是对随机行走“探索”的系统部分进行度量。
+粒子数 t时刻位置 参考位置
+MSD既可以计算三维运动，也可以只考察1D或2D的运动。
+VMD可以计算RMSD，即Root Mean square displacement，对其进
+行平方即可得到MSD。
+
+
+========== PAGE 138 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Extensions-analysis-RMSD Trajectory Tool
+选择原子/元素 开始计算 消除整体平动
+参考第***帧
+忽略前***帧
+画图/保存数据
+删除/添加轨迹
+
+
+========== PAGE 139 ==========
+
+研之成理AIMD与CP2K课程学习圈
+AIMD的后处理，扩散系数
+MSD是时间的函数，理论上均方位移是一条直线，但是AIMD模拟
+时间一般很短 < 100 ps，所以计算结果一般如下图一段震荡向上的
+曲线。需要和做自相关函数一样，以每个点都做参考然后取平均。
+1400 K
+1200 K
+1000 K
+1000 K
+800 K
+600 K
+对不同参考点的RMSD然后取平均，
+得到拟合性更好的线
+
+
+========== PAGE 140 ==========
+
+研之成理AIMD与CP2K课程学习圈
+由于取每一帧然后平均计算速度极慢，还经常把VMD卡死。我们
+这里取0，500，1000，1500，2000帧为参考点取RMSD，然后进行
+平均，再做平方得到MSD。
+1400 K
+1200 K
+1000 K
+800 K
+600 K
+
+
+========== PAGE 141 ==========
+
+研之成理AIMD与CP2K课程学习圈
+AIMD的后处理，扩散系数
+扩散常数（diffusion coefficient）是MD模拟描述离子/分子迁移性
+质的重要参数，单位一般用cm2s-1。在研究锂离子电池电极材料、
+电解液的扩散性质有重要应用价值。
+MD求算扩散常数两种方法，常用的是Einstein公式：
+MSD 维 度 ，时间 MSD
+3维，d=3
+扩散常数，相当于MSD的斜率除以6。模拟时间越长计算就越准。
+另一种求算扩散常数的方法是基于速度自相关函数通过Green-
+Kubo关系得到D，但是不方便。
+
+
+========== PAGE 142 ==========
+
+研之成理AIMD与CP2K课程学习圈
+MSD斜率/6
+扩散系数D
+MSD斜率 扩散系数D（cm2/s）
+slope D D
+T/K 1000/T A2/ps A2/ps cm2/s log(D)
+600 1.666667 0.44461 0.0741017 7.41017E-06 -5.13017
+800 1.25 1.03847 0.1730783 1.73078E-05 -4.76176
+1000 1 2.18712 0.36452 0.000036452 -4.43828
+1200 0.833333 3.61754 0.6029233 6.02923E-05 -4.21974
+1400 0.714286 4.3699 0.7283167 7.28317E-05 -4.13768
+扩散系数和能垒关系满足，阿伦尼乌斯公式：
+
+
+========== PAGE 143 ==========
+
+研之成理AIMD与CP2K课程学习圈
+用log(D)对1000/T作图得到斜率，可以推算出迁移能垒：
+log(D)对1000/T作图斜率即 –E /2303k
+a B
+此例中，
+截距为-3.35865
+斜率为-1.07871
+-1.07871 = –E /2303k
+a B
+k = 8.6173 * 10-5 eV
+B
+求得：E = 0.2141 eV
+a
+
+
+========== PAGE 144 ==========
+
+研之成理AIMD与CP2K课程学习圈
+VMD同时显示多帧结构
+Graphics – Representation - Trajectory
+Create Rep建一个新图层，设置想要
+显示的模型，比如name Li
+在Draw Multiple Frames 让多帧一起
+显示，可以展示体系的运动状态。
+b:s:e
+b代表初始帧
+s代表间隔
+e代表终止帧
+
+
+========== PAGE 145 ==========
+
+研之成理AIMD与CP2K课程学习圈
+CP2K 有用的教程
+Potential of mean force：
+https://www.cp2k.org/exercises:2018_ethz_mmm:pmf
+Simple metadynamics simulation using the coordination numbers as variables:
+https://www.cp2k.org/exercises:2015_cecam_tutorial:mtd1
+Hartree-Fock exchange & ADMM:
+https://www.cp2k.org/exercises:2016_summer_school:hfx
+Adsorption of acetylene on an intermetallic surface：
+https://www.cp2k.org/exercises:2018_ethz_mmm:adsorption_2018
+Projected density of states for graphene and h-BN
+https://www.cp2k.org/exercises:2016_uzh_cmest:calculating_pdos
+Validation of a KCl QMMM model：
+https://www.cp2k.org/exercises:2018_ethz_mmm:qmmm_2018
+
+
+========== PAGE 146 ==========
+
+研之成理AIMD与CP2K课程学习圈
+DFT – D3 参数
+&XC
+&XC_FUNCTIONAL PBE
+&END XC_FUNCTIONAL
+&vdW_POTENTIAL
+DISPERSION_FUNCTIONAL PAIR_POTENTIAL
+&PAIR_POTENTIAL
+或 DFTD3(BJ)
+TYPE DFTD3
+dftd3.dat在源码包的./data
+PARAMETER_FILE_NAME dftd3.dat
+REFERENCE_FUNCTIONAL PBE
+指定泛函，从而指定参数
+R_CUTOFF [angstrom] 15
+截断半径
+#CALCULATE_C9_TERM TRUE
+#REFERENCE_C9_TERM TRUE
+C9项，增加计算量和精度
+&END PAIR_POTENTIAL
+&END vdW_POTENTIAL
+&END XC
+
+
+========== PAGE 147 ==========
+
+研之成理AIMD与CP2K课程学习圈
+SCAN + rvv10 参数
+&XC
+&XC_FUNCTIONAL
+&LIBXC
+FUNCTIONAL XC_MGGA_X_SCAN
+通过LIBXC定义SCAN泛函
+&END LIBXC
+&LIBXC
+FUNCTIONAL XC_MGGA_C_SCAN
+&END LIBXC
+&END XC_FUNCTIONAL
+&vdW_POTENTIAL
+DISPERSION_FUNCTIONAL NON_LOCAL
+&NON_LOCAL
+Nonlocal校正的种类(rvv10)
+TYPE RVV10
+Rvv10对应的参数
+PARAMETERS 6.3 0.0093
+KERNEL_FILE_NAME rVV10_kernel_table.dat
+kernel 文件在源码包./data
+CUTOFF 150
+&END NON_LOCAL cutoff of FFT grid used (150)
+&END vdW_POTENTIAL
+&END XC
+
+
+========== PAGE 148 ==========
+
+研之成理AIMD与CP2K课程学习圈
+DFT + U 参数
++U的方法，一般用
+&DFT
+MULLIKEN或
+PLUS_U_METHOD MULLIKEN
+… MULLIKEN_CHARGES
+&DFT
+…
+…
+&KIND Fe
+BASIS_SET DZVP-MOLOPT-SR-GTH
+POTENTIAL GTH-PBE-q16
+&DFT_PLUS_U
+EPS_U_RAMPING 激活
+EPS_U_RAMPING 1.0E-3
++U的SCF阈值(促进收敛)
+U_RAMPING 0.1
+U_RAMPING U的递增值
+L 2
+L 指定轨道角量子数。
+U_MINUS_J [eV] 4.0
+2: d；3: f
+&END
+U_MINUS_J有效U值 4.0 eV
+&END KIND
+不同程序的适合U值并没有相互的参照价值。不要直接用VASP适
+合的U值给CP2K用。
+
+
+========== PAGE 149 ==========
+
+研之成理AIMD与CP2K课程学习圈
+DFT + U 计算收敛问题
+OT换用DIIS
+EPS_U_RAMPING
+U_RAMPING U的递增值
+先用较低的U值优化收敛，之后再提高U值优化
+U-J
+达到U_MINUS_J
+U值开始递增U_RAMPING
+SCF迭代步数
+达到EPS_U_RAMPING的能量收敛阈值
+
+
+========== PAGE 150 ==========
+
+研之成理AIMD与CP2K课程学习圈
+原子磁矩初猜参数
+&KIND O &KIND Fe2
+BASIS_SET DZVP-MOLOPT-SR-GTH BASIS_SET DZVP-MOLOPT-SR-GTH
+POTENTIAL GTH-PBE-q6 POTENTIAL GTH-PBE-q16
+MAGNETIZATION 1.0 MAGNETIZATION 4.0
+&END KING &DFT_PLUS_U
+L 2
+U_MINUS_J [eV] 4.0
+&END
+&END KING
+(001)
+Fe3+ (tetrahedral) ↓
+Fe2+/Fe3+(octahedral)
+O
+https://groups.google.com/g/cp2k/c/ZlbMyYL2UIo/m/hu-CI7DIBAAJ
+
+
+========== PAGE 151 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Inverse spinel structure:
+1. opposite spins in the tetrahedral and octahedral sites.
+2. 3+ cations occupy the tetrahedral sites,
+while the octahedral sites contain a mixture of 2+ and 3+ cations.
+[001]
+Tetrahedral Fe3+
+Octahedral Fe2+ or Fe3+
+Phys. Chem. Chem. Phys., 2014, 16, 21082--21097
+
+
+========== PAGE 152 ==========
+
+研之成理AIMD与CP2K课程学习圈
+结构文件：
+Fe2 1.066669 7.466683 3.200007
+Octahedral Fe2+
+Fe2 7.466683 5.333345 7.466683
+Fe 3.200007 7.466683 1.066669
+Octahedral Fe3+
+Fe 1.066669 5.333345 1.066669
+Fe3 6.400014 2.133338 6.400014
+Tetrahedral Fe3+
+Fe3 4.266676 0.000000 4.266676
+…
+cp2k.inp文件：
+&KIND Fe2 &KIND Fe &KIND Fe3
+ELEMENT Fe ELEMENT Fe ELEMENT Fe
+MAGNETIZATION 4.0 MAGNETIZATION 5.0 MAGNETIZATION -5.0
+BASIS_SET DZVP-MOLOPT-SR-GTH BASIS_SET DZVP-MOLOPT-SR-GTH BASIS_SET DZVP-MOLOPT-SR-GTH
+POTENTIAL GTH-PBE-q16 POTENTIAL GTH-PBE-q16 POTENTIAL GTH-PBE-q16
+&DFT_PLUS_U &DFT_PLUS_U &DFT_PLUS_U
+EPS_U_RAMPING 1.0E-3 EPS_U_RAMPING 1.0E-3 EPS_U_RAMPING 1.0E-3
+U_RAMPING 0.1 U_RAMPING 0.1 U_RAMPING 0.1
+INIT_U_RAMPING_EACH_SCF F INIT_U_RAMPING_EACH_SCF F INIT_U_RAMPING_EACH_SCF F
+L 2 L 2 L 2
+U_MINUS_J [eV] 3 U_MINUS_J [eV] 3 U_MINUS_J [eV] 3
+&END &END &END
+&END KIND &END KIND &END KIND
+
+
+========== PAGE 153 ==========
+
+研之成理AIMD与CP2K课程学习圈
+Oct Fe2+
+Oct Fe3+
+Tetr Fe3+
+Spin Up/Down 的自旋布局 电荷布局 自旋布局
+初猜磁矩，不一定就和最终磁矩排列一致。
+在SCF自洽迭代过程中自动调整电子占据，最后可以通过原子电荷布局/自
+旋布局/自旋密度分布判断磁性排列。
+自旋电荷密度分布：
+黄色（Spin UP）
+蓝色（Spin DOWN）
+
+
+========== PAGE 154 ==========
+
+研之成理AIMD与CP2K课程学习圈
+原子磁矩初猜参数(老办法)
+&KIND Fe2
+BASIS_SET DZVP-MOLOPT-SR-GTH
+POTENTIAL GTH-PBE-q16 e
+g
+&DFT_PLUS_U
+L 2 t
+2g
+U_MINUS_J [eV] 4.0
+&END
+&BS T
+N: 主量子数
+&ALPHA
+L: 角量子数
+NEL -2 4
+L 0 2 NEL: 电子个数变化。(Fe原本是4s23d6)
+N 4 3
+变化后 4s alpha轨道：(2-2)/2=0
+&END ALPHA
+变化后 3d alpha轨道：(6+4)/2=5
+&BETA
+NEL -2 -4
+变化后 4s beta轨道：(2-2)/2=0
+L 0 2
+变化后 3d beta轨道：(6-4)/2=1
+N 4 3
+&END BETA
+&END BS
+&END KIND
+参考：Implicit_Solvent_Methods_and_DFT_U.pdf
+
+
+========== PAGE 155 ==========
+
+研之成理AIMD与CP2K课程学习圈
+杂化泛函 HSE06
+𝐻𝑆𝐸 𝐻𝐹,𝑆𝑅 𝑃𝐵𝐸,𝑆𝑅 𝑃𝐵𝐸,𝐿𝑅 𝑃𝐵𝐸
+𝐸 = 𝑎𝐸 (𝜔) + (1 − 𝑎)𝐸 (𝜔) + 𝐸 (𝜔) + 𝐸
+𝑥𝑐 𝑥 𝑥 𝑥 𝑐
+&XC &HF
+&XC_FUNCTIONAL &SCREENING
+&XWPBE EPS_SCHWARZ 1.0E-10
+SCALE_X -0.25 &END
+SCALE_X0 1.0 &INTERACTION_POTENTIAL
+OMEGA 0.11 POTENTIAL_TYPE SHORTRANGE 截断长程的HF
+&END OMEGA 0.11
+&PBE &END
+SCALE_X 0.0 &MEMORY
+内存上限MB/core
+SCALE_C 1.0 MAX_MEMORY 2400
+&END PBE &END
+&END XC_FUNCTIONAL FRACTION 0.25 HF的比例，25%
+&END
+&END XC
+• 用psmp版本(OpenMP+MPI混编)提高内存效率。
+• ADMM辅助基组提速杂化泛函计算。
+
+
+========== PAGE 156 ==========
+
+研之成理AIMD与CP2K课程学习圈
+声 明
+本讲义和直播视频仅限参加研之成理AIMD与CP2K课程学习圈的学员
+个人学习使用，版权归属于研之成理(杭州)网络科技有限公司。不得以任何
+方式擅自翻录、复制、传播、出售，或将其中内容挪作它用，否则将追究法
+律责任。
+如果您发现盗版和侵权行为，请保留侵权者的聊天记录和收款转账
+记录等。经核实后，我们给予举报者免费正版课程（无线回看视频，讲义，
+计算文件，课程相关资料，无限答疑社群，后续免费专题课），和500元现金
+奖励。

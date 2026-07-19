@@ -1,0 +1,142 @@
+&GLOBAL
+  PROJECT __PROJECT__
+  RUN_TYPE __RUN_TYPE__
+  PRINT_LEVEL LOW
+&END GLOBAL
+&MULTIPLE_FORCE_EVALS
+  FORCE_EVAL_ORDER 2 3
+  MULTIPLE_SUBSYS T
+&END MULTIPLE_FORCE_EVALS
+# ---------------------------------------------------------------------------
+# 1) MIXED force eval (id 1): couples the FIST (MM) and Quickstep (QM) evals.
+#    MIXING_TYPE GENMIX adds the two energies (E1+E2); MAPPING assigns atoms
+#    to the QM fragment (1) and MM fragment (2).
+# ---------------------------------------------------------------------------
+&FORCE_EVAL
+  METHOD MIXED
+  &MIXED
+    MIXING_TYPE GENMIX
+    GROUP_PARTITION __GROUP_PARTITION__
+    &GENERIC
+      ERROR_LIMIT 1.0E-10
+      MIXING_FUNCTION E1+E2
+      VARIABLES E1 E2
+    &END GENERIC
+    &MAPPING
+      &FORCE_EVAL_MIXED
+        &FRAGMENT 1
+__QM_ATOMS__
+        &END FRAGMENT
+        &FRAGMENT 2
+__MM_ATOMS__
+        &END FRAGMENT
+      &END FORCE_EVAL_MIXED
+      &FORCE_EVAL 1
+        DEFINE_FRAGMENTS 1 2
+      &END FORCE_EVAL
+      &FORCE_EVAL 2
+        DEFINE_FRAGMENTS 1
+      &END FORCE_EVAL
+    &END MAPPING
+  &END MIXED
+  &SUBSYS
+    &CELL
+      ABC __A1__ __A2__ __A3__
+    &END CELL
+    &TOPOLOGY
+      COORD_FILE_NAME __TOPOLOGY__
+      COORD_FILE_FORMAT __COORD_FMT__
+      CONNECTIVITY OFF
+    &END TOPOLOGY
+__ALL_KIND_BLOCK__
+  &END SUBSYS
+&END FORCE_EVAL
+# ---------------------------------------------------------------------------
+# 2) FIST (MM) force eval (id 2): classical force field on the whole system.
+#    The NONBONDED block below is a *placeholder skeleton* -- replace the
+#    LENNARD-JONES self-pairs and add cross-term potentials (GENPOT / EAM /
+#    Buckingham) with parameters from your force field before running.
+# ---------------------------------------------------------------------------
+&FORCE_EVAL
+  METHOD FIST
+  &MM
+    &FORCEFIELD
+      &SPLINE
+        EPS_SPLINE 1.0E-6
+        EMAX_SPLINE 0.9
+      &END SPLINE
+__MM_CHARGE_BLOCK__
+__MM_NONBONDED_BLOCK__
+    &END FORCEFIELD
+    &POISSON
+      &EWALD
+        EWALD_TYPE none
+      &END EWALD
+    &END POISSON
+  &END MM
+  &SUBSYS
+    &CELL
+      ABC __A1__ __A2__ __A3__
+    &END CELL
+    &TOPOLOGY
+      COORD_FILE_NAME __TOPOLOGY__
+      COORD_FILE_FORMAT __COORD_FMT__
+      CONNECTIVITY OFF
+    &END TOPOLOGY
+__MM_KIND_BLOCK__
+  &END SUBSYS
+&END FORCE_EVAL
+# ---------------------------------------------------------------------------
+# 3) Quickstep (QM) force eval (id 3): semi-empirical PM6 on the QM fragment.
+#    QS METHOD PM6 needs no Gaussian basis / pseudopotential; PERIODIC NONE +
+#    WAVELET Poisson + &SE COULOMB/EXCHANGE cutoffs are the canonical setup.
+# ---------------------------------------------------------------------------
+&FORCE_EVAL
+  METHOD Quickstep
+  &DFT
+    &QS
+      METHOD __QM_METHOD__
+      EXTRAPOLATION ASPC
+      EXTRAPOLATION_ORDER 3
+      &SE
+        &COULOMB
+          CUTOFF [angstrom] 20.0
+        &END COULOMB
+        &EXCHANGE
+          CUTOFF [angstrom] 20.0
+        &END EXCHANGE
+      &END SE
+    &END QS
+    &SCF
+      MAX_SCF 20
+      SCF_GUESS ATOMIC
+      EPS_SCF 1.0E-6
+      &OT
+        PRECONDITIONER NONE
+        MINIMIZER DIIS
+        N_DIIS 7
+      &END OT
+      &OUTER_SCF
+        MAX_SCF 8
+        EPS_SCF 1.0E-6
+      &END OUTER_SCF
+    &END SCF
+    &POISSON
+      PERIODIC NONE
+      POISSON_SOLVER WAVELET
+    &END POISSON
+  &END DFT
+  &SUBSYS
+    &CELL
+      ABC 30 30 30
+      PERIODIC NONE
+    &END CELL
+    &TOPOLOGY
+      COORD_FILE_NAME __QM_TOPOLOGY__
+      COORD_FILE_FORMAT xyz
+      &CENTER_COORDINATES
+      &END
+    &END TOPOLOGY
+__QM_KIND_BLOCK__
+  &END SUBSYS
+&END FORCE_EVAL
