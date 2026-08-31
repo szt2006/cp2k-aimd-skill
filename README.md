@@ -46,7 +46,6 @@ cp2k-aimd/
 
 ##  credits
 
-- 课程实战经验来自 **庚子计算《AIMD 与 CP2K》5 天培训**（PDF 讲义 + 视频字幕）。
 - 决策库与输入结构对照 **CP2K 官方手册**（manual.cp2k.org）与本地 `cp2k_input.xml` 校验。
 
 ## 许可
