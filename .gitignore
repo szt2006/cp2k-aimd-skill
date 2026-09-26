@@ -25,12 +25,11 @@ _tmp_*.txt
 # 这类 csv/png 产物既留在仓库根、又不在忽略范围内（实测遗留了两个 9/17 的陈旧文件）。
 _chk_*
 /geo_opt.inp
-/verify_out/
 
 # 维护工具生成的报告（每次运行都会重建）
 _new_items_report.md
 
-# 校验 harness 生成的中间产物（每次运行都会重建）
+# 校验 harness 的中间产物（每次运行都会重建）
 verify_out/_run/
 *.restart
 *.wfn
