@@ -1,7 +1,7 @@
 ---
 name: cp2k-aimd
 description: CP2K 计算顾问（AIMD / 几何优化 / 晶胞优化 / NEB 过渡态 / 元动力学 / 振动分析 / 电子结构后处理）。给出参数推荐、生成与校验 .inp、解析 .out、诊断 SCF/几何/虚频问题、后处理轨迹出图，并按 11 个主线阶段向导陪跑项目。Use when 用户要做 CP2K 计算、问 CP2K 输入怎么写或参数怎么选、需要校验 .inp / 解析 .out / 判断 SCF 收敛 / 决定下一步调什么、或做 RDF/MSD/扩散/VACF/IR/PDOS/Bader/自由能面等后处理时。
-title: CP2K 计算助手（会思考的版本 v2）
+title: CP2K 计算助手 V1.2（会思考的版本）
 summary: 基于庚子计算《AIMD与CP2K讲义》(1-5) 等资料提炼的 CP2K 计算顾问，定位是"全过程参谋，不是自动驾驶"：每个阶段只讲清该考虑什么、取舍、坑、判读指标，并给出可选命令，决定权在用户。工具链：recommend.py 推理参数、gen_inp.py 生成 .inp、validate_inp/parse_output/diagnose 校验·解读·诊断、postprocess.py 后处理出图、guide.py 阶段向导。知识分 A–H 八层：A 决策库 / B 课程综合 / C 速查 / D 手册笔记 / E 原始素材 / F 实战手册（症状→处方 / 数值速查 / 报错速查）/ G 官方权威层（逐页采自 cp2k.org / manual.cp2k.org，带来源 URL）/ H 官方教程与实战算例（24 份官方 workshop·howto·夏校教材共 701 页，逐页抽取带页码，附逐主题精读笔记与真实生产算例输入卡）。冲突裁决：A–F 与 G 冲突以 G 为准；G 未覆盖而 H 教材讲了的内容以 H 原文为准并标注 T** P** 页码。
 agent_created: true
 read_when:

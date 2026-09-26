@@ -800,6 +800,35 @@ def main():
             + "\n      ⇒ 往 gen_inp.py 加带值开关时，同步登记到 wizard.py 的两个集合。"
         )
 
+    # --- 版本号一致性 -------------------------------------------------------
+    # **唯一真源是仓库根目录的 `VERSION`**，另外两处必须与之相符。
+    # 为什么要有这条：同一个数字出现在多处就必须有东西守着 —— 版本号也不例外。
+    # 实测漂移过：`SKILL.md` 的 title 曾写「会思考的版本 v2」，而发布号是 `V1.2`；
+    # 两处说同一件事却对不上，而当时**没有任何检查会发现**。
+    _vp = os.path.join(HERE, "VERSION")
+    _ver = ""
+    if os.path.isfile(_vp):
+        _ver = open(_vp, encoding="utf-8").read().strip()
+    if not _ver:
+        problems.append(
+            "VERSION 文件缺失或为空 —— 它是对外版本号的**唯一真源**，不能没有。"
+            "\n      ⇒ 内容形如一行 `V1.2`。")
+    else:
+        _cl = open(os.path.join(HERE, "CHANGELOG.md"),
+                      encoding="utf-8").read()
+        if "## [{}]".format(_ver) not in _cl:
+            problems.append(
+                "CHANGELOG.md  [版本漂移] 里没有 `## [{}]` 发布段（VERSION 写的是 {}）。"
+                "\n      ⇒ 补一段 `## [{}] - <日期>` 说明本版相对上一版的变化。"
+                .format(_ver, _ver, _ver))
+        _sk = open(os.path.join(HERE, "SKILL.md"), encoding="utf-8").read()
+        _mt = re.search(r"(?m)^title:\s*(.+)$", _sk)
+        if not _mt or _ver not in _mt.group(1):
+            problems.append(
+                "SKILL.md  [版本漂移] 的 `title` 里没有版本号 {}（当前 title 是「{}」）。"
+                "\n      ⇒ 让 title 带上版本号，读者才知道手上这份是哪一版。"
+                .format(_ver, (_mt.group(1).strip() if _mt else "（无 title）")))
+
     # --- 输出 ---------------------------------------------------------------
     if problems:
         print(f"发现 {len(problems)} 处口径不一致：\n")
