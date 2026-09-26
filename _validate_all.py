@@ -211,6 +211,15 @@ def parse(path):
 
 
 def main():
+    # 🔴 `--help` 必须 **exit 0**（AGENTS.md §6.3 的健壮性基线）。
+    # 本 harness 没有别的选项，所以早先**干脆没写参数解析** —— 于是 `--help`
+    # 被当成"没有参数"、直接跑起全套校验（几十秒），最后按校验结果以**非 0** 退出。
+    # 后果不是"少个帮助文档"：`_validate_gbk.py` 会把这个入口也拿来跑一遍，
+    # 于是它稳定判红（实测：`[FAIL] _validate_all.py --help  exit=1 期望 [0]`）。
+    # 教训与 `references/pdf_text/extract_pdf.py` 那次一样 —— **没有选项不等于可以忽略 `--help``**。
+    if any(a in ("-h", "--help") for a in sys.argv[1:]):
+        print(__doc__ or "用法：python _validate_all.py   （无选项，跑全套输入校验）")
+        return 0
     print("#" * 70)
     print("# 1. SCHEMA INTROSPECTION (official reference: cp2k_input.xml)")
     print("#" * 70)

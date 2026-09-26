@@ -1,0 +1,14 @@
+# 本仓库一律用 LF。
+#
+# 为什么必须钉死（2026-10 实测踩过）：仓库里有多处**按行尾敏感**的校验 ——
+#   * references/h_tutorials/cases/ 的 sha256 溯源核验（CRLF 会让 17 处全部不符）
+#   * _validate_gbk.py 的 GBK 控制台回归（2 个用例会红）
+#   * _inject_test.py 的写入-复原比对
+# 而 Windows 上 core.autocrlf=true（Git for Windows 的默认建议）会在每次
+# checkout/rebase 时把工作区改写成 CRLF，于是一次 git 操作就能让整套校验变红。
+# 依赖每个使用者本地的 core.autocrlf 设置是不可靠的 —— 写进仓库才可靠。
+* text=auto eol=lf
+
+# 二进制/生成物不该被行尾转换
+*.png binary
+*.pdf binary
