@@ -810,9 +810,13 @@ def main():
 
     og = truth_official_files() or {}
     print("OK：文档口径全部一致。")
+    # ⚠️ `verify_out/` 是 `_validate_all.py` 的**生成目录**，没跑过它就不存在，
+    # 真值取不到（`vout is None`）。这时要**明说"未测"**，不能印 `None` ——
+    # 汇总行里出现 `None` 会让人以为工具坏了，而不是"这一项本次没测"。
+    vout_s = "{} 个".format(vout) if vout is not None else "未测（需先跑 _validate_all.py）"
     print(f"  模板 {tpl} 类 | 主线阶段 {st['main'] if st else '?'} "
           f"(+续算 {st['resume'] if st else '?'}) | 校验用例 {cases} 类 | "
-          f"示例输入 {vout} 个 | 后处理子命令 {subs} 个 | "
+          f"示例输入 {vout_s} | 后处理子命令 {subs} 个 | "
           f"G 层文件 {og.get('total', '?')} 个")
     return 0
 
