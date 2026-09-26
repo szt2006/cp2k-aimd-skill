@@ -101,7 +101,13 @@ python scripts/guide.py list      # 3. 看 11 个阶段，找到自己该做什�
 
 ## 6. 硬性约束（做任何改动前必读）
 
-1. **所有改动只在本地副本做**，不改 GitHub 上游。
+1. **工作流是「本地改好 → 校验跑绿 → 推到本仓库」**：
+   - **不要直接在 GitHub 上改文件**（网页编辑绕过了本地校验，也绕过了本仓库
+     "改动必须留更正记录"的约定）；
+   - **不要动上游 CP2K 项目**（`cp2k/cp2k`）—— 本仓库只是它的使用者；
+   - **推送前必须在本地跑绿 `python _validate_all_suites.py`（13 项）**。
+     红了先弄明白再推，**不要绕过判据** —— 放宽某条 `want_line` 之前先想清楚：
+     是判据太严，还是被检对象真的错了。
 2. **改完必须串行重跑三项校验**（用同一解释器）：
    ```bash
    python _doc_consistency.py      # 文档一致性
@@ -110,8 +116,19 @@ python scripts/guide.py list      # 3. 看 11 个阶段，找到自己该做什�
    ```
 3. **健壮性基线**：无参数 → usage + exit 2；`--help` → exit 0；
    缺依赖 → 友好提示 + exit 3；文件不存在 → 友好中文 + exit 1，**不抛 traceback**。
-4. **不要删 `.workbuddy/`**（项目数据，非缓存）。
-5. 详见 `CONTRIBUTING.md`。
+   > ⚠️ **"没有选项"不等于可以忽略 `--help`** —— 本仓库栽过两次
+   > （`references/pdf_text/extract_pdf.py`、`_validate_all.py`）：不写参数解析，
+   > `--help` 就被当成"无参数"，直接跑起全套再按结果非 0 退出，
+   > 而"跑一遍所有入口"那类护栏会因此**稳定判红**。
+4. **一律 LF 行尾**（已由 `.gitattributes` 的 `* text=auto eol=lf` 钉死，别绕过它）。
+   > 为什么必须钉死：仓库里有多处**按行尾敏感**的校验 ——
+   > `references/h_tutorials/cases/` 的 sha256 溯源核验（CRLF 会让 17 处全部不符）、
+   > `_validate_gbk.py` 的 GBK 回归、`_inject_test.py` 的写入-复原比对。
+   > Windows 上 `core.autocrlf=true`（Git for Windows 的默认建议）**一次
+   > `checkout`/`rebase` 就能让这三个套件同时变红**。
+   > 依赖每个使用者本地的 git 设置是不可靠的 —— **写进仓库才可靠**。
+5. **不要删 `.workbuddy/`**（项目数据，非缓存）。
+6. 详见 `CONTRIBUTING.md`。
 
 ## 7. 诚实的能力边界
 
