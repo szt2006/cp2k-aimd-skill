@@ -9,7 +9,7 @@
 ## 怎么用
 
 ```bash
-python scripts/guide.py list                       # 看全部 11 个阶段
+python scripts/guide.py list                       # 看全部 11 个主线阶段（+ 1 个续算分支）
 python scripts/guide.py show optimize              # 展开"几何优化"阶段的完整指引
 python scripts/guide.py scan /path/to/project      # 扫描你的项目目录，推断卡在哪、下一步做什么
 python scripts/guide.py next /path/to/project      # 只给下一步行动（scan 的精简版）
@@ -28,7 +28,9 @@ python scripts/guide.py next /path/to/project      # 只给下一步行动（sca
 
 ---
 
-## 11 个阶段（顺序即项目推进顺序）
+## 11 个主线阶段（顺序即项目推进顺序）
+
+> `guide.py list` 额外列出第 12 条 **↻ 续算**——它是旁路分支（任何阶段计算被中断都可能触发），不属于主线推进顺序，详见本节末「续算分支」。
 
 ### ① 立项与问题定义
 **目标**：把科学问题翻译成可计算的任务。
@@ -108,6 +110,18 @@ python scripts/guide.py next /path/to/project      # 只给下一步行动（sca
 - **该做的**：整理能量/结构/谱图/电荷，回答立项时的问题；复查方法描述完整（泛函/基组/参数/U值/k点/温度）；出最终图。
 - **坑**：方法描述不全→别人无法复现；只给图不给误差/收敛信息。
 - **命令**：`postprocess.py <子命令>`（复出最终图）。
+
+---
+
+## 续算分支（↻ 第 12 条，非主线）
+
+`guide.py list` 会在 11 个主线阶段之后额外列出 **↻ 续算**。它**不是**项目推进的一个阶段，而是任何阶段都可能触发的**旁路**：
+
+- **触发条件**：目录里有 `<prefix>-1.restart`，但 `.out` 里没有 `PROGRAM ENDED`（被 kill / 超时 / 宕机中断）。
+- **为什么不放进主线**：续算不改变"你在哪个阶段"，只是把中断的计算接上，接完仍回到原来的阶段继续。
+- **核心动作**：先 `grep -iE 'PROGRAM ENDED|not converged|ABORT' cp2k.out | tail` 确认末步健康；再 `&EXT_RESTART / RESTART_FILE_NAME <prefix>-1.restart`（或直接提交 restart 文件）。
+- **关键坑**：`&MD STEPS` 是**总步数目标**而非"再跑多少步"；续算是从最后写盘的检查点接上，两次检查点之间的步会重跑。
+- 完整指引：`python guide.py show resume`。
 
 ---
 

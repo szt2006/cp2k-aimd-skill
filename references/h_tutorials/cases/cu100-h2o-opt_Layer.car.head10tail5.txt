@@ -1,0 +1,23 @@
+# EXCERPT ONLY - head 10 lines + tail 5 lines
+# source : 【庚子计算整理】cu100-h2o-opt-计算输入文件和结构/cu100-h2o-opt/Layer.car
+# full file: 239 lines, 15658 bytes, sha256 81d17414676d31e8b74b7f98b7c56d7ff8b397215c148f38903d06f8788eac44
+# NOTE: the full coordinate list is NOT reproduced here.
+
+--- HEAD 10 ---
+!BIOSYM archive 3
+PBC=ON
+Materials Studio Generated CAR File
+!DATE Thu Oct 03 01:27:06 2019
+PBC   10.2425   10.2425   21.0000   90.0000   90.0000   90.0000 (P1)
+O1       3.829898219    1.473677262    9.105633079 XXXX 1      o2*     O  -0.820
+H1       3.877951562    0.542687987    9.315187864 XXXX 1      h1o     H   0.410
+H2       3.232610106    1.780427119    9.802339553 XXXX 1      h1o     H   0.410
+end
+O1       7.363109177    5.616173325   16.673554565 XXXX 1      o2*     O  -0.820
+
+--- TAIL 5 ---
+Cu46     7.681866554    7.681866554    1.399999976 XXXX 47     xx      Cu  0.000
+Cu47     7.681866554    7.681866554    5.021262616 XXXX 47     xx      Cu  0.000
+Cu48     8.962177646    8.962177646    3.210631296 XXXX 47     xx      Cu  0.000
+end
+end

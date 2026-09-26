@@ -1,0 +1,98 @@
+name: verify
+
+# 每次 push / PR 自动跑三项校验：
+#   1. 文档口径一致性（零依赖，最快，先跑）
+#   2. 后处理端到端校验（合成数据，需 numpy + matplotlib）
+#   3. 输入权威校验（需 cp2k-input-tools + pint + lxml）
+#
+# 设计意图：本 skill 的正确性不该依赖"人工记得跑"，所以把三条命令固化成 CI。
+# 所有校验都**不需要 CP2K 二进制**——后处理用合成数据，输入校验用官方 cp2k_input.xml。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  docs-consistency:
+    name: 文档口径一致性
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: 实测真值
+        run: python _doc_consistency.py --list
+      - name: 检查口径
+        run: python _doc_consistency.py
+
+  postprocess:
+    name: 后处理端到端校验
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: 安装运行依赖
+        run: pip install -r requirements.txt
+      - name: 跑合成数据校验
+        run: python _validate_postprocess.py
+
+  input-schema:
+    name: 输入文件权威校验
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: 安装开发依赖
+        run: pip install -r requirements-dev.txt
+      - name: 生成并解析全部特征输入
+        run: python _validate_all.py
+      - name: 校验示例输入
+        run: python _official_validate.py verify_out/*.inp
+      # 知识层的护栏：把 A–G 层"某关键字默认是 X"的断言逐条对官方 XML 核。
+      # 它守的是**知识本身**（此前只有 48 条被人工核过），退出码 0 = 无不符。
+      - name: 默认值断言 vs 官方 XML
+        run: python _audit_claims.py
+
+  examples-and-doctor:
+    name: 示例工程与自检
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: 安装依赖
+        run: pip install -r requirements.txt -r requirements-dev.txt
+      - name: 一键环境自检（CI 模式）
+        run: python scripts/doctor.py --quiet
+      - name: 内置语法校验全部示例输入
+        run: |
+          for f in examples/0*/*.inp; do
+            echo "--- $f ---"
+            python scripts/validate_inp.py "$f"
+          done
+      - name: 权威解析器校验全部示例输入
+        run: python _official_validate.py examples/0*/*.inp
+      - name: 示例目录完整性（每个示例须有 README.md 与 .inp）
+        run: |
+          fail=0
+          for d in examples/0*/; do
+            [ -f "$d/README.md" ] || { echo "缺 README.md: $d"; fail=1; }
+            ls "$d"/*.inp >/dev/null 2>&1 || { echo "缺 .inp: $d"; fail=1; }
+          done
+          exit $fail
+      - name: 向导与 JSON 输出可用
+        run: |
+          python scripts/doctor.py --json > /dev/null
+          python scripts/wizard.py --yes --out /tmp/_ci_wizard.inp
+          python scripts/validate_inp.py /tmp/_ci_wizard.inp
+          python scripts/guide.py --json list > /dev/null
+          python scripts/validate_inp.py --json examples/01_si_bulk_static/si_bulk8.inp > /dev/null

@@ -1,0 +1,383 @@
+# SOURCE: 【QMMM-庚子计算整理】CP2K Quantum Mechanics  Molecular Mechanics 2D Embedding and Applications.pdf
+# PAGES: 23
+# TOPIC: QM/MM 2D 嵌入与应用
+
+
+
+========== PAGE 1 ==========
+
+CP2K Quantum Mechanics / Molecular Mechanics
+2D Embedding and Applications
+David Z. Gao, Matthew B. Watkins, Filippo Federici-Canova, Alexander L. Shluger
+Department of Physics and Astronomy
+University College London
+
+
+========== PAGE 2 ==========
+
+Outline
+Introduction to QM/MM
+• Embedded Cluster Models
+• Embedded Island Models
+• Embedded Sandwich Models
+Implementation in CP2K
+Application to Molecular Films
+• Experimental Overview
+• Applying QM/MM
+• Common Challenges
+Conclusions
+
+
+========== PAGE 3 ==========
+
+Embedded Cluster Methods (Finite Systems)
+Why Combine QM and MM?
+• QM: Electronic Effects
+• MM: Wider Environment
+• Reduce Computational Cost
+Typically too expensive to treat the
+full system with ab initio techniques
+Only part of the system contains
+critical interactions!
+
+
+========== PAGE 4 ==========
+
+Additional Embedding Schemes in CP2K: Island
+MM region
+QM region
+
+
+========== PAGE 5 ==========
+
+Additional Embedding Schemes in CP2K: Sandwich
+Periodic in 2 Dimensions: The Infinite Sandwich Model
+
+
+========== PAGE 6 ==========
+
+Additive QM/MM in CP2K
+Total energy is just the QM part + MM part + interaction between them!
+Note: There is also subtractive QM/MM… which is a bit different… (also in CP2K)
+= Position of an MM atom with charge
+= Total electronic and nuclear charge density of the QM system
+= van der Waals interactions between MM and QM atoms
+
+
+========== PAGE 7 ==========
+
+An Example Application:
+Molecular Design and Control over the Morphology of
+Self-Assembled Films on Ionic Substrates
+Ania Amrous, Franck Bocquet, Laurent Nony, Franck Para, Christian Loppacher*,
+Simon Lamare, Frank Palmino, Frederic Cherioux,
+David Z. Gao*,Filippo Federici Canova, Matthew B. Watkins, and Alexander L. Shluger
+Advanced Materials Interfaces, 2004, 1, 1400414.
+
+
+========== PAGE 8 ==========
+
+The Surface and a Molecule
+Molecular Design:
+• Anchoring CN Functional Group
+• Interchangeable Groups
+• Rings for π-Stacking Interactions
+• Hydrocarbon Arms for Flexibility
+The KCl(001) Substrate:
+• Experimentally Limited: Easily Cleaved,
+Obtainable, Few Impurities, Etc…
+• Simple Cubic Structure
+• Simple Step Edges
+• Insulator with Anchoring and Repulsive Sites
+
+
+========== PAGE 9 ==========
+
+QM/MM Representation
+2D Monolayer Films
+2D Sandwich Embedding
+DFT for Molecule-
+Surface Interactions
+Classical Force Field for
+Subsurface KCl Atoms
+
+
+========== PAGE 10 ==========
+
+QM/MM CP2K Input Sections
+&FORCE_EVAL &WILLIAMS
+METHOD QMMM (QMMM/FIST/QS) atoms Cl Cl
+@include QS.inc (The usual DFT stuff!) A [eV] 1227.2
+B [angstrom^-1] 3.1114
+&MM (This is from @include MM.inc) C [eV*angstrom^6] 124.0
+&FORCEFIELD RCUT [angstrom] 3.0
+&CHARGE &END WILLIAMS
+ATOM K &WILLIAMS
+CHARGE 1.0 atoms K K
+&END CHARGE A [eV] 3796.9
+&CHARGE B [angstrom^-1] 3.84172
+ATOM Cl C [eV*angstrom^6] 124.0
+CHARGE -1.0 RCUT [angstrom] 3.0
+&END CHARGE &END WILLIAMS
+&END NONBONDED
+&NONBONDED &END FORCEFIELD
+&WILLIAMS &POISSON (POISSON section in the MM part)
+atoms K Cl &EWALD
+A [eV] 4117.9 EWALD_TYPE spme
+B [angstrom^-1] 3.2808 ALPHA .44
+C [eV*angstrom^6] 0.0 GMAX 40
+RCUT [angstrom] 3.0 &END EWALD
+&END WILLIAMS &END POISSON
+&END MM
+
+
+========== PAGE 11 ==========
+
+QM/MM CP2K Input Sections
+&QMMM
+&MM_KIND K (Width of MM Gaussians)
+RADIUS 1.52
+&CELL (Size of QS Cell)
+&END MM_KIND
+ABC 12.6 15.0 12.6
+&MM_KIND Cl
+PERIODIC XZ
+RADIUS 1.67
+&END CELL
+&END MM_KIND
+ECOUPL GAUSS (Use GEEP)
+#should be treated as parameters
+NOCOMPATIBILITY
+USE_GEEP_LIB 6
+&QM_KIND K
+NOCENTER F
+MM_INDEX 25..32 41..48
+NOCENTER0 F
+&END QM_KIND
+&PERIODIC (Apply periodic potential)
+&QM_KIND Cl
+&MULTIPOLE OFF
+MM_INDEX 17..24 33..40
+#QM multipole coupling
+&END QM_KIND
+#use if XY of MM box =/= QM box
+&END
+&END QMMM
+&END PERIODIC
+
+
+========== PAGE 12 ==========
+
+QM/MM CP2K Input Sections
+&SUBSYS
+&END FORCE_EVAL
+&CELL
+ABC 12.6 50 12.6 (Size of Entire System)
+&GLOBAL
+PERIODIC XZ
+FLUSH_SHOULD_FLUSH
+&END CELL
+PRINT_LEVEL MEDIUM
+&TOPOLOGY
+PROJECT KCl
+COORD_FILE_NAME kcl.xyz
+RUN_TYPE GEO_OPT
+COORD_FILE_FORMAT XYZ
+&END GLOBAL
+&GENERATE
+&ISOLATED_ATOMS (Ignores bonds, dihedrals...)
+&MOTION
+LIST 1..48
+&GEO_OPT
+&END ISOLATED_ATOMS
+OPTIMIZER LBFGS
+&END GENERATE
+&END
+&END TOPOLOGY
+&KIND K
+&CONSTRAINT
+ELEMENT K
+&FIXED_ATOMS
+BASIS_SET DZVP-MOLOPT-SR-GTH
+LIST 1..16
+POTENTIAL GTH-PBE-q9
+EXCLUDE_MM .FALSE.
+&END KIND
+EXCLUDE_QM .TRUE.
+&KIND Cl
+&END FIXED_ATOMS
+BASIS_SET DZVP-MOLOPT-GTH
+&END CONSTRAINT
+POTENTIAL GTH-PBE-q7
+&END MOTION
+&END KIND
+&END SUBSYS
+
+
+========== PAGE 13 ==========
+
+Step 1: Select Individual QM and MM Representations
+CP2K with mixed Gaussian and plane wave (GPW) approach
+J. VandeVondele, M. Krack, F. Mohamed, M. Parrinello, T. Chassaing, J. Hutter,
+Comput. Phys. Commun. 2005 , 167 , 103 .
+GGA/PBE with the MOLOPT basis set
+J. VandeVondele, J. Hutter, J. Chem. Phys.
+2007, 127, 114105 .
+DFT-D2 dispersion corrections
+S. Grimme, J. Comput. Chem. 2006, 27, 1787 .
+Calculated Properties:
+•Mulliken and Bader analysis
+indicate no charge transfer
+•Main interaction to be between
+CN and the surface cations
+•3.1 eV Adsorption Energy
+•DFT Recipe Produces 5.2 eV KCl
+homo/lumo gap (Exp:7.6 eV)
+MM Representation of KCl(001): Previously Derived Pair Potentials:
+C.R.A. Catlow , K.M. Diller , M.J. Norgett ,
+(Note: Fixed Shells to Cores!)
+J. Phys. C: Solid State Phys. 1977, 10, 1395.
+
+
+========== PAGE 14 ==========
+
+Electronic Properties: CDB on KCl(001)
+D.Z. Gao, F. Federici Canova, M.B. Watkins, A.L. Shluger, Journal
+of Computational Chemistry, 2014, Submitted
+
+
+========== PAGE 15 ==========
+
+Step 2: Evaluate the QM/MM Model
+After choosing DFT and classical representations…. Evaluate QM/MM
+•Compare known physical properties of the various representations
+•Compare electronic structure of the DFT and QM/MM systems
+•Check for some of the common issues related to embedding
+Starting with some physical properties:
+QM/MM indeed seems to work…
+D.Z. Gao, F. Federici Canova, M.B. Watkins, A.L. Shluger, Journal
+of Computational Chemistry, 2014, Submitted
+
+
+========== PAGE 16 ==========
+
+Electronic Structure Using QM/MM
+D.Z. Gao, F. Federici Canova, M.B. Watkins, A.L. Shluger, Journal
+of Computational Chemistry, 2014, Submitted
+
+
+========== PAGE 17 ==========
+
+Common Considerations: Electron Leakage
+2D Embedding
+Vacuum Region
+QM Atoms
+MM Atoms
+In previous embedded cluster studies charge leakage was an issue:
+•Examine the electron density plots of the system
+•Less of a problem in ionic materials , looks OK here!
+
+
+========== PAGE 18 ==========
+
+Common Considerations: Border Potentials
+QM atoms interact with MM atoms at the border…
+•May not be properly represented using the standard force field
+•Additive corrective potential may be added to improve the model
+Some possible causes:
+A. Difference in lattice constant in
+the QM and MM region
+B. More complex interactions at
+the edge… covalent bonds etc?
+Example Solution and Implementation… (for case A)
+1. Fix the atoms to the desired positions
+2. Optimize an additional set of additive pair potentials
+3. Forces on border atoms should reach 0 ideally
+
+
+========== PAGE 19 ==========
+
+QM/MM CP2K Embedding Potentials Input Example
+&MM &NONBONDED
+&POISSON
+&WILLIAMS
+&EWALD
+&FORCEFIELD (the normal sets of potentials)
+EWALD_TYPE spme
+&CHARGE &END WILLIAMS
+ALPHA .44
+ATOM K &WILLIAMS
+GMAX 40
+CHARGE 1.0 atoms K ClZ
+&END EWALD
+&END CHARGE A [eV] 4117.9
+&END POISSON
+&CHARGE B [angstrom^-1] 3.2808
+ATOM Cl C [eV*angstrom^6] 0.0
+&END MM
+CHARGE -1.0 RCUT [angstrom] 5.0
+&END CHARGE &END WILLIAMS
+&CHARGE (border KCl) &WILLIAMS
+ATOM KZ atoms KZ Cl
+CHARGE 1.0 A [eV] 4117.9
+&END CHARGE B [angstrom^-1] 3.2808
+&CHARGE C [eV*angstrom^6] 0.0
+If you need border
+ATOM ClZ RCUT [angstrom] 5.0
+potentials for KCl (001)
+CHARGE -1.0 &END WILLIAMS
+bulk material or some
+&END CHARGE (all other possible pairings)
+scripts to do this just ask
+&END NONBONDED
+&END FORCEFIELD
+
+
+========== PAGE 20 ==========
+
+Periodic Monolayer Structures: CDB on KCl (001)
+Advanced Materials Interfaces, 2014, 1, 1400414.
+[A] Investigate various possible monolayer configurations
+•Constrained using the periodicity of the pattern from experiment
+•Enantiomers (i.e. molecules flipped over) result in degenerate patterns
+•Adsorption energy per molecule increases to 3.4 eV in these configurations
+[B] Simulate AFM images to [C] interpret experimental results…
+
+
+========== PAGE 21 ==========
+
+Creating a Force Field for CDB/TCB on KCl (001)
+CHARMM Force Field for the molecule
+B.R. Brooks, C.L. Brooks, A.D. Mackerell, et al.
+J. Comput. Chem. 2009, 30, 1545-1614.
+?
+1) Use QM/MM to generate fitting data
+2) Genetic algorithm to fit large numbers
+of variables simultaneously
+3) Evaluate force field
+4) Study dynamics within the system
+Classical Representation of KCl(001):
+C.R.A. Catlow , K.M. Diller , M.J. Norgett ,
+J. Phys. C: Solid State Phys. 1977, 10, 1395.
+
+
+========== PAGE 22 ==========
+
+Molecular Dynamics… a quick example!
+
+
+========== PAGE 23 ==========
+
+Thanks!
+Conclusions
+QM/MM can greatly reduce cost if:
+•Only some interactions are critical
+•MM potentials are available
+General Steps:
+•Select QM and MM parameters
+•Test electronic and physical properties
+•Check for some common breakdowns
+http://www.cp2k.org/exercises:2014_uzh_
+molsim:index : Marcella Iannuzzi
+http://www.archer.ac.uk/training/course-
+material/2014/08/CP2K/Slides/QMMM.pdf

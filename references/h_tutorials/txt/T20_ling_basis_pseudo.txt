@@ -1,0 +1,611 @@
+# SOURCE: 【基组和赝势-庚子计算整理】ling_basis_pseudo.pdf
+# PAGES: 34
+# TOPIC: 基组与赝势（Ling）
+
+
+
+========== PAGE 1 ==========
+
+Optimisation of Basis Sets and
+Pseudopotentials
+Sanliang Ling
+University College London
+4th CP2K Tutorial, 31st August – 4th September 2015, Zurich
+
+
+========== PAGE 2 ==========
+
+Electronic structure methods in CP2K
+GPW: Gaussian and plane waves method
+-Goedecker-Teter-Hutter pseudopotentials
+-Gaussian basis sets for valence electrons
+GAPW: Gaussian and augmented plane
+waves method
+-all electron calculations
+2
+
+
+========== PAGE 3 ==========
+
+LCAO
+LCAO: Linear Combination of Atomic Orbitals
+MO coefficient atomic orbital
+molecular orbital (MO)
+(unknown) (basis function)
+Jensen, Introduction to Computational Chemistry, Wiley (2007)
+3
+
+
+========== PAGE 4 ==========
+
+Gaussian type orbitals (GTOs)
+normalisation exponent:
+constant width of orbital
+sum of l , l , l determines type of orbital:
+x y z
+0 for s, 1 for p, 2 for d, 3 for f, etc
+Jensen, Introduction to Computational Chemistry, Wiley (2007)
+4
+
+
+========== PAGE 5 ==========
+
+Contracted basis sets
+contraction coefficient
+(to be optimised)
+Jensen, Introduction to Computational Chemistry, Wiley (2007)
+5
+
+
+========== PAGE 6 ==========
+
+Polarisation function
+(cid:190) basis functions with higher angular momentum (than
+the valence orbital)
+(cid:190) first shell of polarisation functions are most important
+(cid:190) p-function for H-Be, d-function for B-Ca, etc
+(cid:190) adds additional flexibility to the basis set, provides
+better descriptions to bonding
+Jensen, Introduction to Computational Chemistry, Wiley (2007)
+6
+
+
+========== PAGE 7 ==========
+
+Diffuse function
+(cid:190) basis function with small exponent
+(cid:190) better representation of the “tail” of the wavefunction
+(cid:190) important for loosely bound electrons (anions or
+excited state) and molecules in the gas phase
+Jensen, Introduction to Computational Chemistry, Wiley (2007)
+7
+
+
+========== PAGE 8 ==========
+
+All-electron basis set for GAPW calculations
+(cid:190) Pople style basis sets (e.g. 6-31G*, etc)
+(cid:190) Correlation consistent basis sets (aug-cc-pVDZ, etc)
+(cid:190) and more
+see $CP2K/cp2k/data, ‘ALL_BASIS_SETS’ and ‘EMSL_BASIS_SETS’
+additional all-electron basis sets can be found from EMSL Basis Set
+Exchange, see https://bse.pnl.gov/bse/portal
+Potential needs to be defined in &KIND section for GAPW calculations, see
+$CP2K/cp2k/data/POTENTIAL, choose “ALL” potential
+8
+
+
+========== PAGE 9 ==========
+
+Basis set for GPW calculations
+(cid:190) MOLOPT basis sets: basis sets optimised from molecular
+calculations, see ‘BASIS_MOLOPT’
+(cid:190) ‘DZVP-MOLOPT-SR-GTH’ for solids (‘SR’ denotes shorter
+range, i.e. less and thus less diffuse primitives)
+(cid:190) always check the basis set convergence (DZVP/TZVP/…)
+(cid:190) do not use SZV for production run
+(cid:190) more basis sets for GTH pseudos can be found in
+‘BASIS_ZIJLSTRA’ and ‘GTH_BASIS_SETS’
+(cid:190) all basis set files can be found in $CP2K/cp2k/data
+9
+
+
+========== PAGE 10 ==========
+
+Basis set construction
+(cid:190) trade-off between computational cost and accuracy
+(cid:190) route for systematic improvements
+(SZV/DZVP/TZVP/TZV2P/…)
+(cid:190) same basis set should perform in various chemical
+environments, e.g. from isolated molecules to solids
+(cid:190) lead to well conditioned overlap matrices (suitable for
+linear scaling calculations)
+(cid:190) condition number: ratio of the largest to smallest
+eigenvalue of the overlap matrix
+VandeVondele & Hutter, J. Chem. Phys., 127, 114105 (2007)
+10
+
+
+========== PAGE 11 ==========
+
+MOLOPT basis set
+CP2K All-electron (Gaussian/NWCHEM)
+SZV STO-3G
+H-Rn
+DZVP 6-31G*
+TZVP 6-311G*
+limited
+availability
+TZV2P 6-311G(2df, 2pd)
+SZV: single-zeta valence, i.e. one contracted function per orbital
+DZVP: double-zeta valence, i.e. two contracted functions per orbital plus
+one set of polarisation functions with l = l + 1
+max
+TZVP/TZV2P: triple-zeta valence, i.e. three contracted functions per
+orbital plus one/two set of polarisation functions with l = l + 1
+max
+Matthias Krack, 1st CP2K Tutorial, Zurich, 2009 11
+
+
+========== PAGE 12 ==========
+
+MOLOPT basis set format
+element basis set name number of valence electrons in pseudo
+H DZVP-MOLOPT-GTH DZVP-MOLOPT-GTH-q1
+1 number of CGTO contraction coefficients
+2 0 1 7 2 1
+11.478000339908 0.0249162432 -0.0125124214 0.0245109182
+3.700758562763 0.0798254900 -0.0564490711 0.0581407941
+1.446884268432 0.1288626753 0.0112426847 0.4447094985
+0.716814589696 0.3794488946 -0.4185875483 0.6462079731
+0.247918564176 0.3245524326 0.5903632167 0.8033850182
+0.066918004004 0.0371481214 0.4387031330 0.8929712087
+0.021708243634 -0.0011251955 -0.0596931713 0.1201013165
+Gaussian exponents s-function p-function
+principle quantum
+2 0 1 7 2 1 number of
+number
+p-function
+minimum angular
+maximum angular number of number of
+momentum
+momentum Gaussian s-function
+quantum number
+quantum number exponents 12
+
+
+========== PAGE 13 ==========
+
+Basis set optimisation
+(cid:190) number of Gaussian exponents (to be determined
+before optimisation)
+(cid:190) number of basis functions per angular momentum
+(cid:190) choice of training molecules (transferability)
+(cid:190) strategy of basis set optimisation, e.g. whether or not
+to optimise different basis sets concurrently
+(cid:190) weight of condition number in optimisation
+13
+
+
+========== PAGE 14 ==========
+
+Choice of training molecules
+(cid:190) small molecules formed with different elements and
+with different coordination environments
+(cid:190) preferably with only two elements (including the
+target element) in each molecule
+(cid:190) a good source of small molecules (with optimised
+geometries) can be found in the Supporting
+Information of “Ahlrichs et al., Phys. Chem. Chem.
+Phys., 7, 3297 (2005)”
+14
+
+
+========== PAGE 15 ==========
+
+Basis set optimisation: MOLOPT
+contraction
+exponents
+coefficients
+objective basis sets training total condition
+weight
+function to be optimised molecules energy number
+VandeVondele & Hutter, J. Chem. Phys., 127, 114105 (2007)
+15
+
+
+========== PAGE 16 ==========
+
+Basis optimisation with OPTIMIZE_BASIS
+Choosing a reference (complete) basis
+Performing accurate molecular calculations with ref. basis
+Choosing a form of the basis to be fitted
+Minimizing the objective function
+𝐵,𝑀 𝐵,𝑀
+Ω 𝛼 , 𝑐 = ∆𝜌 𝛼 , 𝑐 + 𝛾 ln κ 𝛼 , 𝑐
+𝑖 𝑗 𝐵 𝑀 𝑖 𝑗 𝑖 𝑗
+(developed by Dr Florian Schiffmann) 16
+
+
+========== PAGE 17 ==========
+
+Basis optimisation with OPTIMIZE_BASIS
+• Reference (Complete) basis set
+– check GTH-def2-QZVP and aug-GTH-def2-QZVP
+included in $CP2K/cp2k/data/BASIS_ADMM
+– generate uncontracted basis sets with the ATOM code
+(see Marcella’s slides and examples in
+$CP2K/cp2k/tests/ATOM)
+• Molecular calculations
+– use reference basis sets for all elements
+– avoid homonuclear diatomic molecules
+– use equilibrium geometry (i.e. GEO_OPT)
+17
+
+
+========== PAGE 18 ==========
+
+Generate uncontracted basis set with ATOM
+&GLOBAL
+PROJECT Na
+PROGRAM_NAME ATOM
+&END GLOBAL
+&ATOM
+ELEMENT Na
+RUN_TYPE BASIS_OPTIMIZATION
+ELECTRON_CONFIGURATION CORE 2s2 2p6 3s1
+CORE 1s2
+MAX_ANGULAR_MOMENTUM 1
+&METHOD
+METHOD_TYPE KOHN-SHAM
+&XC
+&XC_FUNCTIONAL PBE
+&END XC_FUNCTIONAL
+&END XC
+&END METHOD
+&OPTIMIZATION
+EPS_SCF 1.e-8
+&END OPTIMIZATION
+&PP_BASIS
+NUM_GTO 6 6
+S_EXPONENTS 7.92602574 5.92602574 1.59655262 0.71279902 0.28969807 4.00675308
+P_EXPONENTS 7.92602574 5.92602574 1.59655262 0.71279902 0.28969807 4.00675308
+&END PP_BASIS
+&POTENTIAL
+PSEUDO_TYPE GTH
+POTENTIAL_FILE_NAME POTENTIAL
+POTENTIAL_NAME GTH-PBE-q9
+&END POTENTIAL
+&POWELL
+ACCURACY 1.e-8
+STEP_SIZE 1.0
+&END POWELL
+&END ATOM 18
+
+
+========== PAGE 19 ==========
+
+Generate uncontracted basis set with ATOM
+19
+
+
+========== PAGE 20 ==========
+
+Generate uncontracted basis set with ATOM
+Na CBS
+8
+2 0 2 1 1 1 1
+23.51400109 1.0 1.0 1.0
+2 0 2 1 1 1 1
+11.54276369 1.0 1.0 1.0
+2 0 2 1 1 1 1
+4.98513381 1.0 1.0 1.0
+2 0 2 1 1 1 1
+2.06401264 1.0 1.0 1.0
+2 0 2 1 1 1 1
+0.83224580 1.0 1.0 1.0
+2 0 2 1 1 1 1
+0.31900235 1.0 1.0 1.0
+2 0 2 1 1 1 1
+0.06577574 1.0 1.0 1.0
+2 0 2 1 1 1 1
+0.02386738 1.0 1.0 1.0
+20
+
+
+========== PAGE 21 ==========
+
+GTH-def2-QZVP basis set
+Go to https://bse.pnl.gov/bse/portal,
+H GTH-def2-QZVP
+12
+select ‘H’ element and ‘Def2-QZVP’ basis
+2 0 0 7 1
+11.478000339908 0.024916243200 set, use ‘Gaussian 94’ format:
+3.700758562763 0.079825490000
+1.446884268432 0.128862675300
+SZV H 0
+0.716814589696 0.379448894600
+S 4 1.00
+0.247918564176 0.324552432600
+190.6916900 0.70815167E-03
+0.066918004004 0.037148121400
+28.6055320 0.54678827E-02
+0.021708243634 -0.001125195500
+6.5095943 0.27966605E-01
+1 0 0 1 1
+1.8412455 0.10764538
+6.50959430 1.00000000
+S 1 1.00
+1 0 0 1 1
+0.59853725 1.0000000
+1.84124550 1.00000000
+S 1 1.00
+1 0 0 1 1
+0.21397624 1.0000000
+0.59853725 1.00000000
+S 1 1.00
+1 0 0 1 1
+0.80316286E-01 1.0000000
+0.21397624 1.00000000
+P 1 1.00
+1 0 0 1 1
+2.29200000 1.0000000
+0.08031629 1.00000000
+P 1 1.00
+1 1 1 1 1
+0.83800000 1.0000000
+2.29200000 1.00000000
+P 1 1.00
+1 1 1 1 1
+0.29200000 1.0000000
+0.83800000 1.00000000
+D 1 1.00
+1 1 1 1 1
+2.06200000 1.0000000
+0.29200000 1.00000000
+D 1 1.00
+1 2 2 1 1
+0.66200000 1.0000000
+2.06200000 1.00000000
+F 1 1.00
+1 2 2 1 1
+1.39700000 1.0000000
+0.66200000 1.00000000
+1 3 3 1 1
+(use exponents between 0.05~20 only)
+1.39700000 1.00000000
+21
+
+
+========== PAGE 22 ==========
+
+Input Structure: OPTIMIZE_BASIS
+&GLOBAL
+PROJECT optbas
+PROGRAM_NAME OPTIMIZE_BASIS Ti FIT10
+PRINT_LEVEL HIGH 10
+&END GLOBAL 1 0 0 1 1
+&OPTIMIZE_BASIS 0.10001966 1.00000000
+BASIS_TEMPLATE_FILE BASIS_SET_TEMPLATE 1 0 0 1 1
+BASIS_WORK_FILE WORK_BASIS_STRUCTURE 1.06186104 1.00000000 s-functions
+BASIS_OUTPUT_FILE Ti_FIT10 1 0 0 1 1
+# USE_CONDITION_NUMBER Y 0.40963197 1.00000000
+# CONDITION_WEIGHT 0.0005 1 0 0 1 1
+WRITE_FREQUENCY 10 4.39901876 1.00000000
+&OPTIMIZATION 1 1 1 1 1
+MAX_FUN 50000 0.52985233 1.00000000
+&END OPTIMIZATION 1 1 1 1 1 p-functions
+… 1.57394040 1.00000000
+&TRAINING_FILES 1 1 1 1 1
+DIRECTORY ../ticl4 11.83843422 1.00000000
+INPUT_FILE_NAME ticl4.inp 1 2 2 1 1
+&END TRAINING_FILES 0.25675246 1.00000000
+… 1 2 2 1 1 d-functions
+&FIT_KIND Ti 1.02358115 1.00000000
+BASIS_SET FIT10 1 2 2 1 1
+INITIAL_DEGREES_OF_FREEDOM EXPONENTS 4.21355677 1.00000000
+&CONSTRAIN_EXPONENTS
+BOUNDARIES 0.1 20 (Ti electron configuration: [Ne] 3s2 3p6 4s2 3d2)
+USE_EXP -1 -1
+&END CONSTRAIN_EXPONENTS
+&END FIT_KIND
+&END OPTIMIZE_BASIS
+(see $CP2K/cp2k/tests/QS/regtest-optbas)
+22
+
+
+========== PAGE 23 ==========
+
+Basis optimisation with OPTIMIZE_BASIS
+23
+
+
+========== PAGE 24 ==========
+
+Basis set superposition error
+(cid:190) MOLOPT basis sets are &GLOBAL
+PROJECT_NAME project
+incomplete RUN_TYPE BSSE
+&END GLOBAL
+…
+(cid:190) BSSE correction using the
+&FORCE_EVAL
+…
+Boys and Bernardi
+&BSSE
+counterpoise correction &FRAGMENT
+LIST 1..272
+scheme &END FRAGMENT
+&FRAGMENT
+Boys & Bernardi, Mol. Phys., 19, 553 (1970)
+LIST 273..368
+&END FRAGMENT
+&END BSSE
+(cid:190) useful for binding energy
+…
+calculations, etc SCF_GUESS ATOMIC
+…
+&KIND H_ghost
+(cid:190) use larger basis sets to BASIS_SET DZVP-MOLOPT-SR-GTH
+GHOST
+reduce BSSE
+&END KIND
+…
+(see more examples in $CP2K/cp2k/tests/QS/regtest-gpw-3)
+24
+
+
+========== PAGE 25 ==========
+
+Pseudopotentials
+Goedecker-Teter-Hutter (GTH) pseudopotentials
+ionic charge error function
+long-ranged term
+Local part
+short-ranged term
+coefficients
+r : range of Gaussian ionic charge distribution
+loc
+Krack, Theor. Chem. Acc., 114, 145 (2005)
+25
+
+
+========== PAGE 26 ==========
+
+Pseudopotentials
+Non-local part
+coefficients
+Gaussian-type projectors
+normalisation spherical
+radius
+constant harmonics
+Krack, Theor. Chem. Acc., 114, 145 (2005)
+26
+
+
+========== PAGE 27 ==========
+
+GTH pseudopotential format
+Element Name Number of valence electrons
+Ti GTH-PBE-q12 GTH-PBE
+4 6 2
+Number of valence electrons in each shell (s/p/d)
+𝒓
+0.38000000 2 8.71144218 -0.70028677
+𝒍𝒐𝒄
+Number of non-
+3
+local projectors
+𝒓
+0.33777078 2 2.57526386 3.69297065
+𝒔
+-4.76760461
+𝒓
+0.24253135 2 -4.63054123 8.87087502
+𝒑
+-10.49616087
+𝒓
+0.24331694 1 -9.40665268
+𝒅
+number of potential functions coefficients
+27
+
+
+========== PAGE 28 ==========
+
+GTH pseudopotential
+(cid:190) LDA (PADE): H-Rn (including lanthanides)
+(cid:190) PBE: H-Rn (excluding lanthanides)
+(cid:190) PBEsol: H-Kr (plus a few selected)
+(cid:190) BP: H-Kr (plus a few selected)
+(cid:190) HCTH: a few selected elements
+(cid:190) Non-linear core corrected (NLCC) pseudopotentials:
+a few selected elements
+All pseudopotentials can be found in $CP2K/cp2k/data, see ‘POTENTIAL’,
+‘GTH_POTENTIALS’ and ‘NLCC_POTENTIALS’
+Matthias Krack, 1st CP2K Tutorial, Zurich, 2009 28
+
+
+========== PAGE 29 ==========
+
+Pseudopotentials optimisation
+All-electron calculation using a chosen DFT functional
+Choosing a form of the pseudopotential to be fitted
+Minimising the differences between eigenvalues
+and charges within an atomic sphere of the all-
+electron atom and the pseudo atom
+Quality check
+Hutter et al., Phys. Rev. B, 58, 3641 (1998)
+29
+
+
+========== PAGE 30 ==========
+
+Pseudopotentials optimisation with ATOM
+Example: optimise pseudo- &OPTIMIZATION
+EPS_SCF 1.e-10
+potential of O using PBE0 &END OPTIMIZATION
+&PRINT
+&GLOBAL &BASIS_SET
+PROGRAM_NAME ATOM &END
+&END GLOBAL &END
+&ATOM &AE_BASIS
+ELEMENT O BASIS_TYPE GEOMETRICAL_GTO
+RUN_TYPE PSEUDOPOTENTIAL_OPTIMIZATION &END AE_BASIS
+ELECTRON_CONFIGURATION [He] 2s2 2p4 &PP_BASIS
+CORE [He] BASIS_TYPE GEOMETRICAL_GTO
+MAX_ANGULAR_MOMENTUM 2 &END PP_BASIS
+COULOMB_INTEGRALS ANALYTIC &POTENTIAL
+EXCHANGE_INTEGRALS ANALYTIC PSEUDO_TYPE GTH
+&METHOD POTENTIAL_FILE_NAME POTENTIAL
+METHOD_TYPE KOHN-SHAM POTENTIAL_NAME GTH-PBE-q6
+RELATIVISTIC DKH(2) &END POTENTIAL
+&XC &POWELL
+&XC_FUNCTIONAL PBE0 ACCURACY 1.e-10
+&END XC_FUNCTIONAL STEP_SIZE 0.5
+&END XC WEIGHT_PSIR0 0.1
+&END METHOD &END POWELL
+&END ATOM
+(see more examples in $CP2K/cp2k/tests/ATOM/regtest-pseudo) 30
+
+
+========== PAGE 31 ==========
+
+Pseudopotentials optimisation with ATOM
+31
+
+
+========== PAGE 32 ==========
+
+Pseudopotentials optimisation with the
+standalone ATOM code
+(cid:190) check ‘README_quick_GTH’ in $CP2K/potentials,
+more details in Dr Matthias Krack’s slides
+Matthias Krack, 1st CP2K Tutorial, Zurich, 2009
+(cid:190) more options for quality check
+32
+
+
+========== PAGE 33 ==========
+
+A few final remarks …
+(cid:190) read the original references on basis sets and
+pseudopotentials before making your own basis sets and
+pseudopotentials
+(cid:190) do plenty of tests on optimised basis sets and
+pseudopotentials and compare the results with reference
+values before production run
+(cid:190) All data files used by CP2K can be downloaded directly from
+http://sourceforge.net/p/cp2k/code/HEAD/tree/trunk/cp2k/data/
+33
+
+
+========== PAGE 34 ==========
+
+Further Reading
+Accuracy and Efficiency (by Dr Matthias Krack)
+http://www.cecam.org/upload/talk/presentation_3002.pdf
+Basis Sets and Pseudo-Potentials (by Dr Fawzi Mohamed)
+http://www.cecam.org/upload/talk/presentation_2994.pdf
+34

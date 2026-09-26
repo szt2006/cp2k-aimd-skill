@@ -1,0 +1,18 @@
+copied_file	copied_bytes	copied_sha256	source_file	source_bytes	source_sha256_16	note
+cu100-h2o-opt_cp2k.inp	3217	9003e90bd74a629e036686ae125f76e322db9333d2bcd4c22d67bd13c6e368e4	【庚子计算整理】cu100-h2o-opt-计算输入文件和结构/cu100-h2o-opt/cp2k.inp	3380	7831113081877790	verbatim full copy
+cu100-h2o-aimd_cp2k.inp	3471	4515d6c19d408a730374aafdbd5d849ce3938c799e45d36b137b480244936eb3	【庚子计算整理】cu100-h2o-aimd-计算输入文件和结构/cu100-h2o-aimd/cp2k.inp	3651	d5eea08b0eebf25b	verbatim full copy
+au111-h2o_cp2k.inp	3618	bf6288f2e19f5d49c25b016bf5db7b320285fd66d5c200cd1d7628f667a5c945	【庚子计算整理】au111-h2o-aimd计算输入文件和结构/au111-h2o/cp2k.inp	3794	1b517ed476e92df3	verbatim full copy
+au111-h2o_md_cp2k.inp	3605	08a536c523283836878ae8d3d968fe6c23c153cbfb7aab3abb6083310caa81b1	【庚子计算整理】au111-h2o-aimd计算输入文件和结构/au111-h2o/md/cp2k.inp	3783	fc340152c0ea37d6	verbatim full copy
+au111-h2o-6Na_cp2k.inp	3618	38a4f9e47a44e2ec37780aeef859f31c1c4c45891e5cbbb516a3b5d29d7cd260	【庚子计算整理】au111-h2o-6Na-计算输入文件和结构/au111-h2o-6Na/cp2k.inp	3794	6b07d37994f63bd7	verbatim full copy
+au111-h2o-6Na_md_cp2k.inp	3605	1f6b98774bbe51093fb99698af96bd17e659abbeada546dd6d8462f5c715fa3d	【庚子计算整理】au111-h2o-6Na-计算输入文件和结构/au111-h2o-6Na/md/cp2k.inp	3783	0cc113376f643018	verbatim full copy
+TiO2-Au20_cp2k.inp	3746	8806b931c4b2d071e5dff4f5763288e3c54a908fba5a14a5dc76163603ebcf19	【庚子计算整理】TiO2-Au20-计算输入文件和结构/TiO2-Au20/cp2k.inp	3931	e8b19d1db50d9f08	verbatim full copy
+cu100-h2o-aimd_sub_cp2k.txt	103	d3460c36b7f17549d05ce76e3484aca3fa96531b0cf888579bcbf92e607744d7	【庚子计算整理】cu100-h2o-aimd-计算输入文件和结构/cu100-h2o-aimd/sub_cp2k	103	d3460c36b7f17549	verbatim full copy
+cu100-h2o-opt_coord.head10tail5.txt	785	28069a47afa829c2025c104da18184de66315d04469d9ffb33e3d7bf04105224	【庚子计算整理】cu100-h2o-opt-计算输入文件和结构/cu100-h2o-opt/coord.inc	5562	67972be5071ce3de	head10+tail5 excerpt (186 lines / 5562 bytes total)
+cu100-h2o-aimd_coord.head10tail5.txt	932	fb3c3fe14633ff73a66cfb02a8c4481047088157a78b4617cdb629016a9e5a47	【庚子计算整理】cu100-h2o-aimd-计算输入文件和结构/cu100-h2o-aimd/coord.inc	5280	cf5fd44170b8b6ec	head10+tail5 excerpt (132 lines / 5280 bytes total)
+au111-h2o_coord.head10tail5.txt	785	1754cb825dc9bedbd3daac7d0721b90f63036c81a244e82c4cdc630e41758839	【庚子计算整理】au111-h2o-aimd计算输入文件和结构/au111-h2o/coord.inc	9205	8d37eba38595ff12	head10+tail5 excerpt (303 lines / 9205 bytes total)
+au111-h2o_md_coord.head10tail5.txt	1320	b4cadeac00c70d5bb10db5d787243015be3ff67e8c6db2f29e0f4932841cb04b	【庚子计算整理】au111-h2o-aimd计算输入文件和结构/au111-h2o/md/coord.inc	19695	762dab690db605ab	head10+tail5 excerpt (303 lines / 19695 bytes total)
+au111-h2o-6Na_coord.head10tail5.txt	789	4396810ad22fa49b1f82938d3881fd5fbd13467b709fc5a0f6a5a0601fc0528d	【庚子计算整理】au111-h2o-6Na-计算输入文件和结构/au111-h2o-6Na/coord.inc	9391	b9166dfbd46ea124	head10+tail5 excerpt (309 lines / 9391 bytes total)
+au111-h2o-6Na_md_coord.head10tail5.txt	1324	bc2c5f2b947a25ec76ff54be08f9bf458873563d2680048048fa4bccf74a04cf	【庚子计算整理】au111-h2o-6Na-计算输入文件和结构/au111-h2o-6Na/md/coord.inc	20085	95a0a7ec3e37eb8f	head10+tail5 excerpt (309 lines / 20085 bytes total)
+TiO2-Au20_coord.head10tail5.txt	1313	ed7a50f87f9bc8d921c88f6c9affb8f7afd18ee3d3011ffe6e5ae8295af1918a	【庚子计算整理】TiO2-Au20-计算输入文件和结构/TiO2-Au20/coord.inc	29380	89ecf66b3de02b96	head10+tail5 excerpt (452 lines / 29380 bytes total)
+cu100-h2o-opt_Layer.head10tail5.txt	761	abc70c77dec5af3c910410b76a4f3f112855fba45085a554c30c25178ddd39fb	【庚子计算整理】cu100-h2o-opt-计算输入文件和结构/cu100-h2o-opt/Layer.xyz	5596	d3b0d22113b7db5d	head10+tail5 excerpt (188 lines / 5596 bytes total)
+cu100-h2o-opt_Layer.car.head10tail5.txt	1086	a68d6965c6d8dcdade5237913153eb1ad765c05814ba749856ae328595dbe36f	【庚子计算整理】cu100-h2o-opt-计算输入文件和结构/cu100-h2o-opt/Layer.car	15658	81d17414676d31e8	head10+tail5 excerpt (239 lines / 15658 bytes total)

@@ -23,6 +23,17 @@ import argparse
 import json
 import sys
 
+# --- 控制台编码兼容层（中文 Windows/GBK 下输出 ✓ ⑪ Å 等符号不再抛异常）---
+try:
+    import os as _os, sys as _sys
+    _here = _os.path.dirname(_os.path.abspath(__file__))
+    for _d in (_here, _os.path.join(_here, "scripts")):
+        if _d not in _sys.path:
+            _sys.path.insert(0, _d)
+    import _console  # noqa: F401  导入即生效，见 scripts/_console.py
+except Exception:
+    pass
+
 # ---------------------------------------------------------------------------
 # 元素知识表
 #   sym -> (is_metal, default_basis, default_potential(q), note)
@@ -306,22 +317,62 @@ def recommend(args):
 
     # ---- Thermostat (MD only) ----
     if goal == "md":
-        thermo = args.thermostat or "csvr"
-        if has_metal and thermo == "csvr":
-            thermo = "langevin"
+        ens = args.ensemble or "nvt"
+        rec["ensemble"] = ens
+        if ens == "nve":
+            # NVE = 微正则（N/V/E 恒定）——**按定义不控温**，&THERMOSTAT 不起作用。
+            # 这条必须显式讲：CP2K 的 &MD ENSEMBLE **官方默认就是 NVE**，
+            # 所以"忘了写系综"会静默变成不控温的跑法。
+            rec["thermostat"] = None
+            _msg = ("恒温器: 系综选了 **NVE**（微正则，N/V/E 恒定）—— 按定义**没有恒温器**，"
+                    "写 &THERMOSTAT 也不起作用；温度会自由漂移。NVE 只适合做能量守恒/"
+                    "守恒量检查，要控温请用 --ensemble nvt。"
+                    "（注意 CP2K 的 &MD ENSEMBLE **官方默认就是 NVE**，不写系综 = 不控温。）")
+            if args.thermostat:
+                _msg += " 你显式给的 --thermostat {} 在 NVE 下会被忽略。".format(args.thermostat)
+            reasoning.append(_msg)
+        else:
+            thermo = args.thermostat or "csvr"
+            if has_metal and thermo == "csvr":
+                thermo = "langevin"
+                reasoning.append(
+                    "恒温器: MD 含金属表面 -> 推荐 Langevin 恒温器（--thermostat langevin）。"
+                    "Langevin 对表面催化体系温度控制更稳定；CSVR/Nose 在金属表面易过热。"
+                )
+            else:
+                reasoning.append(
+                    "恒温器: {} ({} 系综)。".format(
+                        thermo.upper(),
+                        {"nve": "微正则", "nvt": "正则", "npt": "等压等温"}.get(ens, "NVT")
+                    )
+                )
+            rec["thermostat"] = thermo
+
+        # ---- TIMESTEP：原先**完全不推荐**，而它恰恰是 AIMD 最有后果的参数 ----
+        # 口径与 gen_inp.py --timestep 的帮助文本严格一致（模板默认 0.5 fs）：
+        #   「AIMD 一般 0.5–1.0 fs；超过 ~2 fs 要检查能量守恒/漂移」，
+        #   「含氢体系 O–H 振动周期约 10 fs，经验上限 1/10（1 fs）、常态 1/20（0.5 fs）」。
+        _has_h = any(i["sym"] == "H" for i in infos)
+        if args.timestep is not None:
+            ts = args.timestep
             reasoning.append(
-                "恒温器: MD 含金属表面 -> 推荐 Langevin 恒温器（--thermostat langevin）。"
-                "Langevin 对表面催化体系温度控制更稳定；CSVR/Nose 在金属表面易过热。"
+                "TIMESTEP: 按你的指定 {} fs（gen_inp.py --timestep {}）。".format(ts, ts))
+        elif _has_h:
+            ts = 0.5
+            reasoning.append(
+                "TIMESTEP: 含氢 -> 0.5 fs。含氢体系有最快的振动（O–H 周期约 10 fs，"
+                "3300 cm^-1），经验上限是周期的 1/10（1 fs）、文献常态是 1/20（0.5 fs）。"
+                "要放宽到 >1 fs 必须先 --deuterate（O–D 降到约 2500 cm^-1）"
+                "或先做能量守恒测试。"
             )
         else:
+            ts = 1.0
             reasoning.append(
-                "恒温器: {} ({} 系综)。".format(
-                    thermo.upper(),
-                    {"nve": "微正则", "nvt": "正则", "npt": "等压等温"}.get(args.ensemble or "nvt", "NVT")
-                )
+                "TIMESTEP: 不含氢（没有最快的 X–H 振动）-> 可放宽到 1.0 fs。"
+                "AIMD 一般取 0.5–1.0 fs；重原子慢振动体系（如 TiO2）生产上见过 2 fs，"
+                "但**必须**先确认守恒量不漂（用 diagnose.py 看 ENERGY DRIFT PER ATOM）。"
             )
-        rec["thermostat"] = thermo
-        rec["ensemble"] = args.ensemble or "nvt"
+        rec["timestep"] = ts
     if outer_scf:
         reasoning.append("OUTER_SCF: 杂化泛函难收敛 → 自动加 --outer-scf。")
 
@@ -356,9 +407,15 @@ def recommend(args):
     ladder = build_ladder(elems, args.goal, func, has_metal, vdw, any_magnetic, cutoff, kpoints)
 
     # ---- 生成命令 ----
+    # MD 的恒温器/系综/步长必须一路带到命令里，否则"理由"与"命令"会不一致。
+    _md = None
+    if goal == "md":
+        _md = {"thermostat": rec.get("thermostat"),
+               "ensemble": rec.get("ensemble"),
+               "timestep": rec.get("timestep")}
     cmd = build_command(args, elems, basis_list, pot_list, func, mult, vdw,
                          periodic, kpoints, smear, outer_scf, cutoff,
-                         plus_u, kind_specs)
+                         plus_u, kind_specs, _md)
 
     rec["ladder"] = ladder
     rec["command"] = cmd
@@ -398,11 +455,16 @@ def build_ladder(elems, goal, func, has_metal, vdw, any_magnetic, cutoff, kpoint
 
 def build_command(args, elems, basis_list, pot_list, func, mult, vdw,
                   periodic, kpoints, smear, outer_scf, cutoff,
-                  plus_u=False, kind_specs=None):
+                  plus_u=False, kind_specs=None, md=None):
     """拼出一条可直接执行的 gen_inp.py 命令。
 
     当 plus_u 触发时，用 --kinds 取代 --elem/--basis/--potential（逐原子 &KIND
     同时携带 DFT+U 的 U= 设定），否则保持逐元素三参数写法。
+
+    `md` 是 MD 分支**解析后**的推荐值 {thermostat, ensemble, timestep}。
+    必须传进来：早先这三项只出现在"选择理由"里、从不进入命令，于是
+    **建议说"推荐 Langevin"，生成的命令却会用 gen_inp.py 的默认 csvr**
+    —— 建议与实际输入静默不一致。默认值（csvr / nvt）仍不写，保持命令干净。
     """
     parts = ["python gen_inp.py"]
     # 目标 -> gen_inp.py 的 --type（goal 用领域名，type 用 gen_inp.py 枚举）
@@ -448,6 +510,14 @@ def build_command(args, elems, basis_list, pot_list, func, mult, vdw,
         parts.append("--mixing-beta 1.5")
         parts.append("--mixing-nbroyden 8")
         parts.append("--diagonalization-eps-adapt 0.01")
+    # ---- MD 三件套：恒温器 / 系综 / TIMESTEP（默认值不写，保持命令干净）----
+    if md:
+        if md.get("thermostat") and md["thermostat"] != "csvr":
+            parts.append("--thermostat {}".format(md["thermostat"]))
+        if md.get("ensemble") and md["ensemble"] != "nvt":
+            parts.append("--ensemble {}".format(md["ensemble"]))
+        if md.get("timestep") is not None:
+            parts.append("--timestep {}".format(md["timestep"]))
     # 坐标：NEB 用 --xyz-init/--xyz-final 或 --xyz-replicas，其余用 --xyz
     if args.goal == "neb":
         if args.xyz_replicas:
@@ -583,7 +653,9 @@ def main():
     ap.add_argument("--rotate-frames", default="F", choices=["T", "F"],
                     help="&BAND ROTATE_FRAMES")
     ap.add_argument("--k-spring", type=float, default=0.02,
-                    help="&BAND K_SPRING (eV/angstrom^2)")
+                    help="&BAND K_SPRING（相邻 replica 间的弹簧常数）。官方默认 0.02，"
+                         "**官方 XML 不标单位 ⇒ 按 CP2K 内部原子单位 hartree/bohr²**"
+                         "（早先这里写 eV/angstrom^2 是错的）。粗算常取 0.08/0.1")
     ap.add_argument("--program-run-info", action="store_true",
                     help="&BAND &PROGRAM_RUN_INFO ON")
     ap.add_argument("--convergence-info", action="store_true",
@@ -596,6 +668,9 @@ def main():
     ap.add_argument("--ensemble", default="nvt",
                     choices=["nve", "nvt", "npt"],
                     help="MD ensemble (default: nvt)")
+    ap.add_argument("--timestep", type=float, default=None,
+                    help="&MD TIMESTEP [fs]；不给则按体系推荐"
+                         "（含氢 0.5、不含氢 1.0）。口径同 gen_inp.py --timestep")
     ap.add_argument("--json", action="store_true", help="导出 JSON 结果")
     args = ap.parse_args()
 

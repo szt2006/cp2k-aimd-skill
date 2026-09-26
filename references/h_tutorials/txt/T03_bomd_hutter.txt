@@ -1,0 +1,1471 @@
+# SOURCE: 【bomd-庚子计算整理】hutter-bomd.pdf
+# PAGES: 74
+# TOPIC: BOMD 讲义（Hutter）
+
+
+
+========== PAGE 1 ==========
+
+Ab initio Molecular Dynamics
+Jürg Hutter
+Department of Chemistry, University of Zurich
+
+
+========== PAGE 2 ==========
+
+Overview
+Equations of motion and Integrators
+•
+General Lagrangian for AIMD
+•
+Car–Parrinello MD and Born–Oppenheimer MD
+•
+ab initio Langevin MD
+•
+Stability and efficiency
+•
+Thermostats
+•
+External Drivers
+•
+
+
+========== PAGE 3 ==========
+
+Equations of Motion (EOM)
+Newton’s EOM for a set of classical point particles in a
+potential.
+dV(R)
+¨
+M R =
+I I − dR
+I
+These EOM generate for a given number of particles N in a
+volume V the micro canonical ensemble (NVE ensemble).
+The total energy E is a constant of motion!
+
+
+========== PAGE 4 ==========
+
+Total Energy
+Total Energy = Kinetic energy+Potential energy
+N
+Kinetic energy = T(R ˙ ) = M IR ˙2
+2
+I=1
+(cid:88)
+Potential energy = V(R)
+We will use the total energy as an indicator for the numerical
+accuracy of simulations.
+
+
+========== PAGE 5 ==========
+
+Lagrange Equation
+d ∂ ∂
+L = L
+dt ∂R ˙ ∂R
+with
+˙ ˙
+(R,R) = T(R) V(R)
+L −
+Equivalent to Newton’s EOM in Cartesian coordinates, but is
+more general and flexible.
+Extended systems
+•
+Constraints
+•
+
+
+========== PAGE 6 ==========
+
+Integration of EOM
+Discretization of time
+R(t) R(t +τ) R(t +2τ) R(t +mτ)
+→ → → ··· →
+V(t) V(t +τ) V(t +2τ) V(t +mτ)
+→ → → ··· →
+Efficiency: minimal number of force evaluations, minimal
+•
+number of stored quantities
+Stability: minimal drift in constant of motion (energy)
+•
+Accuracy: minimal distance to exact trajectory
+•
+
+
+========== PAGE 7 ==========
+
+Sources of Errors
+Type of integrator
+•
+predictor-corrector, time-reversible, symplectic
+Time step τ
+•
+short time accuracy measured as (τn)
+O
+Consistency of forces and energy
+•
+e.g. cutoffs leading to non-smooth energy surfaces
+Accuracy of forces
+•
+e.g. convergence of iterative force calculations (SCF,
+constraints)
+
+
+========== PAGE 8 ==========
+
+Velocity Verlet Integrator
+τ2
+R(t +τ) = R(t)+τV(t)+ f(t)
+2M
+τ
+V(t +τ) = V(t)+ [f(t)+f(t +τ)
+2M
+Efficiency: 1 force evaluation, 3 storage vectors
+•
+Stability: time reversible
+•
+Accuracy: (τ2)
+• O
+Simple adaptation for constraints (shake, rattle, roll)
+•
+Simple adaptation for multiple time steps and thermostats
+•
+
+
+========== PAGE 9 ==========
+
+Test on Required Accuracy of Forces
+ClassicalForceFieldCalculations,64molecules,330K
+TIP3P(flexible),SPME(α=0.44,GMAX=25),
+
+
+========== PAGE 10 ==========
+
+Stability: Accuracy of Forces
+Stdev. ∆f Stdev. Energy Drift
+Hartree/Bohr µHartree µHartree/ns Kelvin/ns
+– 170.35 35.9 0.06
+10−10 179.55 -85.7 -0.14
+10−08 173.68 6.5 0.01
+10−07 177.83 -58.2 -0.10
+10−06 — -385.4 -0.63
+10−05 — 9255.8 15.21
+10−04 — 972810.0 1599.31
+
+
+========== PAGE 11 ==========
+
+Born–Oppenheimer MD: The Easy Way
+dV(R)
+¨
+M R = EOM
+I I − dR
+I
+V(R) = min[E ( Φ(r) ;R)+const.] Kohn–Sham BO potential
+KS
+Φ { }
+Forces
+dmin E ( Φ(r) ;R)
+f (R) = Φ KS { }
+KS
+dR
+∂E ∂const. ∂(E +const.) ∂Φ
+= KS + + KS i
+∂R ∂R ∂Φ ∂R
+i
+i
+(cid:88)
+=0
+(cid:124) (cid:123)(cid:122) (cid:125)
+
+
+========== PAGE 12 ==========
+
+Computational Details
+System
+•
+• 64watermolecules
+• density1gcm−3
+• Temperature 330K
+≈
+• Timestep0.5fs
+DFT Calculations
+•
+• GPW,TZV2Pbasis(2560bsf),PBEfunctional
+• Cutoff280Rydberg,(cid:15) =10−12
+default
+• OT-DIIS,PreconditionerFULL_SINGLE_INVERSE
+• Referencetrajectory(1ps),(cid:15) =10−10
+SCF
+
+
+========== PAGE 13 ==========
+
+Stability in BOMD
+Unbiased initial guess; Φ(t) = Φ (R(t))
+0
+(cid:15) MAE E MAE f Drift
+SCF KS
+Hartree Hartree/Bohr Kelvin/ns
+10−08 1.2 10−11 5.1 10−09 0.0
+· ·
+10−07 9.5 10−10 5.6 10−08 0.1
+· ·
+10−06 6.9 10−08 4.8 10−07 0.4
+· ·
+10−05 7.4 10−06 5.6 10−06 2.3
+· ·
+10−04 3.3 10−04 5.9 10−05 50.0
+· ·
+Consistent with results from classical MD
+Note accuracy of forces!
+
+
+========== PAGE 14 ==========
+
+Efficiency: Initial Guess of Wavefunction
+4th order Gear predictor (PS extrapolation in CP2K)
+Method (cid:15) Iterations Drift (Kelvin/ns)
+SCF
+Guess 10−06 14.38 0.4
+Gear(4) 10−07 6.47 5.7
+Gear(4) 10−06 5.22 11.8
+Gear(4) 10−05 4.60 86.8
+What is the problem?
+Time reversibility has been broken!
+
+
+========== PAGE 15 ==========
+
+Generalized Lagrangian
+1 1
+(q,q˙,x,x˙) = Mq˙2+ µx˙2 E(q,y)+kµG( x y )
+L 2 2 − (cid:107) − (cid:107)
+y = F(q,x) wavefunction optimization
+G( x y ) wavefunction retention potential
+(cid:107) − (cid:107)
+Equations of motion
+∂E ∂E ∂F ∂G∂F
+Mq¨ = +kµ
+−∂q − ∂y ∂q ∂y ∂q
+∂E ∂F ∂G ∂G∂F
+µx¨ = +kµ +
+−∂y ∂x ∂x ∂y ∂x
+(cid:20) (cid:21)
+ExtensionofNiklassonLagrangian,PRL100123004(2008)
+
+
+========== PAGE 16 ==========
+
+Dynamical System
+
+
+========== PAGE 17 ==========
+
+Car–Parrinello Molecular Dynamics
+y = x G( x y ) = 0
+⇒ (cid:107) − (cid:107)
+Lagrangian
+1 1
+(q,q˙,x,x˙) = Mq˙2+ µx˙2 E(q,x)
+L 2 2 −
+Equations of motion
+∂E
+Mq¨ =
+−∂q
+∂E
+µx¨ =
+−∂x
+
+
+========== PAGE 18 ==========
+
+Properties of CPMD
+Accuracy: Medium
+•
+Distance from BO surface controlled by mass µ
+Requires renormalization of dynamic quantities (e.g.
+vibrational spectra)
+Stability: Excellent
+•
+All forces can be calculated to machine precision easily
+Efficiency: Good
+•
+Efficiency is strongly system dependent (electronic gap)
+Requires many nuclear gradient calculations
+Not implemented in CP2K!
+
+
+========== PAGE 19 ==========
+
+BOMD
+y = Min E(q,x) and µ = 0
+x
+Lagrangian
+1
+(q,q˙) = Mq˙2+E(q,y)
+L 2
+1
+(x,x˙) = x˙2+kG( x y )
+L 2 (cid:107) − (cid:107)
+Equations of motion
+Mq¨ = ∂E
+−∂q
+decoupled equations
+
+x¨ = k∂G
+− ∂x 
+
+
+
+========== PAGE 20 ==========
+
+BOMD with Incomplete SCF Convergence
+y = F(q,x) Min E(q,x) and µ = 0
+x
+≈
+Equations of motion
+∂E ∂E ∂F
+Mq¨ =
+−∂q − ∂y ∂q
+∂G ∂G∂F
+x¨ = k
+− ∂x − ∂y ∂x
+SCF Error: Neglect of force terms ∂E ∂F and ∂G∂F.
+∂y ∂q ∂y ∂x
+EOM are coupled through terms neglected!
+
+
+========== PAGE 21 ==========
+
+ASPC Integrator
+Integration of electronic DOF (x) has to be
+accurate: good wavefunction guess gives improved
+•
+efficiency
+stable: donotdestroytime-reversibilityofnucleartrajectory
+•
+ASPC: Always Stable Predictor Corrector
+J. Kolafa, J. Comput Chem. 25: 335–342 (2004)
+•
+ASPC(k): time-reversible to order 2k +1
+•
+
+
+========== PAGE 22 ==========
+
+Orthogonality Constraint
+Wavefunction extrapolation for non-orthogonal basis sets
+K
+C init = B j+1 C t−jτ CT t−jτ S t−jτ C t−τ
+j=0
+(cid:88) PS
+Coefficients B are g(cid:124)iven b(cid:123)y(cid:122)ASPC(cid:125)algorithm
+i
+x = C
+init
+y[t] = C
+t
+S overlap matrix
+J.VandeVondeleetal. Comp. Phys. Comm. 167: 103–128(2005)
+
+
+========== PAGE 23 ==========
+
+Importance of Time-Reversibility
+Method (cid:15) Iterations Drift (Kelvin/ns)
+SCF
+Guess 10−06 14.38 0.4
+ASPC(3) 10−06 5.01 0.2
+ASPC(3) 10−05 3.02 4.5
+Gear(4) 10−07 6.47 5.7
+Gear(4) 10−06 5.22 11.8
+Gear(4) 10−05 4.60 86.8
+
+
+========== PAGE 24 ==========
+
+Efficiency and Drift
+Method (cid:15) Iterations Drift (Kelvin/ns)
+SCF
+Guess 10−06 14.38 0.4
+ASPC(4) 10−06 5.01 0.2
+ASPC(4) 10−05 3.02 4.5
+ASPC(4) 10−04 1.62 1742.4
+ASPC(4) 10−02 1.03 21733.2
+
+
+========== PAGE 25 ==========
+
+Efficiency and Drift
+Method (cid:15) Iterations Drift (Kelvin/ns)
+SCF
+ASPC(4) 10−04 1.62 1742.4
+ASPC(5) 10−04 1.63 1094.0
+ASPC(6) 10−04 1.79 397.4
+ASPC(7) 10−04 1.97 445.8
+ASPC(8) 10−04 2.06 24.1
+
+
+========== PAGE 26 ==========
+
+Langevin BOMD
+Starting point: BOMD with ASPC(k) extrapolation
+Analysis of forces
+f (R) = f (R)+f (R)+f (R)
+BO HF Pulay nsc
+f(R)
+(cid:124) (cid:123)(cid:122) (cid:125)
+f : correct BO force
+BO
+•
+f : Hellmann–Feynman force
+HF
+•
+f : Pulay force
+Pulay
+•
+f : non-self consistency error force
+nsc
+•
+f : approximate BO force
+•
+
+
+========== PAGE 27 ==========
+
+Forces in Approximate BOMD
+Approximate f by
+nsc
+∂V (ρi)
+˜ f = dr xc ∆ρ+V (∆ρ) ρi
+nsc − ∂ρi H ∇ I
+(cid:90) (cid:20)(cid:18) (cid:19) (cid:21)
+with ∆ρ = ρo ρi, ρo final (output) density, ρi initial (predicted)
+−
+density.
+Now assume
+f(R)+ ˜ f (R) = f (R) γ R ˙
+nsc BO D
+−
+where γ is a constant friction parameter.
+D
+
+
+========== PAGE 28 ==========
+
+Langevin EOM
+¨ ˙
+MR = f (R) (γ +γ )R +Θ
+BO D L
+−
+with Θ a Gaussian random noise term and
+Θ(0)Θ(t) = 6(γ +γ )Mk Tδ(t)
+D L B
+(cid:104) (cid:105)
+Given temperature T = kB MR ˙2 and an arbitrary γ this
+3 (cid:104) (cid:105) L
+determines γ
+D
+
+
+========== PAGE 29 ==========
+
+Langevin BOMD
+2ndGenerationCar–Parrinello(SGCP)
+T. D. Kühne et al., Phys. Rev. Lett. 98 066441 (2007)
+single SCF step plus force correction needed
+•
+extremely efficient for systems with slow SCF convergence
+γ is small: correct statistics and dynamics
+• D
+difficult to stabilize in complex systems
+•
+
+
+========== PAGE 30 ==========
+
+SGCP: Examples
+T.Mussoetal. Eur. Phys. J.B,91148(2018)
+Analysis of Force Errors
+Liquid Silicon at 3000 K
+
+
+========== PAGE 31 ==========
+
+SGCP: Nanomesh
+h-BN on Rh(111)
+
+
+========== PAGE 32 ==========
+
+SGCP: Force Errors
+
+
+========== PAGE 33 ==========
+
+SGCP: h-BN on Rh(111)
+ComparisionofMDResults
+
+
+========== PAGE 34 ==========
+
+SGCP: h-BN on Rh(111)
+Performance
+
+
+========== PAGE 35 ==========
+
+
+
+
+========== PAGE 36 ==========
+
+Micro-Canonical Ensemble
+System variables: N, V, E
+•
+Microstate definition: Γ = rN,pN
+• { }
+Energy H(Γ) = p i 2 +U(rN)
+• i 2mi
+(cid:80)
+All states have the same weight δ(H(Γ) E)
+• −
+Partitionfunction
+•
+1 1
+Ω(N,V,E) = δ(H(Γ) E) = drNdpNδ(H(Γ) E)
+− Nh3N −
+Γ (cid:90)
+(cid:88)
+
+
+========== PAGE 37 ==========
+
+Molecular Dynamics
+Fixed number of particles: N
+•
+Fixed volume: V
+•
+Periodic boundary condition to avoid surface effects
+•
+Total energy
+•
+m
+E(t) = i r˙2(t)+U(r(t))
+2 i
+i
+(cid:88)
+
+
+========== PAGE 38 ==========
+
+Constant of Motion: E
+dE(t) m dU(r)
+= i 2r˙¨r + r˙
+i i i
+dt 2 dr
+i
+i i
+(cid:88) (cid:88)
+dU(r)
+F = = m¨r
+i i i
+− dr
+i
+F
+E ˙ = mr˙ i + ( F)r˙
+i i i i
+m −
+i
+i i
+(cid:88) (cid:88)
+= (r˙F r˙F)
+i i i i
+−
+i
+(cid:88)
+= 0
+The energy is conserved. MD samples correct microstates.
+
+
+========== PAGE 39 ==========
+
+Definition of Temperature
+Instantaneous temperature
+2 1
+T(t) = mr˙2(t)
+3Nk 2 i i
+B
+i
+(cid:88)
+Temperature
+T = T(t)
+(cid:104) (cid:105)
+
+
+========== PAGE 40 ==========
+
+Equipartition Theorem
+The equipartition theorem is a general formula that relates the
+temperature of a system with its average energies. For a
+system described by the Hamiltonian (energy function) H(r,r˙)
+∂H ∂H
+r = p = δ k T
+i i ij B
+∂r ∂p
+(cid:28) j (cid:29) (cid:28) j(cid:29)
+For an ideal gas
+3
+H = H = k T
+kin B
+(cid:104) (cid:105) (cid:104) (cid:105) 2
+
+
+========== PAGE 41 ==========
+
+Canonical Ensemble
+System variables: N, V, T
+•
+Closed system exchanging energy with a heat bath at
+•
+temperature T.
+How to simulate on a computer?
+We can directly manipulate velocities (temperature).
+•
+No extended heat bath needed.
+•
+Molecular dynamics with periodic boundary conditions, but
+•
+manipulate r˙ during the integration.
+i
+
+
+========== PAGE 42 ==========
+
+Control of velocities/temperature
+Differential control: the temperature is fixed to the
+•
+predescribed value and no fluctuations occur.
+Proportional control: velocities are corrected at each
+•
+integration step through a coupling constant towards the
+prescribed temperature. The coupling constant determines
+the strength of the fluctuations around T .
+(cid:104) (cid:105)
+Integral control: the Hamiltonian is extended and variables
+•
+are introduced wich reflect the effect of an external system
+which fix the temperature. Time evolution is derived from
+the extended Hamiltonian.
+Stochastic control: position and velocities are propagated
+•
+according to modified equations of motion with friction and
+stochastic forces. The final equations give the correct
+mean value of the temperature.
+
+
+========== PAGE 43 ==========
+
+NVE
+Γ= rN,pN microstate
+{ }
+N
+1
+(Γ)= p + (rN) const.
+H 2m i U
+i
+i=1
+X
+All accessible microstates are equally probable
+W (Γ)=δ( (Γ) E) statistical weight
+NVE
+H −
+Distribution of microstates
+1 1
+Ω = δ( (Γ) E) drNpN δ( (Γ) E)
+NVE H − ≈ N!h3N H −
+Γ Z
+X
+5/1
+
+
+========== PAGE 44 ==========
+
+Canonical Ensemble (NVT)
+Microstates follow the Boltzmann’s distribution
+(rN,pN)
+W (Γ)=exp H
+NVT − k T
+(cid:20) B (cid:21)
+Canonical partition function: describes the statistical properties
+(Γ) 1 (rN,pN)
+= exp H drNdpN exp H
+Q NVT −k T ≈ N!h3N − k T
+Γ (cid:20) B (cid:21) Z (cid:20) B (cid:21)
+X
+Probability distribution
+W (Γ)
+(Γ)= NVT
+P
+NVT
+Q
+and the expectation value of the total energy is (β 1/k T)
+B
+≡
+∂ln 1 (Γ)
+E = Q NVT = (Γ)exp H
+h i − ∂β Q NVT ( Γ H (cid:20) −k B T (cid:21))
+X
+
+
+========== PAGE 45 ==========
+
+Velocity Rescaling
+At t and temperature T(t) all velocities are multiplied by λ
+1 N 2m(λv)2 1 N 2mv2
+∆T = i i i i =(λ2 1)T(t)
+2 3 Nk − 2 3 Nk −
+B B
+i=1 i=1
+X X
+To control the temperature
+λ= T /T(t)
+0
+p
+Easy to implement
+•
+Sampling does not correspond to any ensemble
+•
+Not recommended for production MD
+•
+Good for equilibration
+•
+Not time-reversible, not deterministic
+•
+24/1
+
+
+========== PAGE 46 ==========
+
+Velocity rescaling
+Perform one (or more) MD steps
+Compute the instantanous kinetic energy
+Rescale the velocities by a factor
+25/1
+
+
+========== PAGE 47 ==========
+
+Velocity rescaling (II)
+Jumps by Rescaling
+20
+15
+10
+5
+0
+0 20 40 60 80 100
+t
+K
+20
+15
+10
+5
+0
+0 20 40 60 80 100
+t
+K
+!=1
+!=10
+26/1
+Pisa,ScuolaNormale–p.25/73
+
+
+========== PAGE 48 ==========
+
+Berendsen Thermostat
+Weak coupling to a heat bath: temperature correction
+BerendsenThermostat
+dT(t) 1
+= (T T(t))
+Anotherpopula
+d
+r
+t
+velocit
+τ
+yscabalitnhg
+−
+thermostatisthatofBerendsen.Here,
+thescalingisgivenby
+τ coupling parameter: larger τ weaker coupling
+Exponential decay of the systemdtvowarfds the1desTired temperature
+= + md 1 v (13)
+dt m 2τ T(t)−
+δt ! "
+∆T = (T T(t))
+τ iscalledthe‘risetimτe’of b t a h th e−thermostat.Itdescribesthestrengthof
+thecouplingofthesystemtoahypotheticalheatbath.
+The larger τ, the weaker
+the coupling, i.e., the
+τ , thermosltoantgiesrinitatcatkieves to achieve
+→∞
+too small τ, unreaalgisivtiecnalTly lowfroflmucthtueactuior-ns
+md
+τ =δt, standardrerenstcTal(itn)g: T
+Same problems as velocity rescaling
+Time
+27/1
+SimulationofBiomolecules–p.28
+
+
+========== PAGE 49 ==========
+
+Like a friction
+Continuous formulation of the velocity rescaling
+p˙ =f ζp
+i i i
+−
+p2 1/2
+δt i
+(1 ζδt)= 1 i mi 1
+−  − τ Nk T − 
+PB
+  
+Friction positive whBeneren>dNskenTt/h2,ermcoosotliangt.(III)
+B
+K ⇒
+20
+15
+10
+5
+00 20 40 60 80 100
+t
+K
+20
+15
+10
+5
+00 20 40 60 80 100
+t
+K
+!=1
+!=10
+Pisa,ScuolaNormale–p.28/73
+
+
+========== PAGE 50 ==========
+
+Langevin Thermostat
+Random forces due to impacts exerted by molecules in the environment:
+irregular motion and friction. At each step all v are corrected by a
+i
+random force and a friction term
+∂
+m¨r = U mΓr˙ +W(t)
+i −∂r − i i
+i
+Frictional force and random motion are related, i.e.
+fluctuation–dissipation theorem is satisfied
+W
+i
+(t),W
+j
+(t0) =δ
+ij
+δ(t t0)6mΓk
+B
+T
+h i −
+Gaussian distribution with infinitely short correlation time (great number
+of collisions)
+Transition probability
+∂ p ∂ ∂ ∂ ∂2 ∂p
+P = i P + U P +mD P +Γ i P
+∂t −m ∂r ∂r ∂p i ∂p2 ∂p
+i (cid:18) i i i i i i (cid:19)
+X
+
+
+========== PAGE 51 ==========
+
+Stochastic Behavior
+The canonical distribution is then recovered as
+1 mp2
+lim =Cexp i + (rN)
+t →∞ P −k B T{ i 2 U }!
+X
+and friction and diffusion are related
+Γ
+D = k T
+m B
+Local thermostat: noise term depends on the particle
+Samples from canonical ensemble and ergodic.
+•
+Allows larger time steps compared to non-stochastic thermostats.
+•
+Momentum transfer is destroyed, i.e., no diffusion coefficients.
+•
+34/1
+
+
+========== PAGE 52 ==========
+
+Nose Thermostat
+Heat bath integral part of the system: s, s˙, and Q (coupling)
+ms2r˙2 1
+= i (rN)+ Qs˙2 gk Tlns
+L 2 −U 2 − B
+i
+X
+The conjugate momenta in the extended system are
+∂ ∂
+p L =ms2r˙ p L =Qs˙
+i ≡ ∂r˙ i i s ≡ ∂s˙
+i
+where the auxiliary variable is a time-scaling parameter
+dt0 =sdt p0i =p/s real system momentum
+Microcanonical ensemble in the extended system: for g =3N+1
+canonical ensemble for the real system
+38/1
+
+
+========== PAGE 53 ==========
+
+Nose–Hoover
+Using only differentiation in real time t : 1 d
+0 sdt0
+p
+r˙ = i
+i m
+i
+∂
+p˙ = U ξp ξ =sp /Q
+i −∂r − i s
+i
+1 p2 g
+ξ˙ = i
+Q m
+i
+− β!
+i
+X
+s˙ dlns
+= =ξ
+s dt
+p ξ2Q lns
+= i + (rN)+ +g conserved
+H Nose 2m U 2 β
+i
+i
+X
+39/1
+
+
+========== PAGE 54 ==========
+
+Friction Coefficient
+Define the relaxation time as
+ν 3Nk T/Q
+T B
+≡
+dynamics of friction coefficient byp(feed-back mechanism)
+p2
+i
+ξ˙=ν2 i mi 1 =ν2 T 1
+T3Nk T −  T T −
+P B (cid:20) (cid:21)
+ 
+Too large Q: canonical distribution after long simulation
+Too small Q: high-frequency T oscillations
+
+
+========== PAGE 55 ==========
+
+Ergodicity Problems
+Microcanonic Andersen Nose-Hoover
+v
+r r r
+NVE: closed loop, constant energy shell
+Andersen: points corresponding to a Gaussian velocity distribution
+Nose–Hoover: band trajectory determined by the initial conditions
+Not sufficiently chaotic to sample all phase-space; trapped in a subspace
+41/1
+
+
+========== PAGE 56 ==========
+
+Nose–Hoover Chain
+Ergodicity is improved by thermostatting the thermostat variable: M
+Nose–Hoover thermostats
+p
+r˙ = i
+i m
+i
+∂
+p˙ = U ξ p
+i −∂r − 1 i
+i
+1 p2 g
+ξ˙ = i ξξ
+1 Q
+1
+m
+i
+β!− i 2
+i
+X
+1
+ξ˙ = Q ξ2 k T ξξ
+j Q j j − 1 j − 1− B − j j+1
+1 (cid:0) (cid:1)
+ξ˙ = Q ξ2 k T
+M Q M M − 1 M − 1− B
+(cid:0) (cid:1)
+= p i + (rN)+ Q j ξ j 2 +gk Ts + M k Ts
+H NHC 2m U 2 B 1 B j
+i
+i j j=2
+X X X
+42/1
+
+
+========== PAGE 57 ==========
+
+Thermostats Comparison
+yticolev
+600
+velocity rescaling
+300
+0
+0 8
+600
+Berendsen
+300
+position
+0
+Nose-Hoover chain
+2000
+1500
+1000
+500
+Time [ps]
+yticolev
+position
+yticolev
+2 4 6
+0 2 4 6 8
+position
+0 2 4 6 8
+43/1
+
+
+========== PAGE 58 ==========
+
+TThheermromstoatsstTaatb lteable
+tune cont. L/G correct ergodic cons. q. determ. cp2k
+Velocity rescaling G ? X
+Andersen X L X X
+Berendsen X X G ? X
+Nosé-Hoover X X L/G X X X NOSE*
+Nosé-Hoover
+X X L/G X X X X NOSE
+chains
+Langevin X X L X X X CSVR**
+Stochastic velocity
+X X L/G X X X CSVR
+rescaling
+*use “LENGTH=1”
+**use “MASSIVE”
+44/1
+
+
+========== PAGE 59 ==========
+
+Other Ensembles
+N, V, E microcanonical inner energy U
+N, V, T canonical Helmholtz free energy F
+F = U TS
+−
+N, P, H isobaric-isoenthalpic enthalpy H
+H = U +pV
+N, P, T isobaric-isothermal Gibbs free energy G
+G = U TS+pV = H TS
+− −
+
+
+========== PAGE 60 ==========
+
+How to simulate an isobaric ensemble?
+We can manipulate the volume of the system.
+•
+This emulates an external piston used to keep the
+•
+pressure constant.
+Instantaneous pressure p(t) fluctuates, forces on the
+•
+container
+Averaging p(t) gives the observable internal pressure.
+•
+
+
+========== PAGE 61 ==========
+
+Pressure: Virial Theorem
+From equipartition theorem
+p2 1 ∂U(r)
+H = i = r
+kin i
+h i 2m 2 ∂r
+* i i+ i (cid:28) i (cid:29)
+X X
+The total potential U(r) is coming from in internal potential
+V (r) and and a wall potential W(r).
+int
+∂W(r)
+r = p df r = p dV(divr) = 3pV
+i
+∂r ·
+i (cid:28) i (cid:29) Z Z
+X
+The virial theorem is then
+∂V(r)
+3pV = 2 H r
+kin i
+h i− ∂r
+i (cid:28) i (cid:29)
+X
+
+
+========== PAGE 62 ==========
+
+Isobaric-Isoenthalpic Ensemble
+The system exchange work with an external surface: Ω is a variable
+Cubic box
+Ω1 3 0 0
+h= 0 Ω1 3 0
+ 
+0 0 Ω1 3
+ 
+Scaled coordinates
+r =Ω1/3s
+i i
+Lagrangian in terms of scaled coordinates
+1
+L
+=
+2
+m
+i
+Ω2 3s˙2
+i −U
+(sN,Ω)
+i
+X
+External applied pressure P
+P∆Ω
+−
+work on the system to balance P: the internal pressure fluctuates
+46/1
+
+
+========== PAGE 63 ==========
+
+Barostat
+Correct the internal pressure by scaling the voluem, i.e. the inter-particle
+distances
+The system is coupled to a barostat
+Isobaric-Isoenthalpic ensemble NPH
+(rN,pN,Ω) δ(C (pN) (rN,Ω) ΠΩ)
+P ∝ −K −U −
+where Π is the internal pressure
+Isobaric-Isothermal ensemble NPT
+(pN)+ (rN,Ω)+ΠΩ
+(rN,pN,Ω) exp K U
+P ∝ − k T
+(cid:18) B (cid:19)
+47/1
+
+
+========== PAGE 64 ==========
+
+Berendsen Barostat
+Deviation from desired pressure
+dP(t) P P(t)
+= 0 − τ relaxation time
+dt τ P
+P
+Rescale volume by η the volume, η1/3 coordinates
+δt
+η(t)=1 γ(P P(t))
+− τ 0 −
+P
+γ is the compressibility.
+Asotropic or anisotropic, τ strength of coupling,
+P
+not correct ensemble distribution
+
+
+========== PAGE 65 ==========
+
+Andersen Barostat
+Associate a kinetic energy to the variable volume
+1 1
+L
+=
+2
+m
+i
+Ω2 3s˙2
+i
++
+2
+WΩ˙2
+−U
+(sN,Ω)
+−
+PΩ
+i
+X
+The coupling mimics the action of a piston of mass W (strength of
+coupling)
+Equations of motion
+1 ∂U 2Ω˙
+¨s = s
+i −m i Ω3 2 ∂s i − 3Ω i
+1 ∂
+WΩ¨ = 3Ω Ω2 3 m i s˙2 i − s i∂ U s i!− P =P int − P
+i i
+X X
+Feedback loop to adjust the simulation volume: internal pressure
+fluctuates around the external pressure
+49/1
+
+
+========== PAGE 66 ==========
+
+Correct Distribution
+Conserved Hamiltonian of the 6N+2 dimensional system
+1 π2 Π2
+= i + + (sN,Ω)+PΩ
+H 2 i m i Ω2 3 2W U
+X
+low W will result in rapid box size oscillations
+large W slow adjustmen of the volume
+Partition function
+Π2
+∆(N,P, )= dΩ dΠ dπN sNδ H+
+H 2W −H
+Z Z Z Z (cid:18) (cid:19)
+trajectories consistent with the NPH ensemble
+The combination with one of the constant temperature methods allows
+the simulation in the NPT ensemble.
+50/1
+
+
+========== PAGE 67 ==========
+
+Experiment with barostat and thermostat
+Experiments with barostats
+EquilibrationwithBerendsen
+-1000 -1100
+-1200
+-1300 -1400
+τT=0.1
+τP=1,2,4,8
+]lom/Jk[
+.snoC
+2
+1.5 1
+0.5 0
+]mtak[
+P
+13000
+12500
+12000 11500
+110000 5 10 15 20
+time (ps)
+]3A[
+V
+Experiments with barostats
+EquilibrationwithBerendsen
+-1000
+-1100
+-1200
+-1300
+-1400
+τT=0.1
+τP=1,2,4,8
+Pisa,ScuolaNormale–p.64/73
+]lom/Jk[
+.snoC
+2
+1.5 1
+0.5
+0
+]mtak[
+P
+13000
+12500
+12000 11500
+110000 5 10 15 20 time (ps)
+]3A[
+V
+Experiments with barostats
+EquilibrationwithNosé-Hoover Berendsen Thermostat and Barostat
+-295
+-300
+-305
+τT=0.1
+τP=1,2,4,8
+Pisa,ScuolaNormale–p.64/73
+]lom/Jk[
+.snoC
+6 5
+4 3 2
+1 0
+]mtak[
+P
+13000
+12000
+11000 10000
+0 5 10 15 20
+time (ps)
+]3A[
+V
+Experiments with barostats
+EquilibrationwithNosé-Hoover
+-295
+-300
+-305
+Nose--Hoover Thermostat and Barostat
+τT=0.1
+τP=1,2,4,8
+Pisa,ScuolaNormale–p.65/73
+]lom/Jk[
+.snoC
+6 5
+4 3 2
+1 0
+]mtak[
+P
+13000
+12000
+11000 10000
+0 5 10 15 20 time (ps)
+]3A[
+V
+Pisa,ScuolaNormale–p.65/73
+51/1
+
+
+========== PAGE 68 ==========
+
+Multiple Time Step Method (r-RESPA)
+M.E.Tuckermanetal. JCP,971990(1992)
+Equation of motion
+p
+r˙ = p˙ = F +F
+fast slow
+m
+Liouville operator
+p ∂ ∂ ∂
+iL = +F +F +iL +iL
+fast slow ref slow
+m∂r ∂p ∂p
+(cid:18) (cid:19)
+Integrator
+x(δt) = exp(iLδt)x(0)
+= exp(iL δt/2)[exp(iL δt)]nexp(iL δt/2)+ (δt3)
+slow ref slow
+O
+
+
+========== PAGE 69 ==========
+
+MTS in CP2K
+Two FORCE_EVAL sections defining methods
+•
+Example DFT with hybrid functionals
+•
+F = F
+ref GGA
+F = F
+slow hybrid
+
+
+========== PAGE 70 ==========
+
+PLUMED: MD Driver and Enhanced Sampling
+Definition of many Collective Variables (CV)
+•
+Analysis features for MD and MetaDynamics
+•
+Bias methods for enhanced sampling MD
+•
+Logarithmic Mean Force Dynamics Method
+•
+Experiment Directed Simulation Methods
+•
+
+
+========== PAGE 71 ==========
+
+i-Pi: External MD Driver
+Kapiletal.,Comp. Phys. Comm. 236,214-223(2018)
+Driver software communicating with force engines (e.g. CP2K)
+through socket interfaces
+
+
+========== PAGE 72 ==========
+
+i-Pi: Features
+MDandPath-IntegralMD(PIMD)forNVE,NVT,NPT
+•
+RingPolymerContraction(RPC)MDandCentroidMD
+•
+GeneralizedLangevinEquation(GLE)thermostats
+•
+PI+GLEandPIGLET
+•
+RingPolymerInstantons
+•
+ThermodynamicIntegration,Geomertyoptimization,Saddle
+•
+pointsearch
+Harmonicvibrations
+•
+MultipleTimeStepalgorithms
+•
+Metadynamics(interfacetoPLUMED)
+•
+ReplicaExchageMD
+•
+SecondGenerationCPlikeintegration
+•
+
+
+========== PAGE 73 ==========
+
+i-PI: Multiple Time Steps
+
+
+========== PAGE 74 ==========
+
+Summary: BOMD in CP2K
+Born–Oppenheimer MD with ASPC(3) is default in CP2K
+•
+SCF convergence criteria depends on system
+•
+10−5 10−6 is a reasonable starting guess
+−
+Best used together with OT and the
+•
+FULL_SINGLE_INVERSE preconditioner, for large system
+an iterative update of the preconditioner should be used
+PRECOND_SOLVER INVERSE_UPDATE
+Langevin dynamics is an option
+•
+needs some special care, analysis of forces

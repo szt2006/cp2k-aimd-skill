@@ -1,0 +1,797 @@
+# SOURCE: 【输入文件-庚子计算整理】cp2k-3.pdf
+# PAGES: 26
+# TOPIC: CP2K 输入文件（cp2k-3）
+
+
+
+========== PAGE 1 ==========
+
+CP2K
+http://cp2k.berlios.de/
+Basic tutorial to CP2K calculations
+Sébastien LE ROUX sebastien.leroux@ipcms.unistra.fr
+INSTITUT DE PHYSIQUE ET DE CHIMIE DES MATÉRIAUX DE STRASBOURG,
+DÉPARTEMENT DES MATÉRIAUX ORGANIQUES,
+23 RUE DU LOESS, BP43,
+F-67034 STRASBOURG CEDEX 2, FRANCE
+
+
+========== PAGE 2 ==========
+
+
+
+
+========== PAGE 3 ==========
+
+Contents
+Contents i
+Listoftables iii
+1 CP2Kbasics 1
+1.1 GeneralideasontheCP2Kmethod . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1
+1.2 Variablesandincludefiles . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2
+1.3 TheGLOBALsection . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 3
+1.4 Energyandforcescalculation-theFORCE_EVALsection . . . . . . . . . . . . . . . . . . 4
+1.5 TheMOTIONsection . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+1.5.1 MOTIONsectionforgeometryoptimization . . . . . . . . . . . . . . . . . . . . . 7
+1.5.2 MOTIONsectionformoleculardynamics . . . . . . . . . . . . . . . . . . . . . . 9
+1.5.3 GeneralizedMOTIONsection . . . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+1.6 Restarts . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 13
+2 CP2Kinputstructuresetupforfirstprinciplecalculations 15
+2.1 Organization. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15
+2.2 Themaininputfile: System.inp . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15
+i
+
+
+========== PAGE 4 ==========
+
+
+
+
+========== PAGE 5 ==========
+
+List of Tables
+1.1 DeclarationofthevariablesusedintheFORCE_EVALsectionoftheCP2Kinputfileformat. . . . 4
+1.2 FirstprinciplestypeFORCE_EVALsectionoftheCP2Kinputfileformat. . . . . . . . . . . . . . 5
+1.3 SCFsubsectionoftheFORCE_EVALsectionoftheCP2Kinputfileformat. . . . . . . . . . . . . 6
+1.4 SUBSYSsubsectionoftheFORCE_EVALsectionoftheCP2Kinputfileformat. . . . . . . . . . . 7
+1.5 DeclarationofthevariablesusedintheGEO_OPTsectionoftheCP2Kinputfileformat. . . . . . 8
+1.6 MOTIONsectionforgeometryoptimizationsintheCP2Kinputfileformat. . . . . . . . . . . . . . 8
+1.7 DeclarationofthevariablesusedintheMDsectionoftheCP2Kinputfileformat. . . . . . . . . . 9
+1.8 MOTIONsectionforMDcalculationsintheCP2Kinputfileformat. . . . . . . . . . . . . . . . . 10
+1.9 DeclarationofthevariablesusedinthegeneralizedMOTIONsectionoftheCP2Kinputfileformat. 11
+1.10 GeneralizedMOTIONsectionforbothMDandgeometryoptimizationsintheCP2Kinputfileformat. 12
+1.11 DeclarationofthevariablesusedinthegeneralizedMOTIONsectionoftheCP2Kinputfileformat. 13
+1.12 EXT_RESTARTsectionintheCP2Kinputfileformat. . . . . . . . . . . . . . . . . . . . . . . . 13
+2.1 ThemaininputfileforfirstprinciplesCP2Kcalculations. . . . . . . . . . . . . . . . . . . . . . . 17
+iii
+
+
+========== PAGE 6 ==========
+
+
+
+
+========== PAGE 7 ==========
+
+CP2K basics
+1.1 General ideas on the CP2K method
+Fordetailsseereferences[1–3].
+CP2K is a program (written in Fortran95) to perform atomistic and molecular simulations.
+The CP2K code provides access to a wide number of calculations (MM, QMMM, QM, MC,
+MD ...), this guide is written to help to set up First Principles calculations (single point, geom-
+etry optimization and in particular molecular dynamics) therefore all other aspects of the code
+willnotbediscussinthenextpages.
+FPMD-CP2K simulations are Born-Oppenheimer molecular dynamics calculations. The DFT
+approaches uses a mixed Gaussian and plane waves approach (GPW = Gaussian and Plane
+Waves). The wave-function is described using a combination of Gaussians, but the density is
+calculated on a grid (PAW like scheme [4]). For large systems the method scales as O (N2M)
+withM =numberofbasisfunctions andN =numberofmolecularorbitals.
+InCP2KtheinputformatusesaCPMD-likesectionsystem:
+&SECTION
+...
+&END SECTION
+AndtheCP2KinputfileforaFPMDcalculationisdecomposedin3mandatorysections:
+• aGLOBAL section
+• aFORCE_EVAL section
+• aMOTION section
+Theorderofappearanceofthesesectionsdoesnotmatter.
+1
+
+
+========== PAGE 8 ==========
+
+Chapter1. CP2Kbasics 2
+1.2 Variables and include files
+TheCP2Kinputsystemis"commandinterpreter"-likesystem,thusitallowstodefinevariables,
+commandsanduseincludefiles.
+Variables
+Since input files for CP2K can be huge, it is very interesting to use variables to define the key
+parametersinthesame(beginning) partoftheinputfiletomakethemeasilyaccessible.
+@SET MD_STEPS 5000
+.
+.
+.
+&MOTION
+&MD
+STEPS ${MD_STEPS}
+&END MD
+&END MOTION
+In this example the variable "MD_STEPS" is declared using the "@SET" command, and used
+further away in the input file to define the number of MD steps. The declaration must be
+composed of 3 and only 3 instructions, the "@SET" command, the name of the variable (ex:
+MD_STEPS)andthevalueofthevariable(ex: 5000). Anyotherparameterontheinstructionline
+wouldbeparsedaspartofthevalueofthevariable:
+@SET MD_DT 1.5 ! Integration time step in fs =>Bad
+@SET MD_DT 1.5 =>Good
+IntheCP2Kinputsystemthisruleisageneralruleforthecaseoftextvariables,ie. filenames,
+thereforewhenspecifyingafilenamenocommentaryshouldbeaddedonthesameline.
+Include files
+Also it is possible to split an input into several parts, each of the files being inserted at the
+appropriateplaceallowingtosimplify thereadingoftheinputfile.
+@INCLUDE ’file.inc’
+In this example the include file "file.inc" is inserted and read using the "@INCLUDE ’ ’"
+command. Include files can also contains "@INCLUDE ’ ’" command(s), therefore at some
+pointthestructureoftheinputfilecanbecomesomewhatcomplicated.
+ThesyntaxoftheCP2Kinputfilecanbetestedusing:
+]$ cp2k -c input.inp
+Thecommandactsrecursivelyonallincludefiles.
+2
+
+
+========== PAGE 9 ==========
+
+3 1.3. TheGLOBAL section
+1.3 The GLOBAL section
+&GLOBAL
+PROJECT My_system
+RUN_TYPE My_calculation
+PRINT_LEVEL MEDIUM
+WALLTIME My_cpu_time
+&END GLOBAL
+• PROJECT =nameoftheproject,here"My_system"
+• RUN_TYPE = type of calculation, here "My_calculation", available types of calculation
+andcorrespondingkeywordsare:
+– Moleculardynamics: MD
+– Geometryoptimization: GEO_OPT
+– Singlepoint calculation: ENERGY_FORCE
+• PRINT_LEVEL=theamountofdataoutputtedbyCP2K,useLOWforstandardinformation.
+• WALLTIME=internallimitforCPUtimeinseconds,here"My_cpu_time",foracleanjob
+endingandrestart
+Definingvariablesusingthe"@SET" command[Sec. 1.2]wecanwrite:
+@SET SYSNAME liquid-Ge2Se3
+@SET RTYPE MD
+@SET CPUTIME 36000
+&GLOBAL
+PROJECT ${SYSNAME}
+RUN_TYPE ${RTYPE}
+PRINT_LEVEL MEDIUM
+WALLTIME ${CPUTIME}
+&END GLOBAL
+The interest in this method is allow to produce more generalized input files, this will be illus-
+tratedinthenextpages.
+3
+
+
+========== PAGE 10 ==========
+
+Chapter1. CP2Kbasics 4
+1.4 Energy and forces calculation - the FORCE_EVAL section
+The FORCE_EVAL section describes how forces and energy will be calculated and therefore is
+theheartofthecalculation.
+Fromnowonwewillusethefollowing syntaxinourexampleCP2Kinputfile:
+• Comments will appear in blue font, these comments are in the CP2K input format and
+cantherefore bekeptaspartoftheinputfile.
+• Variableswillbedeclaredandappearingreen font.
+• Includefileswillbeinsertedinbold font.
+First we are going to define variables to generalize and simplify the FORCE_EVAL section for
+DFTbasedcalculations,thispartoftheinputfileispresentedintable[Tab. 1.1].
+! Is the calculation a restart or not ?
+@SET RESTART FALSE
+! Name of the file that contains the basis set
+@SET BASISFILE file_with_basis_set
+! Name of the file that contains the pseudo-potentials
+@SET PSEUDOFILE file_with_pseudo
+! Name of the file that contains the wave-function (for restart)
+@SET WAVEFILE file_with_wavefunction
+! For comments on the following variables see the FORCE_EVAL section
+@SET CUTOFF 300
+@SET GRIDS 5
+@SET SCF_NCYCLES 500
+@SET SCF_OCYCLES 100
+@SET SCF_CONV 1E-6
+@IF ( ${RESTART} == TRUE )
+@SET SCF_GUESS RESTART
+@ENDIF
+@IF ( ${RESTART} == FALSE )
+@SET SCF_GUESS ATOMIC
+@ENDIF
+! Minimizer algorithm for SCF: BROYDEN, CG, or DIIS
+@SET SCF_MINI CG
+@SET FUNCTIONAL BLYP
+! Save results every OUT_STEPS molecular dynamics steps
+@SET OUT_STEPS 1
+Table1.1 DeclarationofthevariablesusedintheFORCE_EVALsectionoftheCP2Kinput
+fileformat.
+4
+
+
+========== PAGE 11 ==========
+
+5 1.4. Energyandforcescalculation-theFORCE_EVAL section
+AfirstprinciplestypeFORCE_EVAL sectionispresentedintable[Tab. 1.2].
+!
+! This file contains the description the CP2K method to evaluate forces and energy
+!
+&FORCE_EVAL
+! To print the forces
+&PRINT
+&FORCES
+&END
+&END
+! For first principles calculation the method is always Quickstep
+! which is the name of the method used to expand the wave-function in CP2K
+METHOD Quickstep
+&DFT
+! The files that will be used in the calculation
+BASIS_SET_FILE_NAME ${BASISFILE}
+POTENTIAL_FILE_NAME ${PSEUDOFILE}
+! If we restart a calculation then we use the previous wave-function
+@IF ( ${RESTART} == TRUE )
+WFN_RESTART_FILE_NAME ${WAVEFILE}
+@ENDIF
+! Setting up of the multigrids calculation
+&MGRID
+CUTOFF ${CUTOFF} ! => Cutoff of the finest grid level
+NGRIDS ${GRIDS} ! => Number of multigrids to use, default = 4
+&END MGRID
+! Setting up of the Quickstep algorithm
+&QS
+METHOD GPW ! => This is the default value
+EPS_DEFAULT 1.0E-12 ! => Default value is 1.0E-10
+MAP_CONSISTENT TRUE ! => Default value is TRUE, more consistent
+EXTRAPOLATION ASPC ! => Recommend for MD, PS otherwise
+EXTRAPOLATION_ORDER 3 ! => 4 can be better but increases CPU time
+&END QS
+! Setting up the Self Consistent Field calculation parameters
+! the SCF section is inserted using an include file:
+@INCLUDE ’scf.inc’
+! Setting up the exchange-correlation calculation
+&XC
+&XC_FUNCTIONAL ${FUNCTIONAL}
+&END XC_FUNCTIONAL
+&END XC
+&END DFT
+! The FORCE_EVAL also requires a SUBSYS section to describe the system
+! the SUBSYS section is inserted using an include file:
+@INCLUDE ’subsys.inc’
+&END FORCE_EVAL
+Table1.2 FirstprinciplestypeFORCE_EVALsectionoftheCP2Kinputfileformat.
+5
+
+
+========== PAGE 12 ==========
+
+Chapter1. CP2Kbasics 6
+TheSCFsection,inthe’scf.inc’ includefileispresentedintable[Tab. 1.3].
+!
+! This file contains the CP2K parameters for the SCF calculation
+!
+&SCF
+MAX_SCF ${SCF_NCYCLES} ! => Maximum number of SCF cycles
+EPS_SCF ${SCF_CONV} ! => Threshold for the SCF convergence
+SCF_GUESS ${SCF_GUESS} ! => Initial guess for the wave-function
+! Default value of initial configuration,
+! Initial calculation: ATOMIC
+! Restart calculation: RESTART
+! Setting up the Orbital Transformation to speed up the calculation
+! WARNING - This requires a gap HOMO-LUMO
+! WARNING - therefore it works only for insulators
+&OT ON
+MINIMIZER ${SCF_MINI} ! => Which algorithm for the minimizer DIIS or CG
+PRECONDITIONER FULL_ALL ! => Preconditioner for the minimization scheme,
+! FULL_ALL is the most effective state selective
+! preconditioner and is based on diagonalization
+ENERGY_GAP 0.001 ! => Underestimate value of the Gap (HOMO-LUMO) in a.u.
+! to be used with the FULL_ALL preconditioner
+&END OT
+! If after the ${SCF_NCYCLES} first SCF steps no convergence has been reach
+! more SCF cycles can be done updating the preconditioner.
+! detailed information is then specified in the ’OUTER_SCF’ section
+&OUTER_SCF
+MAX_SCF ${SCF_OCYCLES} ! => We update the preconditioner and start a new cycle
+! up to ${SCF_OCYCLES} times, thus in this case:
+! 500 x 100 cycles can be computed
+EPS_SCF ${SCF_CONV} ! => Convergence threshold for the extra cycles
+! it is safer to keep the same value
+&END OUTER_SCF
+&PRINT
+! To tune the printing of the restart file
+&RESTART
+LOG_PRINT_KEY T ! => Printing on screen when restart file is written
+&EACH
+QS_SCF 0 ! => Never write restart file(s) during the SCF cycle
+MD ${OUT_STEPS} ! => Write restart file every ${OUT_STEPS} MD steps
+&END EACH
+ADD_LAST NUMERIC
+&END RESTART
+&END PRINT
+&END SCF
+Table1.3 SCFsubsectionoftheFORCE_EVALsectionoftheCP2Kinputfileformat.
+6
+
+
+========== PAGE 13 ==========
+
+7 1.5. TheMOTION section
+TheSUBSYS section,inthe’subsys.inc’ includefileispresentedintable[Tab. 1.4].
+!
+! This file contains the description of the system in the CP2K input format
+!
+&SUBSYS
+&CELL
+ABC [angstrom] 15.28 15.28 15.28 ! => Simulation box parameters
+PERIODIC XYZ ! => Periodicity of the system
+&END CELL
+&TOPOLOGY
+! From XYZ file coordinates are always Cartesian and in angstrom
+COORDINATE XYZ
+! Name of the file that contains the atomic coordinates
+COORD_FILE_NAME GeSe.xyz
+&END TOPOLOGY
+&KIND Ge ! => For each species we create a KIND section
+BASIS_SET SZV-MOLOPT-SR-GTH ! => Very tricky section, thorough tests
+! to ensure that proper basis set is used
+POTENTIAL GTH-BLYP-q4 ! => CP2K pseudo-potential: GTH, ALL or KG
+! the exact sequence ’GTH-BLYP-q4’ appears
+! in the file that contains the pseudo-pot.
+! in front of the name of the element
+&END KIND
+&KIND Se
+BASIS_SET SZV-MOLOPT-SR-GTH
+POTENTIAL GTH-BLYP-q6
+&END KIND
+&END SUBSYS
+Table1.4 SUBSYSsubsectionoftheFORCE_EVALsectionoftheCP2Kinputfileformat.
+1.5 The MOTION section
+If atoms are moved during the calculation in a geometry optimization or a molecular dynamics
+simulationitisrequiredtocreateaMOTIONsectionthatcontainstheinformationrelatedtoeither
+ofboth.
+1.5.1 MOTION section for geometry optimization
+For geometry optimization it is required to define a GEO_OPT subsection in the MOTION section.
+As done previously we define variables to generalize and simplify the MOTION section for ge-
+ometry optimization calculations, this part of the input file is presented in table [Tab. 1.5]. The
+MOTION sectionforgeometryoptimization ispresentedintable[Tab. 1.6].
+7
+
+
+========== PAGE 14 ==========
+
+Chapter1. CP2Kbasics 8
+! Type of calculation (see section [Sec. 1.3] for details)
+@SET RTYPE GEO_OPT
+! Minimizer algorithm for geometry optimization
+@SET GEO_MINI CG
+! Maximum number of geometry optimization steps
+@SET GEO_MAXS 10000
+! Output format
+@SET OUT_FORM XYZ
+! Output unit
+@SET OUT_UNIT angstrom
+! Save results every OUT_STEPS steps of geometry optimization
+@SET OUT_STEPS 1
+Table1.5 Declaration of the variables used in the GEO_OPT section of the CP2K input file
+format.
+!
+! This file contains the CP2K parameters for the geometry optimization
+!
+&MOTION
+&GEO_OPT
+MINIMIZER ${GEO_MINI}
+MAX_ITER ${GEO_MAXS}
+&END GEO_OPT
+&PRINT
+&RESTART
+LOG_PRINT_KEY T
+&EACH
+GEO_OPT ${OUT_STEPS}
+&END EACH
+ADD_LAST NUMERIC
+&END RESTART
+&TRAJECTORY
+LOG_PRINT_KEY T
+FORMAT ${OUT_FORM}
+UNIT ${OUT_UNIT}
+&EACH
+GEO_OPT ${OUT_STEPS} ! Trajectory files will be printed every ${OUT_STEPS} steps
+&END EACH
+ADD_LAST NUMERIC
+&END TRAJECTORY
+&END PRINT
+&END MOTION
+Table1.6 MOTIONsectionforgeometryoptimizations intheCP2Kinput fileformat.
+8
+
+
+========== PAGE 15 ==========
+
+9 1.5. TheMOTION section
+1.5.2 MOTION section for molecular dynamics
+Formolecular dynamicsit isrequired to defineaMDsubsectionin theMOTION section. Asdone
+previously we define variables to generalize and simplify the MOTION section for molecular
+dynamicscalculations,thispartoftheinputfileispresentedintable[Tab. 1.7].
+! Type of calculation (see section [Sec. 1.3] for details)
+@SET RTYPE MD
+! Thermodynamical ensemble: NVT or NVE
+@SET MD_ENS NVT
+! Number of MD steps
+@SET MD_STEPS 10000
+! Integration time step of the Newton’s equation of motion (in fs)
+@SET MD_DT 2.0
+! Target temperature (in K)
+@SET MD_TEMP 300
+! Output format
+@SET OUT_FORM XYZ
+! Output unit
+@SET OUT_UNIT angstrom
+! Save results every OUT_STEPS steps of molecular dynamics
+@SET OUT_STEPS 1
+Table1.7 DeclarationofthevariablesusedintheMDsectionoftheCP2Kinputfileformat.
+9
+
+
+========== PAGE 16 ==========
+
+Chapter1. CP2Kbasics 10
+TheMOTION sectionformoleculardynamicscalculationsispresentedintable[Tab. 1.8].
+!
+! This file contains the CP2K parameters for the molecular dynamics calculation
+!
+&MOTION
+&MD
+ENSEMBLE ${MD_ENS}
+STEPS ${MD_STEPS}
+TIMESTEP ${MD_DT}
+TEMPERATURE ${MD_TEMP}
+@IF ( ${MD_ENS} == NVT )
+&THERMOSTAT
+TYPE NOSE
+REGION GLOBAL
+! Parameters of the Nosé-Hoover chain thermostat
+&NOSE
+TIMECON 50.
+LENGTH 3
+YOSHIDA 3
+MTS 2
+&END
+&END
+@ENDIF
+&END MD
+! Setting up how to print results
+&PRINT
+&RESTART
+LOG_PRINT_KEY T
+&EACH
+MD ${OUT_STEPS} ! Restart files will be printed every ${OUT_STEPS} steps
+&END EACH
+ADD_LAST NUMERIC
+&END RESTART
+&TRAJECTORY
+LOG_PRINT_KEY T
+FORMAT ${OUT_FORM}
+UNIT ${OUT_UNIT}
+&EACH
+MD ${OUT_STEPS} ! Trajectory files will be printed every ${OUT_STEPS} steps
+&END EACH
+ADD_LAST NUMERIC
+&END TRAJECTORY
+&VELOCITIES
+LOG_PRINT_KEY T
+FORMAT ${OUT_FORM}
+UNIT ${OUT_UNIT}
+&EACH
+MD ${OUT_STEPS} ! Velocity files will be printed every ${OUT_STEPS} steps
+&END EACH
+ADD_LAST NUMERIC
+&END VELOCITIES
+&END PRINT
+&END MOTION
+Table1.8 MOTIONsectionforMDcalculationsintheCP2Kinputfileformat.
+10
+
+
+========== PAGE 17 ==========
+
+11 1.5. TheMOTION section
+1.5.3 Generalized MOTION section
+TheCP2KinputformatallowstogofurtherinthewritingoftheMOTIONsectionwithageneral
+syntax for first principles calculations. Again we declared variables to generalize and simplify
+theMOTION section,thispartoftheinputfileispresentedintable[Tab. 1.9].
+! Type of calculation (see section [Sec. 1.3] for details)
+@SET RTYPE MD
+!
+! Geometry optimization options
+!
+! Minimizer algorithm for geometry optimization
+@SET GEO_MINI CG
+! Maximum number of geometry optimization steps
+@SET GEO_MAXS 10000
+!
+! Molecular dynamics options
+!
+! Thermodynamical ensemble: NVT or NVE
+@SET MD_ENS NVT
+! Number of MD steps
+@SET MD_STEPS 10000
+! Integration time step of the Newton’s equation of motion (in fs)
+@SET MD_DT 2.0
+! Target temperature (in K)
+@SET MD_TEMP 300
+! Output format
+@SET OUT_FORM XYZ
+! Output unit
+@SET OUT_UNIT angstrom
+! Save results every OUT_STEPS steps of MD or geometry optimization
+@SET OUT_STEPS 1
+Table1.9 DeclarationofthevariablesusedinthegeneralizedMOTIONsectionoftheCP2K
+inputfileformat.
+The generalized MOTION section that can be used for both molecular dynamics and geometry
+optimization calculationsispresentedintable[Tab. 1.10].
+11
+
+
+========== PAGE 18 ==========
+
+Chapter1. CP2Kbasics 12
+!
+! This file contains the CP2K parameters for geometry optimization and MD calculation
+!
+&MOTION
+&${RTYPE}
+@IF ( ${RTYPE} == MD ) ! Running molecular dynamics
+ENSEMBLE ${MD_ENS}
+STEPS ${MD_STEPS}
+TIMESTEP ${MD_DT}
+TEMPERATURE ${MD_TEMP}
+@IF ( ${MD_ENS} == NVT )
+&THERMOSTAT
+TYPE NOSE
+REGION GLOBAL
+! Parameters of the Nosé-Hoover chain thermostat
+&NOSE
+TIMECON 50.
+LENGTH 3
+YOSHIDA 3
+MTS 2
+&END
+&END
+@ENDIF
+@ENDIF
+@IF ( ${RTYPE} == GEO_OPT ) ! Running geometry optimization
+MINIMIZER ${GEO_MINI}
+MAX_ITER ${GEO_MAXS}
+@ENDIF
+&END ${RTYPE}
+! Setting up how to print results
+&PRINT
+&RESTART
+LOG_PRINT_KEY T
+&EACH
+${RTYPE} ${OUT_STEPS} ! Restart files will be printed every ${OUT_STEPS} steps
+&END EACH
+ADD_LAST NUMERIC
+&END RESTART
+&TRAJECTORY
+LOG_PRINT_KEY T
+FORMAT ${OUT_FORM}
+UNIT ${OUT_UNIT}
+&EACH
+${RTYPE} ${OUT_STEPS} ! Trajectory files will be printed every ${OUT_STEPS} steps
+&END EACH
+ADD_LAST NUMERIC
+&END TRAJECTORY
+@IF ( ${RTYPE} == MD )
+&VELOCITIES
+LOG_PRINT_KEY T
+FORMAT ${OUT_FORM}
+UNIT ${OUT_UNIT}
+&EACH
+${RTYPE} ${OUT_STEPS} ! Velocity files will be printed every ${OUT_STEPS} steps
+&END EACH
+ADD_LAST NUMERIC
+&END VELOCITIES
+@ENDIF
+&END PRINT
+&END MOTION
+Table1.10 Generalized MOTION section for both MD and geometry optimizations in the
+CP2Kinputfileformat.
+12
+
+
+========== PAGE 19 ==========
+
+13 1.6. Restarts
+1.6 Restarts
+To restart a calculation it is required to insert an EXT_RESTART section in the CP2K input file.
+VariablestogeneralizeandsimplifytheEXT_RESTARTsectionarepresentedintable[Tab. 1.11].
+! Type of calculation see section [Sec. 1.3]
+@SET RTYPE MD
+@SET RESTART TRUE
+! Name of the restart file from the previous run
+@SET RESTARTFILE My_restart_file
+! Thermodynamical ensemble: NVT or NVE
+@SET MD_ENS NVT
+Table1.11 Declaration of the variables used in the generalized MOTION section of the
+CP2Kinputfileformat.
+The generalized RESTART_RES section for first principles calculations in CP2K is presented in
+table[Tab. 1.12].
+&EXT_RESTART ON
+RESTART_DEFAULT F
+RESTART_FILE_NAME ${RESTARTFILE}
+RESTART_POS T
+RESTART_COUNTERS T
+@IF ( ${RTYPE} == MD )
+RESTART_VEL T
+@IF ( ${MD_ENS} == NVT )
+RESTART_THERMOSTAT T
+@ENDIF
+@ENDIF
+&END EXT_RESTART
+Table1.12 EXT_RESTARTsectionintheCP2Kinputfileformat.
+13
+
+
+========== PAGE 20 ==========
+
+
+
+
+========== PAGE 21 ==========
+
+CP2K input structure setup for first
+principle calculations
+2.1 Organization
+Atypicalsetupforaninitial calculationwouldbetopreparethefollowing files:
+• System.inp → Maininputfileincluding theGLOBAL andEXT_RESTART sections.
+• forces.inc → FORCE_EVAL sectionincludefile.
+• scf.inc → SCF sectionincludefile.
+• subsys.inc → SUBSYS sectionincludefile.
+• motion.inc → MOTION sectionincludefile.
+• restart.inc → EXT_RESTART sectionincludefile.
+• system.xyz → Atomic positionsinXYZangstromCartesiancoordinatesformat.
+• BASIS_SETS → Filethatcontainsthebasissets.
+• PSEUDO_POT → Filethatcontainsthepseudo-potentials.
+For the purpose of this manual it is not necessary to emphasizes the content of system.xyz
+(user defined), as well as the content of BASIS_SETS and PSEUDO_POT that are both distributed
+withCP2K.Theforces.inc,scf.inc,subsys.inc(partiallyuserdefined),motion.inc(gen-
+eralized MOTION section) and restart.inc files are strictly identical to the one presented re-
+spectivelyintables[Tab. 1.2,1.3,1.4,1.10and1.12].
+The main input file will contains all the variable definitions as well as the small GLOBAL and
+EXT_RESTART sections.
+2.2 The main input file: System.inp
+15
+
+
+========== PAGE 22 ==========
+
+Chapter2. CP2Kinputstructuresetupforfirstprinciplecalculations 16
+! /* This is my CP2K input file */
+!
+! General options
+!
+@SET SYSNAME My_system
+@SET RTYPE MD
+! Internal CPU time limit (in s) for a clean job ending
+@SET CPUTIME 36000
+! Is the calculation a restart or not ?
+@SET RESTART FALSE
+!
+! Files options
+!
+! Name of the file that contains the basis set
+@SET BASISFILE BASIS_SETS
+! Name of the file that contains the pseudo-potentials
+@SET PSEUDOFILE PSEUDO_POT
+! Name of the file that contains the wave-function (for restart)
+@SET WAVEFILE file_with_wavefunction
+! Name of the restart file from the previous run (for restart)
+@SET RESTARTFILE file_with_restart
+!
+! DFT calculation options
+!
+@SET CUTOFF 300
+@SET GRIDS 5
+@SET SCF_NCYCLES 500
+@SET SCF_OCYCLES 100
+@SET SCF_CONV 1E-6
+@IF ( ${RESTART} == TRUE )
+@SET SCF_GUESS RESTART
+@ENDIF
+@IF ( ${RESTART} == FALSE )
+@SET SCF_GUESS ATOMIC
+@ENDIF
+! Minimizer algorithm for SCF: BROYDEN, CG, or DIIS
+@SET SCF_MINI CG
+@SET FUNCTIONAL BLYP
+!
+! Geometry optimization options
+!
+! Minimizer algorithm for geometry optimization
+@SET GEO_MINI CG
+! Maximum number of geometry optimization steps
+@SET GEO_MAXS 10000
+!
+! Molecular dynamics options
+!
+! Thermodynamical ensemble: NVT or NVE
+@SET MD_ENS NVT
+! Number of MD steps
+@SET MD_STEPS 10000
+! Integration time step of the Newton’s equation of motion (in fs)
+@SET MD_DT 2.0
+! Target temperature (in K)
+@SET MD_TEMP 300
+!
+! Output options
+!
+@SET OUT_FORM XYZ
+@SET OUT_UNIT angstrom
+! Save results every OUT_STEPS steps for SCF, MD or GEO_OPT calculations
+@SET OUT_STEPS 1
+16
+
+
+========== PAGE 23 ==========
+
+17 2.2. Themaininputfile: System.inp
+!
+! The mandatory GLOBAL section
+!
+&GLOBAL
+PROJECT ${SYSNAME}
+RUN_TYPE ${RTYPE}
+PRINT_LEVEL MEDIUM
+WALLTIME ${CPUTIME}
+&END GLOBAL
+!
+! The optional EXT_RESTART section include file
+!
+@IF ( ${RESTART} == TRUE )
+@INCLUDE ’restart.inc’
+@ENDIF
+!
+! The mandatory FORCE_EVAL section include file
+!
+@INCLUDE ’forces.inc’
+!
+! The optional MOTION section include file
+!
+@IF ( ${RTYPE} /= ENERGY_FORCE )
+@INCLUDE ’motion.inc’
+@ENDIF
+Table2.1 ThemaininputfileforfirstprinciplesCP2Kcalculations.
+Ithastobestressedthatmanyotherkeywordsareavailableforanadvancedparametrizationof
+thecalculation,detailedcanbefoundintheCP2Kusermanual[1].
+17
+
+
+========== PAGE 24 ==========
+
+
+
+
+========== PAGE 25 ==========
+
+Bibliography
+[1] http://cp2k.berlios.de.
+[2] G.Lippert,J.Hutter,andM.Parrinello. Mol.Phys.,92(3):477–487 (1997).
+[3] J.VandeVondeleandJ.Hutter. J.Chem.Phys.,118(10):4365–4369 (2003).
+[4] P.E.Blöchl. Phys.Rev.B,50(24):17953–17979 (1994).
+
+
+========== PAGE 26 ==========
+
+ThisdocumenthasbeenpreparedusingtheLinuxoperatingsystemandfreesoftwares:
+Thetexteditor "gVim"
+TheGNUimagemanipulationprogram "TheGimp"
+TheWYSIWYGplottingtool "Grace"
+Andthedocumentpreparationsystem "LATEX2e ".

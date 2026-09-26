@@ -8,10 +8,38 @@ Desktop.ini
 __pycache__/
 *.pyc
 *.pyo
+*.egg-info/
+.pytest_cache/
+
+# 虚拟环境
+.venv/
+venv/
+env/
 
 # local workspace metadata (not part of the skill)
 .workbuddy/
 
 # dev / test artifacts (kept on disk locally, not published)
 _tmp_*.txt
-_chk_*.inp
+# 校验 harness 的**全部**产物：早先只写了 `_chk_*.inp`，于是 `_chk_realrdf_rdf.csv/.png`
+# 这类 csv/png 产物既留在仓库根、又不在忽略范围内（实测遗留了两个 9/17 的陈旧文件）。
+_chk_*
+/geo_opt.inp
+/verify_out/
+
+# 维护工具生成的报告（每次运行都会重建）
+_new_items_report.md
+
+# 校验 harness 生成的中间产物（每次运行都会重建）
+verify_out/_run/
+*.restart
+*.wfn
+cp2k.out
+
+# `postprocess.py` 默认把图/CSV 写到**当前目录**；在仓库根跑过它就会散落一地
+# （实测遗留过 8 个：M_md-1_energy.png / x_temperature.csv …）。
+# 用**根目录锚定**的 `/*.csv` `/*.png` 而不是 `*.csv` `*.png`：
+# 仓库里当前 0 个已跟踪的 csv/png，但 examples/ 等子目录将来可能放参考数据，
+# 不该被这条波及。
+/*.csv
+/*.png

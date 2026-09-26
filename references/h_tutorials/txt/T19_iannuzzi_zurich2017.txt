@@ -1,0 +1,1683 @@
+# SOURCE: 【GPW和GAPW-庚子计算整理】iannuzzi_cp2k-tutorial-zurich2017.pdf
+# PAGES: 43
+# TOPIC: CP2K 教程 Zurich 2017（GPW 与 GAPW，Iannuzzi）
+
+
+
+========== PAGE 1 ==========
+
+Zurich, July 12th 2017
+CP2K :
+GPW and GAPW
+Marcella Iannuzzi
+Department of Chemistry, University of Zurich
+http://www.cp2k.org
+
+
+========== PAGE 2 ==========
+
+Basis Set Representation
+KS matrix formulation when the wavefunction is expanded into a basis
+System size {N , M}, P [MxM], C [MxN]
+el
+⇥ (r) = C   (r)
+i  i  
+ 
+ 
+Variational
+n(r) = f C C   (r)  (r) = P   (r)  (r)
+principle
+i  i ⇥i   ⇥  ⇥   ⇥
+i  ⇥  ⇥ Constrained
+     
+minimisation
+P = PSP
+problem
+KS total energy
+ext H XC II
+E[   ] = T [   ] + E [n] + E [n] + E [n] + E
+i i
+{ } { }
+Matrix formulation of the KS equations
+H xc
+K(C)C = T(C) + V (C) + E (C) + E (C) = SC 
+ext
+2
+
+
+========== PAGE 3 ==========
+
+Self-consistency
+SCF Method
+(cid:15482) init
+Generate a starting density n
+Input
+3D Coordinates
+(cid:15482) init
+Generate the KS potential V of atomic nuclei
+KS
+(cid:15482)
+Solve the KS equations , ψ
+𝝐
+Initial Guess
+Fock Matrix
+Molecular Orbitals
+Calculation
+(1-electron vectors)
+(cid:15482) 1
+Calculate the new density n
+(cid:15482) 1
+New KS potential V
+Fock Matrix
+KS
+Diagonalization
+(cid:15482) 1
+New orbitals and energies , ψ
+𝝐
+Calculate
+(cid:15482) 2 Properties Yes SCF No
+New density n
+Converged?
+End
+…..
+until self-consistency to required precision
+3
+
+
+========== PAGE 4 ==========
+
+Classes of Basis Sets
+Extended basis sets, PW : condensed matter
+Localised basis sets centred at atomic positions, GTO
+Idea of GPW: auxiliary basis set to represent the density
+Mixed (GTO+PW) to take best of two worlds, GPW
+Augmented basis set, GAPW: separated hard and soft density domains
+4
+
+
+========== PAGE 5 ==========
+
+GPW Ingredients
+linear scaling KS matrix computation for GTO
+Gaussian basis sets (many terms analytic)
+2
+m m m ↵ r
+⇥ (r) = C   (r)   (r) = d g (r) g (r) = x xy y z z e m
+i  i   ↵ m↵ m m  
+  m
+  X
+Pseudo potentials
+Plane waves auxiliary basis for Coulomb integrals
+Regular grids and FFT for the density
+Sparse matrices (KS and P)
+Efficient screening
+G. Lippert et al, Molecular Physics, 92, 477, 1997
+J. VandeVondele et al, Comp. Phys. Comm.,167 (2), 103, 2005
+5
+
+
+========== PAGE 6 ==========
+
+Gaussian Basis Set
+Localised, atom-position dependent GTO basis
+  (r) = d g (r)
+µ mµ m
+m
+ 
+CP2K: Ab initio Molecular Dynamics Simulations Towards Linear Scaling HF/Exact Exchange Summary Acknowledgment
+Expansion of the density using the density matrix
+n(r) = P   (r)  (r)
+Sparse Matrices µ  µ    
+Gaussian basis:
+µ 
+ 
+• Operator matrices are rather sparse
+Operator matrices are sparse The sparsity of H and S
+S = ∫ ϕ (r)ϕ (r)dr
+αβ α β
+S = ' (r)' (r)dr
+H µ=⌫ ∫ ϕ (r)v(µr)ϕ (r⌫)dr
+αβ α β
+Z ϕ (r) ϕ (r)
+α β
+The sparsity pattern of S and H
+depends on the basis and the
+spatial location of the atoms, but not
+H = ' (r)V (r)' (r)dr
+on the µch⌫emical proµperties of the⌫
+system in GGA DFT.
+Z
+S
+αβ
+HIV-1 Protease-DMP323 complex in solution (3200 atoms)
+6
+• Orbital matrices are invariant under unitary transformation The overlap (integral of the product) rapidly
+decays with the spatial separation of the basis
+Chemical localization: Boys, Edminston-Rudenberg, etc.
+functions.
+Mathematical localization
+
+
+========== PAGE 7 ==========
+
+Analytic Integrals
+Cartesian Gaussian
+2
+n n n  (r R)
+g(r, n,  , R) = (x R ) x(y R ) y (z R ) z e
+x y z    
+     
+Differential relations
+@ @ @
+n) = 2⌘ n + 1 ) n n 1 ) n) = n)
+i i i
+@R | |   |   @R |   @r |
+i i i
+Obara-Saika recursion relations
+(0 (r) 0 ) (a + 1 (r) b)
+a b i
+|O |
+|O |
+Obara and Saika JCP 84 (1986), 3963
+7
+
+
+========== PAGE 8 ==========
+
+Basis Set library
+GTH_BASIS_SETS ; BASIS_MOLOPT ; EMSL_BASIS_SETS
+O 6-31Gx 6-31G*
+O SOZ VS-ZMVO-LGOTPHT-GTH SZV-MOLOPT-GTH-q6
+4
+1 1
+1 0 0 6 1
+2 0 1 7 1 1
+2 0 1 4 1 1
+5484.67170000 0.00183110 O 6-311++G3df3pd 6-311++G(3df,3pd)
+12.015954705512 -0.060190841200 0.036543638800
+8 2 5 . 283.439054030805 5 4 9 2 0 . 0 01.3195510011065999 -0.0995679273 9
+5.108150287385 -0.129597923300 0.120927648700
+1 8 8 . 024.649567090408 4 1 9 1 0 . 0-068.043495130195364 -0.3011422449 1 0 0 6 1
+2.048398039874 0.118175889400 0.251093670300
+5 2 . 9 064.7550900703 7 3 4 3 40. 2 -302.761947310724029 -0.4750857083 8588.50000000 0.00189515
+0.832381575582 0.462964485000 0.352639910300
+1 6 . 8 0 97 .2 5 1 7 3 00 6 0 3 8 8 6 3 2 0. 4 - 7 0 0 . 1 3 9 8 3 4 0 1 0 133622 -0.3798777957 1297.23000000 0.01438590
+0.352316246455 0.450353782600 0.294708645200
+5.79963530 0.35852090 299.29600000 0.07073200
+#
+0.142977330880 0.092715833600 0.173039869300
+1 0 1 3 1 1 87.37710000 0.24000100
+O0.0 D46Z7V60P9-1G8T30H0 -0.000255945800 0.009726110600
+15.53961600 -0.11077750 0.07087430 25.67890000 0.59479700
+# 2
+3.59993360 -0.14802630 0.33975280 3.74004000 0.28080200
+O D 2Z V 0P -1M O4 L 2O P 2T-GTH DZVP-MOLOPT-GTH-q6
+1.01376180 1.13076700 0.72715860 1 0 1 3 1 1
+1
+8.3043855492 0.1510165999 0.0000000000 -0.0995679273 0.0000000000
+1 0 1 1 1 1 42.11750000 0.11388900 0.03651140
+2 0 2 7 2 2 1
+0 . 2 720.0405578904 8 4 1 9 11.0 0-000.00309003 1 9 5 3 614.0 0 000.00000000000000 -0.3011422449 0.0000 0 0 0 0 9 0 . 0 62837000 0.92081100 0.23715300
+12.015954705512 -0.060190841200 0.065738617900 0.036543638800 -0.034210557400 0.014807054400
+1 2 2 1 0 1.7597373434 -0.6971724029 0.0000000000 -0.4750857083 0.0000 0 0 0 0 20.085332000 -0.00327447 0.81970200
+5.108150287385 -0.129597923300 0.110885902200 0.120927648700 -0.120619770900 0.068186159300
+0 . 8 000.0201030603 8 8 6 3 12.0 0-000.30804001133622 1.0000000000 -0.3798777957 1.0000 010 000 10 0 1 1 1
+2.048398039874 0.118175889400 -0.053732406400 0.251093670300 -0.213719464600 0.290576499200
+# 3 2 2 1 1 0.90566100 1.00000000 1.00000000
+0.832381575582 0.462964485000 -0.572670666200 0.352639910300 -0.473674858400 1.063344189500
+O 6-31Gxx 6-31G** 1 0 1 1 1 1
+1.1850000000 1.0000000000
+0.352316246455 0.450353782600 0.186760006700 0.294708645200 0.484848376400 0.307656114200
+4 0.25561100 1.00000000 1.00000000
+#0.142977330880 0.092715833600 0.387201458600 0.173039869300 0.717465919700 0.318346834400
+1 0 0 6 1 1 2 2 1 1
+O0.0 T4Z67V60P9-1G8T30H0 -0.000255945800 0.003825849600 0.009726110600 0.032498979400 -0.005771736600
+5484.67170000 0.00183110 5.16000000 1.00000000
+# 2
+825.23495000 0.01395010 1 2 2 1 1
+O TZVP-MOLOPT-GTH TZVP-MOLOPT-GTH-q6
+2 0 1 5 3 3
+188.04696000 0.06844510 1.29200000 1.00000000
+1
+5 2 . 91604.5206070404 1 9 9 3 08.2 3 02.701948390598460 0.0000000000 0.0000000000 -0.0595 8 1 5 2 6 9 2 4 0 1 1 0.0000000000 0.0000000000
+2 0 2 7 3 3 1
+1 6 . 8 397.7547800004 9 5 6 9 60. 4 700.119034010178339 0.0000000000 0.0000000000 -0.1875 6 4 9 0 40.53 2 205.00000000 0 0 0 0 10.00 0 0 00.00000000000000
+12.015954705512 -0.060190841200 0.065738617900 0.041006765400 0.036543638800 -0.034210557400 -0.000592640200 0.014807054400
+5 . 7 919.6333503803 3 7 7 0 04.3 5-085.32800908255700 0.0000000000 0.0000000000 -0.3700 710 73 7 31 8 1 10.0000000000 0.0000000000
+5.108150287385 -0.129597923300 0.110885902200 0.080644802300 0.120927648700 -0.120619770900 0.009852349400 0.068186159300
+1 0 1 3 0 1 .4 5 1 56802254 -0.6232449802 1.0000000000 0.0000000000 -0.4204 9 2 2 6 11.54 0 0 10.00000000 0 0 0 0 10.000 0 00.00000000000000
+2.048398039874 0.118175889400 -0.053732406400 -0.067639801700 0.251093670300 -0.213719464600 0.001286509800 0.290576499200
+15.53961600 -0.11077750 0.07087430 1 0 1 1 1 1
+0.1462920596 -0.1677863491 0.0000000000 1.0000000000 -0.2313901687 0.0000000000 1.0000000000
+0.832381575582 0.462964485000 -0.572670666200 -0.435078312800 0.352639910300 -0.473674858400 -0.021872639500 1.063344189500
+3.59993360 -0.14802630 0.33975280 0.08450000 1.00000000 1.00000000
+0 .33 5 22 3 126 214 6 1455 0.450353782600 0.186760006700 0.722792798300 0.294708645200 0.484848376400 0.530504764700 0.307656114200
+1.01376180 1.13076700 0.72715860
+0 . 1 4 2 197.17835300808000 000.009 2 711.05803030600000 000.3087201458600 -0.521378340700 0.173039869300 0.717465919700 -0.436184043700 0.318346834400
+1 0 1 1 1 1
+0.046760918300 -0.000255945800 0.003825849600 0.175643142900 0.009726110600 0.032498979400 0.073329259500 -0.005771736600
+0.27000580 1.00000000 1.00000000
+1 2 2 1 1
+0.80000000 1.00000000 8
+
+
+========== PAGE 9 ==========
+
+GTO in CP2K
+The repository contains several GTO libraries
+cp2k/data/
+ALL_BASIS_SETS BASIS_RI_cc-TZ GTH_POTENTIALS dftd3.dat
+ALL_POTENTIALS BASIS_SET HFX_BASIS nm12_parameters.xml
+BASIS_ADMM BASIS_ZIJLSTRA HF_POTENTIALS rVV10_kernel_table.dat
+BASIS_ADMM_MOLOPT DFTB MM_POTENTIAL t_c_g.dat
+BASIS_LRIGPW_AUXMOLOPT ECP_POTENTIALS NLCC_POTENTIALS t_sh_p_s_c.dat
+BASIS_MOLOPT EMSL_BASIS_SETS POTENTIAL vdW_kernel_table.dat
+BASIS_MOLOPT_UCL GTH_BASIS_SETS README
+Tools for the optimisation of GTO basis sets are
+available in cp2k, based on atomic and molecular
+electronic structure calculations
+9
+
+
+========== PAGE 10 ==========
+
+Pseudopotentials
+Outline
+Recap of Previous lecture All electrons vs pseudopotentials
+The Hartree-Fock-Kohn-Sham meth oCdore eClelacsstersoonf sB aasirse-s eet liminated Z =Z-Z
+V core
+The exchange and correlation hole Condensed phase: Bloch’s th and PBC
+Solving the electronic problem in practice
+Atomic 1s : exp{-Z r}
+Smooth nodeless pseudo-wfn close to nuclei
+Bare Coulomb replaced by screened Coulomb
+Inclusion of relativistic effects
+Transferable
+Angular dependent potentials:
+Pt p peaked at 3.9Å
+s peaked at 2.4Å
+d peaked at 1.3Å
+10
+Marialore Sulpizi Density Functional Theory: from theory to Applications
+
+
+========== PAGE 11 ==========
+
+GTH Pseudopotentials
+Norm-conserving, separable, dual-space
+Local PP : short-range and long-range terms
+4
+(2i 2) Z
+2
+PP PP PP   (   PP r ) ion PP
+V (r) = C (2)  r e erf   r
+ 
+loc i
+  r
+i=1
+⇤ ⌅
+⇧ ⌃ analytically part of ES   ⇥
+Non-Local PP with Gaussian type projectors
+Accurate and
+PP lm l lm
+V (r, r ) = r p h p r
+nl 0 i ij j 0 Transferable
+h | i h | i
+lm ij
+X X
+Scalar
+2
+1 r
+relativistic
+lm l lm (l+2i 2)
+r p = N Y (rˆ) r   e   2 r l
+i i
+| “ ”
+  ⇥ Few parameters
+Goedeker, Teter, Hutter, PRB 54 (1996), 1703;
+Hartwigsen, Goedeker, Hutter, PRB 58 (1998) 3641
+11
+
+
+========== PAGE 12 ==========
+
+Electrostatic Energy
+Periodic system
+n˜ (G)n˜(G) 1 Z Z
+PP ⇤ A B
+E = V (r)n(r)dr + 2⇡⌦ +
+ES loc
+G2 2 R R
+A B
+Z G A=B |   |
+X X
+6
+total charge distribution
+n (r) = n(r) + n (r)
+tot A
+including n(r) and Z
+A
+ 
+r R
+Z A Z r R
+ 
+n (r) = A   3/2 e r c V A (r) = A erf |   A |
+A
+A   (r c )3   „ « core   r R rc
+A
+A |   |   A ⇥
+r c =   2 r PP cancels the long range term of local PP
+A locA
+H
+E [n ] long range
+1 n (r)n (r ) tot
+SR tot tot  
+E = V (r)n(r) + drdr
+ES loc   smooth
+2 r r
+ 
+⌅ ⌅ ⌅ |   |
+2
+1 Z Z R R 1 Z
+A B A B A
++ erfc |  
+2 R R (rc )2 + (rc )2   ⇥2  rc
+A B   ⇥
+A=B |   | A B A A
+⇤ ⇤
+⇥
+⇧
+E ov short range, pair E self
+12
+
+
+========== PAGE 13 ==========
+
+Auxiliary Basis Set
+Long range term : Non-local Hartree potential
+1 n (r)n (r )
+tot tot  
+H
+E [n ] = drdr
+tot  
+2 r r
+ 
+    |   |
+Orthogonal, unbiased, naturally periodic PW basis
+1
+iG r
+n˜(r) = n˜(G) e
+·
+ 
+G
+ 
+-1
+10
+-2
+10
+Linear scaling solution of the Poiss-3on equation
+10
+-4
+10
+n˜ (G)n˜ -5 (G)
+H  tot 1t0ot
+E [n ] = 2  
+tot
+G2 -6
+10
+G
+  -7
+10
+100 200 300 400 500
+Plane wave cutoff [Ry]
+13
+].u.a[
+rorrE
+Efficient Mapping
+FFT
+Grid spacing [Å]
+0.15 0.13 0.11 0.10 0.09 0.08
+H O, GTH, TZV2P
+2
+Electrostatic
+Energy
+Fig. 1. Shown is the rapid convergence of the absolute error in the electrostatic
+energy Eq. 11 with respect to plane wave cuto  at fixed density matrix. The system
+is a single water molecule described with fairly hard GTH pseudo potentials and a
+TZV2P basis in a 10˚A cubic cell. The relation E =  2 is used throughout this
+cuto  2h2
+work to convert the grid spacing h to the corresponding plane wave cuto .
+infinite. All terms of the electrostatic energy are therefore treated simultane-
+ously
+n˜ (G)n˜(G) 1 Z Z
+EES = VPP(r)n(r)dr +2     + I J (7)
+loc G2 2 R R
+⇥   G I  ⇥ =J | I   J |
+using the Ewald sum method [42] as it is commonly implemented in plane
+wave electronic structure codes [6]. The long range part of all electrostatic
+interactions is treated in Fourier space, whereas the short range part is treated
+in real space. This separation is conveniently achieved for the ionic cores if a
+Gaussianchargedistribution(nI(r))foreachnucleusisintroducedanddefined
+c
+9
+
+
+========== PAGE 14 ==========
+
+Real Space Integration
+Finite cutoff and simulation box define a real space grid
+Density collocation Screening
+Real Space Grid
+Truncation
+n(r) = P   (r)  (r) P  ¯ (R) = n(R)
+µ  µ   µ  µ 
+  Finite cuto  and computational box define a real space grid R
+{ }
+µ  µ 
+   
+nˆ(G)
+nˆ(G) V (G) = V (R)
+H H
+  G2  
+13
+n R → ∇n R
+Numerical approximation of the gradient ( ) ( )
+∂ϵ
+xc
+v n r → V R R
+ϵ and derivatives evaluated on the grid [ ]( ) ( ) = ( )
+XC XC XC
+∂n
+µν r ′
+Real space integration H = ⟨µ|V ( )|ν⟩ → V (R)ϕ (R)
+!
+HXC HXC HXC µν
+R
+G. Lippert et al, Molecular Physics, 92, 477, 1997
+J. VandeVondele et al, Comp. Phys. Comm.,167 (2), 103, 2005 14
+
+
+========== PAGE 15 ==========
+
+Multiple Grids
+Integration
+1
+E
+i cut
+E = , i = 1..N
+cut
+ (i 1)
+  Exponent = 1 For the integartion of
+a Gaussian function
+the exponent of Gaussian product selects the grid
+with exponent 1 an ac-
+number of grid points is exponent-independent
+10
+curacy of 10 re-
+ 
+Accuracy Multiple Grids quires an integration
+2
+⇥ = 1/2 
+p p => Relative Cutoff range of 10 bohr, a
+cuto  of 25 Rydberg,
+~30 Ry
+Multiple Grids
+resulting in 22 integra-
+tion points.
+Number of pairs
+70000
+5000 integration points/integral batch
+⇥
+15
+50000
+30000
+10000
+f c
+n = I (n )
+j j i
+0 2 4 6 8
+Exponent
+15
+16
+16
+
+
+========== PAGE 16 ==========
+
+Analysis of Multigrid
+Bulk Si, 8 atoms, a=5.43Å, E =100 Ry, E =60 Ry
+cut rel
+-------------------------------------------------------------------------------
+---- MULTIGRID INFO ----
+-------------------------------------------------------------------------------
+count for grid 1: 2720 cutoff [a.u.] 50.00
+count for grid 2: 5000 cutoff [a.u.] 16.67
+count for grid 3: 2760 cutoff [a.u.] 5.56
+count for grid 4: 16 cutoff [a.u.] 1.85
+total gridlevel count : 10496
+Changing E from 50 to 500 Ry
+cut
+# REL_CUTOFF = 60
+# Cutoff (Ry) | Total Energy (Ha) | NG on grid 1 | NG on grid 2 | NG on grid 3 | NG on grid 4
+50.00 -32.3795329864 5048 5432 16 0
+100.00 -32.3804557631 2720 5000 2760 16
+150.00 -32.3804554850 2032 3016 5432 16
+200.00 -32.3804554982 1880 2472 3384 2760
+250.00 -32.3804554859 264 4088 3384 2760
+300.00 -32.3804554843 264 2456 5000 2776
+350.00 -32.3804554846 56 1976 5688 2776
+400.00 -32.3804554851 56 1976 3016 5448
+450.00 -32.3804554851 0 2032 3016 5448
+500.00 -32.3804554850 0 2032 3016 5448
+16
+
+
+========== PAGE 17 ==========
+
+GPW Functional
+1
+el 2 SR
+E [n] = P ⇥ + V + V ⇥
+µ  µ loc nl  
+  2 ⇥
+µ  ⇥     ⇤
+⌃
+   
+n˜ ( G)n˜ (G)  
+  tot   tot   XC
++ 2   + n˜(R)V (R)
+G2
+G R
+⌃ ⌃
+1
+2 ext HXC
+= P ⇥ + V ⇥ + V (R)⇥ (R)
+µ  µ   µ  ⇥ µ 
+  2 ⇥
+⌅ ⇧
+µ  ⇥     ⇤ R
+⌃ ⌃
+   
+   
+   
+Linear scaling KS matrix
+construction
+17
+
+
+========== PAGE 18 ==========
+
+CP2K DFT input
+&FORCE_EVAL
+METHOD Quickstep &XC_GRID
+XC_DERIV SPLINE2_smooth
+&DFT XC_SMOOTH_RHO NN10
+BASIS_SET_FILE_NAME GTH_BASIS_SETS &END XC_GRID
+POTENTIAL_FILE_NAME GTH_POTENTIALS &END XC
+LSD F &END DFT
+MULTIPLICITY 1
+CHARGE 0 &SUBSYS
+&MGRID &CELL
+CUTOFF 300 PERIODIC XYZ
+REL_CUTOFF 50 ABC 8. 8. 8.
+&END MGRID &END CELL
+&QS &COORD
+EPS_DEFAULT 1.0E-10 O 0.000000 0.000000 -0.065587
+&END QS H 0.000000 -0.757136 0.520545
+&SCF H 0.000000 0.757136 0.520545
+MAX_SCF 50 &END COORD
+EPS_SCF 2.00E-06 &KIND H
+SCF_GUESS ATOMIC BASIS_SET DZVP-GTH-PBE
+&END SCF POTENTIAL GTH-PBE-q1
+&XC &END KIND
+&XC_FUNCTIONAL &KIND O
+&PBE BASIS_SET DZVP-GTH-PBE
+&END PBE POTENTIAL GTH-PBE-q6
+&END XC_FUNCTIONAL &END KIND
+&END SUBSYS
+&END FORCE_EVAL
+18
+
+
+========== PAGE 19 ==========
+
+Hard and Soft Densities
+Formaldehyde
+Pseudopotential ➯ frozen core
+Augmented PW ➯ separate regions (matching at edges)
+LAPW, LMTO (OK Andersen, PRB 12, 3060 (1975)
+Dual representation ➯ localized orbitals and PW
+PAW (PE Bloechl, PRB, 50, 17953 (1994))
+19
+
+
+========== PAGE 20 ==========
+
+Partitioning of the Density
+n = n˜ + n − n˜
+! A ! A
+A A
+I
+A
+⎫
+n r − n r
+( ) ˜( ) = 0
+⎬r ∈ I
+n r − n r
+( ) ˜ ( ) = 0
+A A
+⎭
+A
+A A
+⎫
+n r − n r
+( ) ( ) = 0
+A
+r ∈ A
+⎬
+n r − n r
+˜( ) ˜ ( ) = 0
+A
+⎭
+G·R
+r A A r → G i
+n ( ) = P χ χ n˜( ) = P ϕ˜ ϕ˜ nˆ( )e
+A ! µν ! µν µ ν !
+µ ν
+µν G
+µν
+Gaussian Augmented Plane Waves
+20
+
+
+========== PAGE 21 ==========
+
+Local Densities
+r A A
+n ( ) = P χ χ
+!
+A µν µ ν μ
+µν
+A
+Χ projection of φ in Ω
+µ µ A
+through atom-dependent d’
+μ ν
+ν
+′ A
+A r overlap in
+χ = d g ( )
+!
+µ α
+µα
+α
+projector basis (same size)
+= α = ′ A
+{p } λ k λ ⟨p |ϕ ⟩ d ⟨p |g ⟩
+α α min !
+α µ α β
+µβ
+β
+′ ′ ′
+r A A r r A r r
+n ( ) = P d d g ( )g ( ) = P g ( )g ( )
+A µν µα νβ α β αβ α β
+" #
+αβ µν αβ
+! ! !
+21
+
+
+========== PAGE 22 ==========
+
+Density Dependent Terms: XC
+Semi-local functionals like local density approximation, generalised
+gradient approximation or meta-functionals
+∇n r ∇n r ∇n r − ∇n r
+( ) = ˜( ) + ( ) ˜ ( )
+Gradient: ! A ! A
+A A
+E n V r n r V˜ r V A r − V˜ A r
+[ ] = ( ) ( ) = ( ) + ( ) ( )
+loc loc loc loc
+" $
+! ! A A
+# #
+× n r n r − n r dr
+˜( ) + ( ) ˜ ( )
+A A
+A " $
+A A
+# #
+V˜ r n r V A r n r − V˜ A r n r
+= ( )˜( ) + ( ) ( ) ( )˜ ( )
+loc loc A loc A
+" $
+! A A
+# #
+22
+
+
+========== PAGE 23 ==========
+
+Density Dependent Terms: ES
+Non local Coulomb operator
+n0 r n0 r L L r Compensation
+( ) = ( ) = Q g ( )
+A A A
+" # charge
+A A L
+A ! ! !
+Same multipole expansion as the
+local densities
+L Z l 2
+r r r
+Q = n ( ) − n˜ ( ) + n ( ) r Y (θφ)r dr sin(θ)dθdφ
+A A A A lm
+!
+" #
+0 Z 0
+V n n V n n − V n n
+[˜ + ] + [ + ] [˜ + ]
+! A ! A
+A A
+A A
+Interstitial region
+Atomic region
+23
+
+
+========== PAGE 24 ==========
+
+GAPW Functionals
+E n E n E n − E n
+[ ] = [˜] + [ ] [˜ ]
+xc xc ! xc A ! xc A
+A A
+Z 0
+E n n E n n
+[ + ] = [˜ + ] +
+H H
+Z 0
+E n n − E n n
+[ + ] [˜ + ]
+! H A ! H A
+A
+A A
+on global grids Analytic integrals
+via collocation + FFT Local Spherical Grids
+Lippert et al., Theor. Chem. Acc. 103, 124 (1999); Iannuzzi, Chassaing, Hutter, Chimia (2005);
+Krack et al, PCCP, 2, 2105 (2000) VandeVondele , Iannuzzi, Hutter, CSCM2005 proceedings
+24
+
+
+========== PAGE 25 ==========
+
+GAPW Input
+&DFT &SUBSYS
+… …
+&QS &KIND O
+EXTRAPOLATION ASPC BASIS_SET DZVP-MOLOPT-GTH-q6
+EXTRAPOLATION_ORDER 4 POTENTIAL GTH-BLYP-q6
+EPS_DEFAULT 1.0E-12 LEBEDEV_GRID 80
+METHOD GAPW RADIAL_GRID 200
+EPS_DEFAULT 1.0E-12 &END KIND
+QUADRATURE GC_LOG &KIND O1
+EPSFIT 1.E-4 ELEMENT O
+EPSISO 1.0E-12 # BASIS_SET 6-311++G2d2p
+EPSRHO0 1.E-8 BASIS_SET 6-311G**
+LMAXN0 4 POTENTIAL ALL
+LMAXN1 6 LEBEDEV_GRID 80
+ALPHA0_H 10 RADIAL_GRID 200
+&END QS &END KIND
+&END DFT &END SUBSYS
+25
+
+
+========== PAGE 26 ==========
+
+Energy Functional Minimisation
+T
+C = arg min E(C) : C SC = 1
+ 
+C
+Standard: Diagonalisat ion + mixing (DIIS, Pulay, J. ⇥ Comput. Chem. 3,
+556,(1982); iterative diag. Kresse G. et al, PRB, 54(16), 11169, (1996) )
+Direct optimisation: Orbital rotations (maximally localised
+Example: DNA Crystal
+Wannier functions)
+Linear scaling methods: Efficiency depends on sparsity of P ( S.
+2388 atoms, 3960 orbitals, 38688 BSF (TZV(2d,2p))
+Goedecker, Rev. Mod. Phys. 71, 1085,(1999)) density matrix, overlap matrix
+⇥
+c E r r
+P(r, r ) e gap  
+⇥   |   |
+ 
+P
+1 1
+P = S S   (r)P(r, r )  (r )drdr
+µ    µp   q  p q ⇥ ⇥
+ 
+pq ⇥ ⇥ S
+ 
+26
+28
+
+
+========== PAGE 27 ==========
+
+Traditional Diagonalisation
+Eigensolver from standard parallel program library: SCALAPACK
+KC = SC 
+Transformation into a standard eigenvalues problem
+T
+S = U U C = U C
+Cholesky decomposition
+0
+T T 1 1
+KC = U U C  (U ) KU C = C  
+    ⇥ ⇥
+ 
+  ⇥
+Diagonalisation of K’ and back transformation of
+MO coefficients (occupied only (20%))
+error matrix
+DIIS for SCF convergence
+e = KPS SPK
+acceleration: few iterations
+ 
+3
+scaling (O(M )) and stability problems
+27
+
+
+========== PAGE 28 ==========
+
+Orbital Transform
+•
+OSeerkbs tiot fiandl t hTe mrinaimnums off othre mation Method
+energy functional with respect to
+the MO coefficients, with the Direction of
+steepest decent
+constraint that MO are normalised.
+Auxiliary X, linearly constrained variables to paramon eE tsurrifascee the occupied subspace
+correction
+Orbital Transform
+• tangent to
+Optimisation problem on a M-
+manifold at n
+C
+not linear orthonormality constraint Linear constraint n+1
+dimensional spherical surface.
+C geodesic
+T n
+C SC = I XSC = 0
+•
+0
+Perform a variable transformation,
+•
+Seeks to find the minimum of the
+Constraint
+from MO coefficients C to a set of
+energy functional with respect to manifold
+auxiliary variables such that the
+X for C T SC = 1
+the MO coefficients, with the Direction of
+optimisation of E is now on a M-1
+steepest decent
+constraint that MO are normalised. Direction of
+on E surface dimension c a or l r e li c n tio e n ar space w.r.t. X steepest decent Orbital Transform
+• tangent to
+Optimisation problem on a M- on E surface
+manifold at n tangent to
+C
+1
+C(X) = C cno+s1(U) + XU sin(U)
+dimensional spherical surface. C geodesic 0   manifold at n X
+n n+1
+• X
+Perform a variable transformation, U = (X T • SX) 1 Seeks to find the minimum of the n
+2
+Constraint
+Constraint
+from MO coefficients C to a set of
+energy functional with respect to manifold
+• manifold
+auxiliary variables such that the With constraint (fixes the direction for XTSC = 0
+X the fMor OC T cSoCe=ffi1cients, with the 0
+M dimensional of the plane): M-1 dimensional
+optimisation of E is now on a M-1
+constraint that MO are normalised.
+Direction of
+dimensional linear space w.r.t. X
+steepest decent •
+X T SC = 0 Optimisation problem on a M- C
+on E surface 0 0
+tangent to dimensional spherical surface.
+C(X) = C cos(U) + XU 1 sin(U) 1 C X,C X T SC = 0
+0   manifo C ld ( at X n ) = C 0 cos • ( X U n+1 ) + XU   sin(U) h 0 i ⌘ 0
+Perform a variable transformation,
+X cos(✓)
+T 1 n 1/2 C = = C cos(✓) + X ˆ sin(✓)
+U = (X SX) 2 T 0
+U = X frSoXm C M on O stra i c n o t efficients C to a set of ✓ sin(✓)
+  
+manifold
+• With constraint (fixes the direction auxili f a or r X y T S v C ar = ia 0 bles X such that the X ✓ = k X k = X X ˆ = X
+matrix func   tionals   by T 0 aylor C k k X
+optimisation of E is now on a M-1 k k k k
+of the plane):
+1
+1 T
+expansionsd imine nXsiToSnaXl linear space w.r.t. X X = X,X 2 = X SX 2
+k k h i
+T
+X SC = 0 28    
+0
+1
+C(X) = C cos(U) + XU sin(U)
+0  
+T 1
+U = (X SX)
+2
+•
+With constraint (fixes the direction
+of the plane):
+T
+X SC = 0
+0
+
+
+========== PAGE 29 ==========
+
+Preconditioned OT
+minimisation in the auxiliary tangent space,
+idempotency verified
+ E(C(X)) + Tr(X SC  )  E  C
+† 0 HC and SX
+= + SC  
+0
+ X  C  X
+dominated
+O(MN)
+CG(LS) or DIIS
+Preconditioned gradients
+P(H S )X X 0 X ⇥ PX
+    ⇥  
+X = X P E
+n+1 n n n
+  r
+1 T
+P = (H S" ) " = C HC
+ideal preconditioner
+n n   n n n
+ 
+Full All
+Full Single Inverse
+Full Kinetic
+Full S Inverse
+Full Single
+VandeVondele et al, JCP, 118, 4365 (2003)
+29
+
+
+========== PAGE 30 ==========
+
+OT Performance
+Use Inner and Outer loop
+Guaranteed convergence with CG + line search
+Various choices of preconditioners
+Limited number of SCF iterations
+KS diagonalisation avoided
+Sparsity of S and H can be exploited
+Based on matrix-matrix and matrix-vector products
+2
+Scaling O(N M) in cpu and O(NM) in memory
+Optimal for large system, high quality basis set
+30
+
+
+========== PAGE 31 ==========
+
+But OT is hard to beat !
+OT Performance
+Refined preconditioner, most effective during MD of large systems with well conditioned
+Refined preconditioner, most effective during MD of large systems with well
+basis sets
+conditioned basis sets
+onI mDapirnotv (eXdC S30in) gle Inverse
+Preconditioner
+3844 nodes
+(8 cores + 1 GPU)
+Preconditioner Solver based on
+an inverse update.
+Schiffmann, VandeVondele, JCP 142 244117 (2015)
+Schiffmann, VandeVondele, JCP 142 244117 (2015)
+31
+
+
+========== PAGE 32 ==========
+
+OT input
+&SCF
+EPS_SCF 1.01E-07
+&OUTER_SCF
+MAX_SCF 20
+EPS_SCF 1.01E-07
+&END OUTER_SCF
+SCF_GUESS RESTART
+MAX_SCF 20
+&OT
+MINIMIZER DIIS
+PRECONDITIONER FULL_ALL
+&END OT
+&END SCF
+32
+
+
+========== PAGE 33 ==========
+
+Linear Scaling SCF
+Linear Scaling SCF in CP2K
+m
+n 2
+2
+22nm
+VandeVondele, Borstnik, Hutter; JCTC 10, 3566 (2012)
+33
+mn4
+mn22
+Based on sparse matrix matrix Largest O(N3) calculation with CP2K
+Traditional approaches to solve the self-
+(~6000 atoms)
+mcounltsiipstleicnat tfiieolnd s( S(iCtFe)r aetqiuvaeti opnrso ca.r)e O(N3)
+limiting system size significantly.
+1
+1 1
+A nePwl=y implIemesnitgend aSlgorHithm iµs IO(NS),
+   
+2    
+allowing for far larger systems to be studied.
+      
+Self consistent solution by mixing
+H (P )
+n+1 n+1
+New regime: small devices, heterostructures,
+ˆ ˆ
+interHfaces, =na(n1o-pa↵rt)iHcles, a↵ sHmall virus.
+n+1 n n+1
+   
+Chemical potential by bisecting until
+Largest O(N) calculation with CP2K
+µ : trace(P S) N < 1/2
+n+1 n+1 el
+|   | (~1'000'000 atoms)
+VandeVondele J; Borstnik U; Hutter J; 2012, Linear scaling self-consistent field calculations for millions of atoms in the condensed phase. JCTC 10: 3566 (2012)
+
+
+========== PAGE 34 ==========
+
+DBCSR: a sparse matrix library
+Distributed Blocked Compressed Sparse Row
+Distributed Blocked Cannon Sparse Recursive
+Sparse Matrix Library
+Optimized for the science case: 10000s of non-zeros per row.
+The densDe BlimCSit Ra:s iDmipsotrrtiabnut taesd t hBel ospcakresde lCimoimt.pressed Sparse Row
+For massively parallel architectures
+Cannon style communication
+Optimised for 10000s of non-zeros pero rno aw h (odmenogseen liizmeidt )m atrix for
+strong scaling
+Stored in block form : atoms or molecules
+Cannons algorithm: 2D layout (rows/columns) and 2D distribution of data
+Homogenised for load balance
+Borstnik et al. : submitted
+given processor communicates only with nearest neighbours
+transferred data decreases as number of processors increases
+34
+
+
+========== PAGE 35 ==========
+
+Millions of atoms
+Millions of atoms
+in the condensed phase
+Accurate basis sets, DFT
+46656 cores
+The electronic structure
+O(106) atoms in < 2 hours
+Minimal basis sets:
+DFT, NDDO, DFTB
+9216 cores
+Bulk liquid water. Dashed lines represent ideal linear scaling.
+VandeVondele, Borstnik, Hutter, JCTC, DOI: 10.1021/ct200897x
+35
+
+
+========== PAGE 36 ==========
+
+Metallic Electronic Structure
+1
+3
+3 w    (  E )d k
+E =    (  E )d k
+k nk nk f
+band nk nk f
+⇥  
+⇥  
+BZ BZ n k
+n ⇥
+   
+ 
+Rh band structure
+C
+𝝐
+and needed
+KS KS
+Ef
+Ef
+charge sloshing and exceedingly slow convergence
+Wavefunction must be orthogonal to unoccupied bands close in energy
+Discontinuous occupancies generate instability (large variations in n(r))
+Integration over k-points and iterative diagonalisation schemes
+36
+
+
+========== PAGE 37 ==========
+
+Smearing & Mixing in G-space
+Mermin functional: minimise the free energy
+F (T ) = E k T S(f ) S(f ) = [f ln f + (1 f ) ln(1 f )]
+B n n n n n n
+       
+n
+ 
+Any smooth operator that allows accurate S(f ) to recover the T=0 result
+n
+  E 1
+n f
+f   = Fermi-Dirac
+n
+kT   E
+exp n f + 1
+⇤ ⌅  
+k T
+B
+  ⇥
+Trial density mixed with previous densities: damping oscillations
+m 1
+ 
+inp inp I inp I
+n = n + G [n ] + ↵  n + G  
+m+1 m m i i i
+R R
+i=1
+X
+   
+residual
+minimise the residual
+inp out inp inp
+[n ] = n [n ] n
+R  
+G preconditioning matrix damping low G
+37
+
+
+========== PAGE 38 ==========
+
+Iterative Improvement of the the n(r)
+Input density matrix
+in in
+P n (r)
+↵ 
+!
+Update of KS Hamiltonian
+C "
+diagonalization plus iterative refinement
+n n
+CPU Time
+E f
+Calculation of Fermi energy and occupations
+f n
+Time[s]/SCF cycle on 256 CPUs IBM Power 5 : 116.2
+New density matrix
+out new
+P n (r)
+↵  out out
+P n (r)
+↵ 
+!
+Check convergence
+out in
+max P P
+↵  ↵ 
+ 
+ 
+Density mixing
+out in h new
+n n n . . . n
+!
+38
+
+
+========== PAGE 39 ==========
+
+Rhodium: Bulk and Surface
+Rh(111) d-projected
+Rhodium: Bulk and Surface
+LDOS
+Bulk: 4x4x4
+DZVP
+Q17
+Surface: 6x6 7 layers
+2
+Basis PP a [Å] B[GPa] E [eV/Å ] W [eV]
+0 s f
+3s2p2df 17e 3.80 258.3 0.186 5.11
+Q9 DZVP
+2s2p2df 9e 3.83 242.6 0.172 5.14
+SZVP
+2sp2d 9e 3.85 230.2 0.167 5.20
+SZV
+spd 9e 3.87 224.4 0.164 5.15
+d-projected LDOS
+Minimal model for Rh(111) surface:
+4 layer slab, 576 Rh atoms, 5184 electrons, 8640 basis function -8 -4 0 4 8
+E-Ef [eV]
+39
+
+
+========== PAGE 40 ==========
+
+T. Auckenthaler et al./Parallel Computing 37 (2011) 783–794 785
+avoiding system-specific complications such as the exact form of the eigenspectrum, or the choice of an optimal precondi-
+tioning strategy [11,9]. Even for (i)–(iii), though, a conventional diagonalization of some kind may still be required or is a
+necessary fallback.
+In general, the solution of (1) proceeds in five steps: (A) Transformation to a dense standard eigenproblem (e.g., by Chole-
+! !
+sky decomposition of S), H c = Sc [ Aq = kq , k ; (B) Reduction to tridiagonal form, A [ T; (C) Solution of the tridi-
+KS l l l A A l
+!
+agonal problem for k eigenvalues and vectors, Tq = kq ; (D) Back transformation of k eigenvectors to dense orthonormal
+T T
+form, q [ q ; (E) Back transformation to the original, non-orthonormal basis, q [ c . Fig. 1 shows the overall timings of
+T A A l
+these operations on a massively parallel IBM BlueGene/P system, for one specific example: the electronic structure of a
+T. Auckenthaler et al./Parallel Computing 37 (2011) 783–794 785
+1003-atom polyalanine peptide (small protein) conformation in an artificially chosen, fixed a-helical geometry. The example
+avoiding system-specific complications such as the exact form of the eigenspectrum, or the choice of an optimal precondi-
+is set up using the ‘‘Fritz Haber Institute ab initio molecular simulations’’ (FHI-aims) all-electron electronic structure package
+tioning strategy [11,9]. Even for (i)–(iii), though, a conventional diagonalization of some kind may still be required or is a
+[8,32], at essentially converged basis set accuracy for DFT (tier 2 [8]). For (1), this means n = 27,069. The number of calculated
+necessary fallback.
+eigenpairs is k = 3410, somewhat more than the theoretical minimum k = 1905, one state per two electrons. Steps (A)–(E)
+In general, the solution of (1) proceeds in five steps: (A) Transformation to a densemsintandard eigenproblem (e.g., by Chole-
+were performed using only s!ubroutine calls as!in the ScaLAPACK [33] library where available, as implemented in IBM’s sys-
+sky decomposition of S), H c = Sc [ Aq = kq , k ; (B) Reduction to tridiagonal form, A [ T; (C) Solution of the tridi-
+KS l l l A A l
+!
+teamgo-nsaplepcriofibclemESfSoLr lkiberigaernyv,acluoems banindevdecatsords,eTsqcri=bkeqd;b(rDie) flBaycikntr[a8n,sSfoercmtiaotinon4.o2f]k. Tehigeenrveeacstoorns itso tdheantseSocratLhAonPoArCmKalor its interfaces are
+T T
+form, q [ q ; (E) Back transformation to the original, non-orthonormal basis, q [ c . Fig. 1 shows the overall timings of
+widely used for (massively) parallel linear algebra and readily available; no claim as to whether our use is the best or only
+T A A l
+these operations on a massively parallel IBM BlueGene/P system, for one specific example: the electronic structure of a
+possible alternative is implied. ScaLAPACK provides the driver routine pdsyevd, which calls pdsytrd, pdstedc, and
+1003-atom polyalanine peptide (small protein) conformation in an artificially chosen, fixed a-helical geometry. The example
+pdormtr for tridiagonalization, solution of the tridiagonal eigenproblem and back transformation respectively. pdstedc
+is set up using the ‘‘Fritz Haber Institute ab initio molecular simulations’’ (FHI-aims) all-electron electronic structure package
+is based on the divide-and-conquer (D&C) algorithm, tridiagonalization and back transformation are done using Householder
+[8,32], at essentially converged basis set accuracy for DFT (tier 2 [8]). For (1), this means n = 27,069. The number of calculated
+treaignesnfpoarimrsaistiko=n3s4a1n0d, sobmloecwkheadt mveorrseitohnans tthheetrheeoofre[t3ic4a,l3m5]in. iTmhuembkack=t1ra9n05s,foonrme satattieonpewr tawsodeolencetroonnsl.yStfeoprs (tAh)e–(nE)eeded eigenvectors.
+min
+weOreurpeprofoirnmtehdeurseinagreonsloymsuebrkoeuytinceoncaclllus sasioinnst,hienSacagLrAePeAmCKen[3t3w] liitbhrarreypwohretrseianvtahilaebwle,idaserimliptleermaetnutreed[i1n2IB,6M,3’s6s]y.sW- hat is most appar-
+tem-specific ESSL library, combined as described briefly in [8, Section 4.2]. The reason is that ScaLAPACK or its interfaces are
+ent from Fig. 1 is that even for this large electronic structure problem, the calculation does not scale beyond 1024 cores, thus
+widely used for (massively) parallel linear algebra and readily available; no claim as to whether our use is the best or only
+limiting the performance of any full electronic structure calculation with more processors. By timing steps (A)–(E) individ-
+possible alternative is implied. ScaLAPACK provides the driver routine pdsyevd, which calls pdsytrd, pdstedc, and
+ually, it is obvious that (B) the reduction to tridiagonal form, and then (C) the solution of the tridiagonal problem using the
+pdormtr for tridiagonalization, solution of the tridiagonal eigenproblem and back transformation respectively. pdstedc
+Di&s bCaasepdpornoathcehddivoidme-iannadt-ecotnhqeuecra(lDcu&lCa)tailognor,iathnmd, tprrideivaegonntafluizratthioenrasncdablainckg.trFaonrsfo(Brm),atthioenmareaidnonreeuassionng Hisouthseahtotldheer underlying House-
+htorladnesfrortmraantisofnosrmanadtbioloncskeidnvveorlsvioenms tahterriexo–f v[3e4c,3to5]r. oThpeerbaactikotnrasn(sufosremoatfioBnLwAaSs-2dosnuebornolyutfionrethseannededuendfeaivgeonrvaebclteorcs.ommunication pat-
+Our point here are some key conclusions, in agreement with reports in the wider literature [12,6,36]. What is most appar-
+tern); the magnitude of (C) is more surprising (see below). By contrast, the matrix multiplication-based transformations
+ent from Fig. 1 is that even for this large electronic structure problem, the calculation does not scale beyond 1024 cores, thus
+(A), (D), and (E) either still scale or take only a small fraction of the overall time.
+limiting the performance of any full electronic structure calculation with more processors. By timing steps (A)–(E) individ-
+In the present paper, we assume that step (A) already has been completed, and step (E) will nAot be considered, either. We
+ually, it is obvious that (B) the reduction to tridiagonal form, and then (C) the solution of the tridiagonal problemnusing the
+The ELPA project The project g e
+w
+prDe&sCenaptparonacehwdopmarinaallteelthime cpallecumlaetinotna,B tae ino yodn ndpbrthea evs bee and sticfo Eun LrPthA t - heLri e bsctawlion-gA s.lg tFo eor prith(m bBi)a c,n ptahd thes rmf e or daeiu ing c ern tep iar o osn boleno mif ss Bthiastchthoefuentdaerll.y[i3na ng7]Hcoousnec-erning step (B), tri-
+d
+te
+dihaogldoenratlriaznastfoiormn;atSioencstiionnvo2lv.e1,mwatirtihx–ivmecptorroovpeemraetinotnss m(usaeinolfyBLf I oAm rSp-ro s2v t e esmup ebnr( tsoDuw )ti , tihnb Eea LsP caA kndtruannfsafvoorramblaeticoonm;mSuencitciaot Inin fo on2 A lg p
+o
+.2a.t-We also extend the
+D t & er C n) a ; l t g h o e ri m th ag m n , it t u h d u e s o s f p (C e
+G
+) e
+e
+i d s
+n
+in m
+e
+g
+r
+o
+a
+r u e
+li
+p
+z
+su
+e
+s r
+d
+t p e r p
+E
+is
+i
+i (
+g
+n C g
+e
+)
+n
+; (s
+v
+S e
+a
+e e
+l
+c
+u
+b t e i
+e
+o lo n
+P
+w
+r
+3 )
+o
+. .
+b
+B S y
+l
+o
+e
+m c
+m
+on e
+E
+t
+f
+a r
+fi
+a
+c
+d
+i
+s
+e
+d t
+n
+,
+t
+i t t
+tr
+h i
+id
+o e
+ia
+n
+g
+m a
+on
+a l
+a
+t o
+l
+r
+iz
+i p x
+at
+t
+io
+m im
+n
+u i lt z i a p t li i c o a n tio s n t - e b p a s se i d n t t r h an e s a fo l r g m o
+rm
+a tik a r t it i
+ritoh
+mh
+ik
+n m s ic parts not specif-
+(A), (D), and (E) either still scale or take only a small fraction of the overall time.
+ically discussed here (reduction to banded form, optimized one-step reduction to tridiagonal form, and corresponding back
+State of the Art
+InAthelgpreosenrtiptahpemr, weicassupmae thtaht sstep f(Ao) arlreeadyighaes bneenpcormoplbetelde, amnd sstep (IEI)Iwill not be considered, either. We
+transformations) will be published as part of an overall implementation in [38]. These routines are also included in recent
+ELPA project
+present a new parallel implementation based on the two-step band reduction of Bischof et al. [37] concerning step (B), tri-
+pr d o ia d g u on c a ti li o z n ati v o e n r ; s S i e o c n ti s on of 2 F .1 H , w I- i a th im im s. p F ro o v r e s m im en p ts li m cEi aLt i y nPlAw y f e oinr w sci t l epl p2p (kr D e ) s , e b n ac t k o t n ra l n y s t fo h r e m r a e ti a o l n s ; y S m ect m io e n t 2 ri .2 c . c W as e e a ; ls t o h e e x c te o n m d p th l e ex Hermitian case is
+Generalized Eigenvalue Problem
+siDm&iClaarlg. orithPm,rtohubs slpeeemdinsg uwp sitteph(Ct);hSiesctioanp3S.tpaStoermooefaathdcediAhtirot:nal optimization steps in the algorithmic parts not specif-
+ScaicalLly dAiscuPssedAheCre (rKeduction to banded form, optimELizPeAdpornojee-csttep reduction to tridiagonal form, and corresponding back
+In addition to synthetic testcases, we show benchmarks for two large, real-world problems from all-electron electronic
+ELPA in cp2k
+transformations) will be published as part of an overall implementation in [38]. These routines are also included in recent
+structure theory: first, the n = 27,069, k = 3410 polyalanine case of Fig. 1, which will be referred to as Poly27069 problem
+production versions of FHI-aims. For simplicity we will present only the real symmetric case; the complex Hermitian case is
+ScaLAPACK performance
+Generalized Eigenvalue Problem
+in the following, and second, an n = 67,990 generalized eigenproblem arising from a periodic Pt (100)-‘‘(5 40)’’, large-scale
+similar. State of the Art
+"
+reconstructed surface calculation with 1E0L4PA6phroejeactvy-element atoms, as needed in [39]. In the latter calculation, the large frac-
+In addition to synthetic testcases, we show benchmarks for two large, real-world problems from all-electron electronic
+ELPA in cp2k
+ScaLAPACK for diagonlisation
+tisotnruoctfucreorteheeolreyc:tfirrosnt,sthfoernP=t2(7a,t0o6m9, ikc=n3u4m10bpeorlyZa=lan7i8n)e mcaasekeosf Ffiogr. 1a,mwhuicchh whiigllhbeerrreafetriroedoftonaesedPoeldy2e7i0g6e9npstroabtelesmto overall basis size,
+ScaLAPACK performance
+in the following, and second, an n = 67,990 generalized eigenproblem arising from a periodic Pt (100)-‘‘(5 40)’’, large-scale
+k = 43,409 64%, than in the polyalanine case, even though the basis set used is similarly well converged. This problem will
+"
+All electron electronic structure calculation with FHI-aims:
+#
+reconstructed surface calculation with 1046 heavy-element atoms, as needed in [39]. In the latter calculation, the large frac-
+be referred to as Pt67990. Benchmarks are performed on two distinct computer systems: The IBM BlueGene/P machine
+λ
+tion of core electronsAfor Pt (atomic number Z = 78) mTakes for a much higher ratio(o f n ,eqed e d) eigenstates to overall basisqsize,
+polyalanine peptide
+‘‘genius’’ used in Fig. 1, and a Sun Microsystems-built, Infiniband-connected Intel Xeon (Nehalem) cluster with individual
+T A
+k = 43,409 64%, than in the polyalanine case, even though the basis set used is similarly well converged. This problem will
+# All electrroednucetlieocnt rtoonic structure ccaolmcpuulatetion with FHI-aims: transform
+eight-core nodes. We note that for all standard ScaLAPACK or PBLAS calls, i.e., those parts not implemented by ourselves,
+be referred to as Pt67990. Benchmarks are performed on two distinct computer systems: The IBM BlueGene/P machine
+tridiagonal formpolyalanineeigpenevpatliudees and eigenvectors
+th‘‘egeoniputsi’m’ uiszeeddinSFciagL. A1,PaAnCdKa-lSiukneMimicrpolseymsteemntsa-btuioilnt,sInbfiyniIbBaMnd-(cEoSnSnLe)ctoedr IInntteellX(eMonK(LN)ewhaelerme )ecmlupstleorywedit.h individual
+−vectors of T
+eight-core nodes. We note that for all standard ScaLAPACK or PBLAS calls, i.e., those parts not implemented by ourselves,
+the optimized ScaLAPACK-like implementations by IBM (ESSL) or Intel (MKL) were employed.
+one half BLAS 2 QR too slow pdsyevd (ESSL) on IBM BGP
+1003 atoms
+Tran3s4f1o0r Mm s O c S a a li t n i g on to trid B i is a In g v o It n s a lo l w f , o no r t m robu b s a t sed on Taridriaogounanlizdatio5n 0%
+1003 atoms
+Polyalanine peptide
+342170 0M6O9S BSf Tridiagonalization
+Generalized Eigenvalue Problem
+D & C scaling
+BLA27S06-92 BSfop Sta e te r of a th t e A i r o t ns. Solution
+ELPA project Solution
+not partial Cho. 1
+ELPA in cp2k
+Cho. 1
+ScaLAPEAiCgeKni-ndcepc2okmposition of T traditionally done wiBtachk trarnos.utines
+MRRR not robust enoughBack trans.
+Cho. 2
+Cho. 2
+such as bisection and inverse iterations.
+Eigenvalue Solvers—The ELPA Project and Beyond, Bruno Lang 9/31
+Divide-and-conquer-based method (D&C)
+Fig. 1. Left: Segment of the a-helical polyalanine molecule Ala as described in the text. Right: Timings for the five steps (A): reduction to standard
+100
+Fig. 1. Left: Segment of the a-helical polyalanine molecule Ala as described in the text. Right: Timings for the five steps (A): reduction to standard
+eigenproblem, (B): tridiagonalization, (C): solution of the tridiagonal problem10,0and back transformation of eigenvectors to the full standard problem (D) and
+ei t g h e e n g p e r n o e b ra l l e5iz mM7ed ,6( p B rC) ou:obut lnelr,m itdIni (iBa Epag )M, ooo nlf=aeaBli1c z oG4a mrt4Pi peo0le nwt0l, ea(,ie Cti )Ngth: e s nieo vEvla leuSluect eSit/ ol-.Ln v=ye:o ct f6po t r3rhds3eosoly6t u rbet,i i d ovki nuda f g ooosr nftth aei l s pimgrro oeeb lne l cpe-u mpler,a, n aeinr=ssd 2=7 be,0 a36 cn9 k7, 6ttk r8= aan 34 stf 1 o 0ir ,om as ana ti f o usn nc o ti fmo e n ig of een th vte ehn c u to mor b s edt r o o t f h p(e roMf c u e l s l so sRt r anRdardRpr)oblem (D) and
+thceorgese.nTehreaclaizlceudlatpioronobwlneasmpIe(BrEfo)Mr,moefdaBocnoGamnPIpBlMewtBeluieetiGgheennevE/aPSlsuyeSst/e-Lmve:,cutspoinrdgsasoclyuometiopvlnedtefolyrStchaLisAPmACoKle-bcausleed, inm=pl2em7,e0n6ta9t,iokn=. S3te4p1(0C,) awsasapfeurfnocrmtioednuosifntghe number of processor
+time x SCF, on CRAY XE6
+the divide-and-conquernmperthoocd.s syevd syevr Cholesky 7/25
+cores. The calculation was performed on an IBM BlueGene/P system, using a completely ScaLAPACK-based implementation. Step (C) was performed using
+7/25
+the divide-and-conquer method.
+32 106 (49%) 72 (40%) 38 (21%)
+Parallel performance depends on data locality and scalability
+>70% in eigenvalue solver
+64 69 (46%) 48 (37%) 34 (26%)
+ScaLAPACK need improvements in numerical stability, parallel
+128 41 (41%) 29 (34%) 23 (28%)
+256 35 (41%) 26 (34%) 24 (32%) poor scaling
+scalability, and memory bandwidth limitations
+Syevd: D&C
+Syevr: MRRR
+40
+6 / 25
+9/25
+
+
+========== PAGE 41 ==========
+
+A
+n
+The ELPA project The project g
+e
+w
+a
+Beyond the basic ELPA-Lib Algorithmic paths for eigenproblems n
+d
+te
+Improvements with ELPA In
+fo
+A
+lg
+o
+Efficient tridiagonalization rm
+a
+rith
+Generalized Eigenvalue Problem
+tik m
+ik
+State of the Art
+ELPA project
+Improvements with ELPA V
+ELPA in cp2k
+Two-step Strategy
+ELPA (http://elpa.rzg.mpg.de)
+Two-step reduction II: banded tridiagonal:
+!
+Improved efficiency by a two-step transformation and back transformation
+better scaling better scaling
+higher per−node perf
+B q
+complex complex better scaling complex band form by
+B
+complex partial
+mainly blocked
+"cheap"
+BLAS 3 partial
+orthogonal
+λ
+A T ( ,q ) q
+transformations
+T A
+reduction to compute transform
+tridiagonal form eigenvalues and eigenvectors
+−vectors of T
+two−step
+one half BLAS 2 QR too slow
+Benchmark on CRAY-XE6
+N atoms=c a2lin11g6; Nel = 169B2is8In;v It slow, not robust
+Reduncmtioo =n 1v0taro9ia6nb4t ;aw nintahdo =f o3r1m7D4 &0b Cy bslocaclinkged orbtethteor sgcoalninag l transformations
+better scaling
+not partial partial variant
+Tridiagonalization by n 2 stages of a bulge-chasing algorithm
+MRRR not robust enough improved robustness
+ 
+1000Optimized kernel for non-blocked Householder transformations
+D&C for partial eigensystem
++ Extended to complex
+Perspective: MRRR based tridiagonal eigensolver; hybrid
+openMP/MPI version
++ Improved parallelization
+14 / 25
+500 1000 1500 2000 2500 3000
+Eigenvalue Solvers—The ELPA Project and Beyond, Bruno Lang 15/31
+Number of cores 41
+FCS
+21
+rof
+emit
+latoT
+Generalized Eigenvalue Problem
+State of the Art
+ELPA project
+ELPA in cp2k
+Benchmark on BGN-P atom= 480; Nel = 6000;
+nmo = 7400; nao = 14240
+CRAY XE6 All - syevd BG-P
+All - syevd
+Diag - syevd
+Diag - syevd All - syevr
+10000
+All - ELPA
+Diag - syevr
+All - ELPA
+Diag - ELPA
+Diag - ELPA
+1000
+500 1000 1500 2000 2500 3000 3500 4000 4500
+24/25
+
+
+========== PAGE 42 ==========
+
+Large metallic systems
+hBN/Rh(111) Nanomesh
+13x13 hBN on 12x12 Rh slab
+graph./Ru(0001) Superstructure
+25x25 g on 23x23 Ru
+2116 Ru atoms (8 valence el.) + 1250 C atoms,
+Nel=21928, Nao=47990 ;
+~ 25 days per structure optimisation, on 1024 cpus
+Slab 12x12 Rh(111) slab, a =3.801 Å, 1 layer hBN 13x13
+0
+4L: 576Rh + 169BN: Nao=19370 ; Nel=11144
+7L: 1008Rh + 338BN: Nao=34996 ; Nel=19840
+Structure opt. > 300 iterations => 1÷2 week on 512 cores
+42
+
+
+========== PAGE 43 ==========
+
+SCF for Metals
+&SCF
+SCF_GUESS ATOMIC
+MAX_SCF 50
+EPS_SCF 1.0e-7 &XC
+EPS_DIIS 1.0e-7 &XC_FUNCTIONAL PBE
+&SMEAR &END
+METHOD FERMI_DIRAC &vdW_POTENTIAL
+ELECTRONIC_TEMPERATURE 500. DISPERSION_FUNCTIONAL PAIR_POTENTIAL
+&END SMEAR &PAIR_POTENTIAL
+&MIXING TYPE DFTD3
+METHOD BROYDEN_MIXING PARAMETER_FILE_NAME dftd3.dat
+ALPHA 0.6 REFERENCE_FUNCTIONAL PBE
+BETA 1.0 &END PAIR_POTENTIAL
+NBROYDEN 15 &END vdW_POTENTIAL
+&END MIXING &END XC
+ADDED_MOS 20 20
+&END SCF
+43

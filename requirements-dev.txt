@@ -1,0 +1,61 @@
+# ============================================================================
+# cp2k-aimd skill —— 开发 / 校验 / 文档依赖
+# ============================================================================
+# 仅在「修改 skill 本身」时才需要装。普通用户只装 requirements.txt 即可。
+#
+# ⚠️ 注意：本文件**不能**用单条 `pip install -r requirements-dev.txt` 安装完，
+#    原因见下面「已知的钉版冲突」。请按文件末尾的「安装步骤」两步走。
+#
+# 覆盖的脚本：
+#   _validate_all.py          —— 权威校验 harness（用官方 cp2k_input.xml 解析）
+#   _validate_postprocess.py  —— 后处理端到端校验（合成数据，无需真实 CP2K）
+#   _official_validate.py     —— 官方解析器对照
+#   scripts/_manual_tree.py / _manual_kw.py —— 从官方手册抽取关键字树
+#   references/pdf_text/extract_pdf.py      —— 重新抽取课程 PDF（可选）
+# ----------------------------------------------------------------------------
+
+-r requirements.txt
+
+# --- 校验层：修改模板/生成逻辑后必跑 -----------------------------------------
+# cp2k-input-tools 自带官方 CP2K 输入参考手册（cp2k_input.xml），
+# 是 _validate_all.py 判定「语法是否合法」的唯一权威来源。
+cp2k-input-tools>=0.9.1
+
+# cp2k-input-tools 的 XML 解析后端
+lxml>=4.9
+
+# --- 以下两个由「安装步骤」显式安装（不写进上面的依赖解析）--------------------
+# pint     : 单位解析（校验 CP2K 输入里的 [Ry] [K] [angstrom] [fs] 等）
+# transitions / pydantic : cp2k-input-tools 的运行期依赖
+#   pint>=0.24.4   —— 见下方冲突说明
+#   transitions
+#   pydantic>=2,<3.0
+
+# --- 已知的钉版冲突（务必阅读）------------------------------------------------
+#   cp2k-input-tools 0.9.1 声明  Pint>=0.15,<0.24
+#   本仓库需要                pint>=0.24.4
+# 两者**互斥**，所以 `pip install -r requirements-dev.txt` 会直接
+#   ERROR: ResolutionImpossible
+# 这**不是**本 skill 的错，而是 cp2k-input-tools 的上限钉得过死：
+#   * pint < 0.24 会调用 numpy 2.x 已移除的 cumproduct，在 numpy>=2 下崩溃；
+#   * 实测 cp2k-input-tools 0.9.1 配 pint 0.26.1 **完全正常**
+#     （28 类特征输入 0 error / 0 warning，示例输入全部解析通过），
+#     说明那个 <0.24 上限是过时且过于保守的。
+# 因此正确做法是：装 cp2k-input-tools 时用 --no-deps 跳过它的过时钉版，
+# 再手动装现代 pint 与它真正需要的运行期依赖。
+#
+# --- 安装步骤（两步，实测可用）------------------------------------------------
+#   python -m pip install --no-deps "cp2k-input-tools==0.9.1"
+#   python -m pip install "pint>=0.24.4" transitions "pydantic>=2,<3.0" lxml
+#
+# 国内网络访问 PyPI 超时时，可加国内镜像，例如：
+#   -i https://pypi.tuna.tsinghua.edu.cn/simple
+#
+# 装完自检（`pip check` 仍会报 cp2k-input-tools 的 Pint 上限，属预期噪声）：
+#   python _validate_all.py          # 期望 0 errors, 0 warnings across 28/28 cases
+#   python _official_validate.py verify_out/*.inp
+
+# --- 文档层：仅在重新抽取课程 PDF 时需要 --------------------------------------
+# 用于 references/pdf_text/extract_pdf.py 重建 L1~L5 讲义文本。
+# 已抽取的结果随仓库提交，日常不需要重跑。
+pdfplumber>=0.11

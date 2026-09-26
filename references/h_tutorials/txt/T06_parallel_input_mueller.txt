@@ -1,0 +1,838 @@
+# SOURCE: Parallelization, Automatization, Input Magic - Tiziano Mueller.pdf
+# PAGES: 42
+# TOPIC: 自动化、脚本化与测试（Mueller；文件名里的 Parallelization 有误导，见 README §3）
+
+
+
+========== PAGE 1 ==========
+
+CP2K: Automation, Scripting, Testing
+TizianoMüller
+tiziano.mueller@chem.uzh.ch
+CP2KWorkshop@UGent,11.-13. March2019
+Dept.ofChemistry,UZH
+
+
+========== PAGE 2 ==========
+
+Outline
+Full Input generation: GUIs
+Preparations
+Full Input generation: Scripting
+Installation
+CP2K Preprocessor
+Verification
+“Run” Automation
+Reproducibility
+Batch Processing
+Syntax-Checking & Input-Debugging
+Workflows
+Archival
+Integration: Phonopy, PyRETIS, i-PI
+Input Generation
+Basis Set Verification
+Structure-only: Supported formats Performance Optimisation
+1
+
+
+========== PAGE 3 ==========
+
+Preparations
+
+
+========== PAGE 4 ==========
+
+Building CP2K with the toolchain scripts
+$ git clone --recursive https://github.com/cp2k/cp2k.git
+• Default: Uses
+$ cd cp2k/tools/toolchain
+$ ./install_cp2k_toolchain.sh
+system compiler,
+MPI is detected and it appears to be OpenMPI
+nvcc not found, disabling CUDA by default
+linker and MPI
+Compiling with 8 processes.
+==================== Finding binutils from system paths ====================
+[...] • Builds and
+==================== generating arch files ====================
+arch files can be found in the /data/cp2k/tools/toolchain/install/arch subdirectory configures for:
+Wrote /data/cp2k/tools/toolchain/install/arch/local.sopt
+libxc, libint,
+Wrote /data/cp2k/tools/toolchain/install/arch/local.sdbg
+Wrote /data/cp2k/tools/toolchain/install/arch/local.ssmp
+libxsmm, ELPA,
+[...]
+========================== usage =========================
+SIRIUS
+Done!
+Now copy:
+cp /data/cp2k/tools/toolchain/install/arch/* to the cp2k/arch/ directory • Support for
+To use the installed tools and libraries and cp2k version
+compiled with it you will first need to execute at the prompt: Linux & macOS
+source /data/cp2k/tools/toolchain/install/setup
+To build CP2K you should change directory:
+cd cp2k/
+make -j 8 ARCH=local VERSION="sopt sdbg ssmp popt pdbg psmp" 2
+
+
+========== PAGE 5 ==========
+
+Building CP2K with the toolchain scripts: Configuration
+• Build everything:
+$ ./install_cp2k_toolchain.sh --install-all
+• More options:
+$ ./install_cp2k_toolchain.sh --help
+→ Fortran requires .mod files and code built with same compiler!
+• Manual clean (build/, install/) recommended after re-configuration
+• Check https://www.cp2k.org/dev:compiler_support for supported
+compilers and libraries
+3
+
+
+========== PAGE 6 ==========
+
+Building CP2K with Spack
+$ git clone https://github.com/spack/spack.git
+$ . ./share/spack/setup-env.sh
+$ spack install cp2k Spack
+$ spack load cp2k
+• Package manager for scientific software
+• Requires Python
+• Automatically detects and reuses available compiler
+• Recursively builds all CP2K prerequisites
+• Installs CP2K and the arch-file used to build it
+4
+
+
+========== PAGE 7 ==========
+
+Building CP2K with Spack: Configuration
+$ spack info cp2k
+MakefilePackage: cp2k
+Description:
+CP2K is a quantum chemistry and solid state physics software package
+that can perform atomistic simulations of solid state, liquid,
+molecular, periodic, material, crystal, and biological systems
+Homepage: https://www.cp2k.org
+Tags:
+None
+Preferred version:
+6.1 https://github.com/cp2k/cp2k/releases/download/v6.1.0/cp2k-6.1.tar.bz2
+Safe versions:
+6.1 https://github.com/cp2k/cp2k/releases/download/v6.1.0/cp2k-6.1.tar.bz2
+[...]
+Variants:
+Name [Default] Allowed values Description
+blas [openblas] openblas, mkl, Enable the use of
+accelerate OpenBlas/MKL/Accelerate 5
+elpa [off] True, False Enable optimised
+diagonalisation routines from
+ELPA
+libxc [on] True, False Support additional functionals
+via libxc
+mpi [on] True, False Enable MPI support
+openmp [off] True, False Enable OpenMP support
+pexsi [off] True, False Enable the alternative PEXSI
+methodfor density matrix
+evaluation
+plumed [off] True, False Enable PLUMED support
+smm [libxsmm] libxsmm, libsmm, Library for small matrix
+blas multiplications
+
+
+========== PAGE 8 ==========
+
+Building CP2K with Spack: Locating the arch-file
+$ spack find -p cp2k
+==> 1 installed package
+-- linux-opensuse_leap15-x86_64 / gcc@7.3.1 ---------------------
+cp2k@6.1 [...]/linux-opensuse_leap15-x86_64/gcc-7.3.1/cp2k-6.1-byjtwnyhrqqmzezvpy3zwiccccmexshd
+$ ls [...]/cp2k-6.1-byjtwnyhrqqmzezvpy3zwiccccmexshd/.spack/archived-files/arch/
+linux-opensuse_leap15-x86_64-gcc.popt
+→ Use Spack arch-file for custom build of CP2K with Spack-installed libraries
+- By default Spack builds all dependencies except compiler & linker.
+Extra configuration needed to use system-MPI.
+Alternative:
+6
+
+
+========== PAGE 9 ==========
+
+Testing CP2K
+Stateoflatestversion Verifyyourbuild
+$ make VERSION=sopt ARCH=local test
+CP2K supports: cp2kflags: libint fftw3 libxc libderiv_max_am1=5 libint_max_am=6
+Skipping QS/regtest-cdft-hirshfeld-2 : missing required feature : parallel
+Skipping QS/regtest-cdft-hirshfeld-2 : missing required feature : mpiranks>1
+[...]
+--------------------------------- Summary --------------------------------
+Number of FAILED tests 0
+Number of WRONG tests 0
+Number of CORRECT tests 3031
+Number of NEW tests 0
+Total number of tests 3031
+GREPME 0 0 3031 0 3031 X
+Summary: correct: 3031 / 3031; 6min
+Status: OK
+https://dashboard.cp2k.org --------------------------------------------------------------------------
+Regtest took 379.00 seconds.
+--------------------------------------------------------------------------
+Multipleplatforms/architectures Thu Feb 28 15:33:59 CET 2019
+*************************** testing ended ********************************
+available,includingfulllogsand
+→ Automatically skips unavailable features
+theirarch-files.
+7
+
+
+========== PAGE 10 ==========
+
+Reproducibility
+
+
+========== PAGE 11 ==========
+
+Input-Debugging & Output-Capturing
+$ cp2k -c your.inp
+*******************************************************************************
+• Basic issues are found * ___ *
+* / *
+• Complex tests only at full runtime *[ABORT] *
+* ___/ foundanunknownkeywordAPACHEinsection__ROOT__ *
+* | *
+→ Use low cutoffs, limit SCF cycles to * O/| *
+*/|| *
+get a full check */ input/input_parsing.F:246*
+*******************************************************************************
+(MAX_SCF, MAX_STEPS, …)
+Output capturing:
+$ cp2k your.inp |& tee your.out
+$ cp2k your.inp -o your.out (production run)
+→ Leave error output handling to batch-system if possible
+8
+
+
+========== PAGE 12 ==========
+
+Data Archival
+$ cp2k -e your.inp
+• Full-input: includes current default settings & resolved preprocessor variables
+• Can also be used for debugging complex inputs and parsing errors
+• Other artefacts:
+• POTENTIAL • proj-1.restart (a full input file)
+• BASIS_SET • proj-pos-1.xyz (MD/GEO_OPT trajectories)
+• Structure files: • proj-1.ener (MD energies, temperature, …)
+.xyz, .pdb, … • proj-1.cell (cell parameters for CELL_OPT,
+• Force field, dispersion NPT MD)
+correction parameter, • proj-RESTART.wfn, proj-RESTART.kp
+DFTB files (orbitals for restart)
+9
+
+
+========== PAGE 13 ==========
+
+Input Generation
+
+
+========== PAGE 14 ==========
+
+Structure-only: Supported formats
+Use your favorite molecular structure editor.
+Supported formats:1
+XYZ (coords only), PDB, CIF,
+G96/G87 (GROMACS), PSF/UPSF (CHARMM), CRD (AMBER), XTL
+1*.restartfileshavecoordinatesintegratedas&COORDsection
+10
+
+
+========== PAGE 15 ==========
+
+Full Input generation: Avogadro
+Avogadro
+• CP2K Plugin for Avogadro 1.x:
+https://github.com/brhr-iwao/
+libavogadro1cp2k
+• CP2K Plugin for Avogadro 2.x:
+https://github.com/svedruziclab/
+avogadrolibs-cp2k
+11
+
+
+========== PAGE 16 ==========
+
+Full Input generation: Chimera
+Chimera
+• Menu-driven + visualisation
+• TETR: pre-processing
+• geometry setup
+• supercell, surfaces,
+clusters calculation
+• LEV00: analysis
+• Visualising charge &
+spin densities
+• DOS, Phonons, IR
+spectra
+TETR+LEV00PluginforChimera
+12
+
+
+========== PAGE 17 ==========
+
+Full Input generation: PYCP2K
+frompycp2kimportCP2K
+• Domain Specific Language (DSL) with
+fromase.lattice.cubicimportDiamond
+Python #======================CreatethestructurewithASE==========================
+lattice=Diamond(directions=[[1,0,0],[0,1,0],[0,0,1]], PYCP2K
+symbol='Si',
+• Keywords match CP2K input file
+latticeconstant=5.430697500,
+size=(1,1,1))
+syntax
+#=================Defineandsetupthecalculatorobject======================
+calc=CP2K()
+• Integration with Python ASE
+calc.working_directory="./"
+calc.project_name="si_bulk"
+• Auto-completion based on Python calc.mpi_n_processes=2
+auto-completion engines #=================Anexistinginputfilecanbeparsed =======================
+calc.parse("template.in")
+#====================Defineshortcutsforeasyaccess=========================
+CP2K_INPUT=calc.CP2K_INPUT
+GLOBAL=CP2K_INPUT.GLOBAL
+FORCE_EVAL=CP2K_INPUT.FORCE_EVAL_add() #Repeatableitemshavetobefirstcreated
+SUBSYS=FORCE_EVAL.SUBSYS
+DFT=FORCE_EVAL.DFT
+SCF=DFT.SCF
+#=======================Writethesimulationinput============================ 13
+GLOBAL.Run_type="ENERGY_FORCE"
+FORCE_EVAL.Method="Quickstep"
+FORCE_EVAL.PRINT.FORCES.Section_parameters="ON"
+DFT.Basis_set_file_name="BASIS_SET"
+DFT.Potential_file_name="GTH_POTENTIALS"
+DFT.QS.Eps_default=1.0E-10
+DFT.MGRID.Ngrids=4
+DFT.MGRID.Cutoff=300
+DFT.MGRID.Rel_cutoff=60
+DFT.XC.XC_FUNCTIONAL.Section_parameters="PADE"
+SCF.Scf_guess="ATOMIC"
+SCF.Eps_scf=1.0E-7
+SCF.Max_scf=300
+SCF.DIAGONALIZATION.Section_parameters="ON"
+SCF.DIAGONALIZATION.Algorithm="STANDARD"
+SCF.MIXING.Section_parameters="T"
+SCF.MIXING.Method="BROYDEN_MIXING"
+SCF.MIXING.Alpha=0.4
+SCF.MIXING.Nbroyden=8
+KIND=SUBSYS.KIND_add("Si") #Section_parameterscanbeprovidedasargument.
+KIND.Basis_set="DZVP-GTH-PADE"
+KIND.Potential="GTH-PADE-q4"
+calc.create_cell(SUBSYS,lattice)
+calc.create_coord(SUBSYS,lattice)
+#============Runthesimulationorjustwritetheinputfile================
+calc.write_input_file()
+calc.run()
+
+
+========== PAGE 18 ==========
+
+Full Input generation: Python ASE
+• Powerful structure building tools
+importnumpyasnp
+• Merging with pre-existing input file fromase.buildimportbulk
+fromase.constraintsimportUnitCellFilter TheAtomicSimulation
+structure possible (templating) fromase.optimizeimportMDMin Environment
+fromase.calculators.cp2kimportCP2K
+• Uses cp2k_shell to run CP2K inp="""&FORCE_EVAL
+&MM
+continuously →minimal overhead &FORCEFIELD
+&SPLINE
+EMAX_ACCURACY500.0
+• Can start CP2K on remote machine EMAX_SPLINE 1000.0
+EPS_SPLINE1.0E-9
+&END
+&NONBONDED
+&LENNARD-JONES
+atomsArAr
+EPSILON[eV]1.0
+SIGMA[angstrom]1.0
+RCUT[angstrom]10.0
+&ENDLENNARD-JONES
+[...]
+&ENDFORCE_EVAL"""
+calc=CP2K(label="test_stress",inp=inp,force_eval_method="Fist") 14
+#Theoreticalinfinite-cutoffLJFCCunitcellparameters
+vol0=4*0.91615977036 #theoreticalminimum
+a0=vol0**(1/3)
+a=bulk('Ar','fcc',a=a0)
+cell0=a.get_cell()
+a.calc=calc
+a.set_cell(np.dot(a.cell,
+[[1.02,0,0.03],[0,0.99,-0.02],[0.1,-0.01,1.03]]),
+scale_atoms=True)
+a*=(1,2,3)
+cell0*=np.array([1,2,3])[:,np.newaxis]
+a.rattle()
+#Verifyanalyticalstresstensoragainstnumericalvalue
+s_analytical=a.get_stress()
+s_numerical=a.calc.calculate_numerical_stress(a,1e-5)
+s_p_err=100*(s_numerical-s_analytical)/s_numerical
+print("Analyticalstress:\n",s_analytical)
+print("Numericalstress:\n",s_numerical)
+print("Percenterrorinstress:\n",s_p_err)
+#Minimizeunitcell
+opt=MDMin(UnitCellFilter(a),dt=0.01)
+opt.run(fmax=1e-3)
+#VerifyminimizedunitcellusingNigglitensors
+g_minimized=np.dot(a.cell,a.cell.T)
+g_theory=np.dot(cell0,cell0.T)
+g_p_err=100*(g_minimized-g_theory)/g_theory
+print("MinimizedNigglitensor:\n",g_minimized)
+print("TheoreticalNigglitensor:\n",g_theory)
+print("PercenterrorinNigglitensor:\n",g_p_err)
+
+
+========== PAGE 19 ==========
+
+CP2K Internal Input Preprocessor
+CP2K input may include extra directives which are evaluated before everything else:
+@INCLUDE 'filename.inc'
+The content of the specified file are included at this point. The path is
+assumed to be relative to the current working directory.
+@SET VAR value
+(re-)define a variable
+${VAR}or$VAR
+Replaced by the content of the previously set variable VAR
+@IF …/@ENDIF
+Conditionals. Supported operators: == and /= (lexical comparison). The value
+0 or whitespaces evaluate to FALSE, everything else to TRUE.
+@PRINT …
+Print the given text while pre-processing 15
+
+
+========== PAGE 20 ==========
+
+CP2K Internal Input Preprocessor: Example
+ HOME
+ HighThroughputProject
+ base.inp...........................@INCLUDE 'settings.inp'
+ structure1
+ settings.inp
+ structure.xyz
+ structure2.............................start CP2K in this directory
+ settings.inp.........................inclusion relative to CWD
+ structure.xyz
+ structure3
+→ settings.inp can contain @SET other @INCLUDE or full sections/keywords
+16
+
+
+========== PAGE 21 ==========
+
+“Run” Automation
+
+
+========== PAGE 22 ==========
+
+“Run” automation
+Shell
+Scripts
+Batch
+Workflows
+Processing
+CP2K
+Farming
+Python
+Scripts
+AiiDA atomate
+Scheduler
+assisted
+16
+
+
+========== PAGE 23 ==========
+
+Batch Processing: CP2K Farming
+&GLOBAL
+PROJECT OldMacDonald
+set to NONE
+PROGRAM FARMING
+RUN_TYPE NONE
+&END GLOBAL use FARMING section
+&FARMING
+NGROUPS 2 ! number of parallel jobs
+MASTER_SLAVE ! for load balancing • Jobsareruninside thesame
+GROUP_SIZE 42 ! number of processors per group, default: 8
+CP2K process
+&JOB
+JOB_ID 1 ! optional, required for dependencies
+DIRECTORY dir-1 • MPI gets initialized once
+INPUT_FILE_NAME water.inp
+OUTPUT_FILE_NAME water.out insert original → reduced startup time
+&END JOB
+&JOB input here • Useful for many small jobs
+DEPENDENCIES 1
+DIRECTORY dir-2
+INPUT_FILE_NAME water.inp
+OUTPUT_FILE_NAME more_water.out
+&END JOB
+[...]
+&END FARMING
+17
+
+
+========== PAGE 24 ==========
+
+Workflows: AiiDA
+• Python-based Automated
+InteractiveInfrastructure
+andDatabase
+• Strong focus on Data Provenance
+• Database backend (PostgreSQL) + File Repository
+• Advanced workflow engine on top of Python
+• Plugin architecture:
+• CP2K Plugin
+• Gaussian Basis Set and Pseudopotential Plugin
+• more in the AiiDA Plugin Registry
+• Jupyter Notebook integration
+• Integration with the MaterialsCloud Open Science platform
+18
+
+
+========== PAGE 25 ==========
+
+Workflows: AiiDA Example
+calc = Code.get_from_string("cp2k").new_calc() • Runs on your machine
+calc.label = "Awesome CP2K calculation"
+• Manages job submission and
+atoms = ase.build.molecule('H2O') # build structure
+retrieval (incl. scheduler support)
+atoms.center(vacuum=2.0)
+structure = StructureData(ase=atoms)
+calc.use_structure(structure) # ... or reuse existing • Tracks structures & calculations
+parameters = ParameterData(dict={
+'FORCE_EVAL': {
+'METHOD': 'Quickstep',
+'DFT': {
+'QS': {
+'EPS_DEFAULT': 1.0e-12,
+},
+[...]
+}
+})
+calc.use_parameters(parameters)
+calc.set_max_wallclock_seconds(3*60)
+calc.set_resources({"num_machines": 4})
+calc.set_computer(Computer.get("skitty"))
+calc.store_all() # store in database AiiDADataProvenanceGraph 19
+calc.submit() # submit for calculation
+
+
+========== PAGE 26 ==========
+
+Integration: Phonopy, PyRETIS, i-PI
+
+
+========== PAGE 27 ==========
+
+Phonopy: Phonon calculation with CP2K
+CP2KInput
+• Python based
+phonopy(pre) phonopy
+• File-based interface:
+parses & generates code inputs CP2KInputw/atomicdisplacements
+• Only needs equilibrated and
+symmetrized crystal structure input
+• Uses a supercell approach
+Energies&Forces
+• Can also generate:
+DOS, pDOS, Thermal properties phonopy(post)
+Phononbandstructure
+20
+
+
+========== PAGE 28 ==========
+
+PyRETIS: Transition Interface Sampling
+CP2K+PyRETISInput
+• Python based
+PyRETIS–rareeventsinPython
+• Transition Interface
+Sampling (TIS) and Replica
+Exchange Transition
+PyRETIS
+Interface Sampling (RETIS)
+• Can use CP2K as integrator
+for MD steps
+Crossingprobability/rateconstant
+21
+
+
+========== PAGE 29 ==========
+
+i-PI: a universal force engine
+• Python based i-PIconfiguration i-PI–auniversalforceengine
+• Focus on Path Integral
+Molecular Dynamics
+Sockets
+• Communication with Force i-PI
+Engines via network sockets
+• Many additional methods
+available MDTrajectory
+22
+
+
+========== PAGE 30 ==========
+
+Basis Set Verification
+
+
+========== PAGE 31 ==========
+
+Basis Set Verification: The challenge
+“For GTOs, a triple-ζ quality basis has
+mean errors of ~10 kcal/mol in total
+energies, while chemical accuracy is
+almost reached for a quintuple-ζ basis...”
+→Do we really need larger basis sets?
+StigRuneJensenetal.In:J.Phys.Chem.Lett.8.7(Apr.6,2017).00003, 23
+pp.1449–1457.doi: 10.1021/acs.jpclett.7b00255
+
+
+========== PAGE 32 ==========
+
+Basis Set Verification: The challenge
+“We show that by choosing Gaussian
+basis sets optimized for density
+functional theory, basis set methods are
+capable of achieving accuracy
+comparabletothatfromthemultiwavelet
+approach...”
+→Not necessarily, just use the right one.
+FrankJensen.In:J.Phys.Chem.A121.32(Aug.17,2017).00002,pp.6104–6107.
+doi: 10.1021/acs.jpca.7b04760
+23
+
+
+========== PAGE 33 ==========
+
+Basis Set Verification: The Deltatest
+∆-Gauge3
+(cid:118)
+• Solid-state benchmark2 ∆(a,b)=
+(cid:117) (cid:117) (cid:117)
+(cid:117) (cid:116)
+(cid:90)
+0.
+1
+9
+.
+4
+0
+V
+6
+0
+V
+,
+0
+i
+,i(cid:0) E b,i (V)−E a,i (V) (cid:1)2 dV
+i 0.12V0,i
+• Measure: Difference between two
+Volume/Energy-curves
+• 40+ “Methods”, 71 Elements (H-Rn,
+elemental crystals)
+• DFT, PBE Functional
+• All-Electron calculations as reference
+Volume
+ygrenE
+2
+KurtLejaeghereetal.In:Science351.6280(Mar.25,2016).00079,aad3000.doi: 10.1126/science.aad3000
+3
+KurtLejaeghereetal.In:Crit.Rev.SolidState39.1(Jan.1,2014).00112,pp.1–24.doi: 10.1080/10408436.2013.772503 24
+
+
+========== PAGE 34 ==========
+
+Basis Set Verification: Deltatest results for CP2K’s MOLOPT Basis Set
+30
+25
+20
+15
+10
+5
+0 HHeLiBeBCNOFNeNaMgAlSiP SClArKCaScTiVCrMnFeCoNiCuZnGaGeAsSeBrKrRbSrYZrNbMoTcRuRhPdAgCdInSnSbTeIXeCsBaLuHfTaWReOsIrPtAuHgTlPbBiPoRn
+eulav-
+CCCCAb PPPP 2222in KKKKit ,,,, DTTT ZZZ ZVVV VP22 P-PP -SS -X RS R -RS vv R sv s s v AA sAbb ibA inn ib in it i t intit 30
+25
+20
+15
+10
+5
+H CNOF SiPSCl Cu Br 0
+eulav-
+CCCCAb PPPP 2222in KKKKit ,,,, DTTT ZZZ ZVVV VP22 P PP vv X sv s s v AA sAbb ibA inn ib in it i t intit
+15
+10
+5
+0 HHeLiBeBCNOFNeNaMgAlSiP SClArKCaScTiVCrMnFeCoNiCuZnGaGeAsSeBrKrRbSrYZrNbMoTcRuRhPdAgCdInSnSbTeIXeCsBaLuHfTaWReOsIrPtAuHgTlPbBiPoRn
+eulav-
+CAbP2inKit ,v sG.T WHI-EPNB2E kvs. WIEN2k
+↑non-SRMOLOPTbasissets
+25
+
+
+========== PAGE 35 ==========
+
+Basis Set Verification: Deltatest results for CP2K’s MOLOPT Basis Set
+30
+25
+20
+15
+10
+5
+0 HHeLiBeBCNOFNeNaMgAlSiP SClArKCaScTiVCrMnFeCoNiCuZnGaGeAsSeBrKrRbSrYZrNbMoTcRuRhPdAgCdInSnSbTeIXeCsBaLuHfTaWReOsIrPtAuHgTlPbBiPoRn
+eulav-
+CCCCAb PPPP 2222in KKKKit ,,,, DTTT ZZZ ZVVV VP22 P-PP -SS -X RS R -RS vv R sv s s v AA sAbb ibA inn ib in it i t intit 30
+25
+20
+15
+10
+5
+H CNOF SiPSCl Cu Br 0
+eulav-
+CCCCAb PPPP 2222in KKKKit ,,,, DTTT ZZZ ZVVV VP22 P PP vv X sv s s v AA sAbb ibA inn ib in it i t intit
+15
+10
+5
+0 HHeLiBeBCNOFNeNaMgAlSiP SClArKCaScTiVCrMnFeCoNiCuZnGaGeAsSeBrKrRbSrYZrNbMoTcRuRhPdAgCdInSnSbTeIXeCsBaLuHfTaWReOsIrPtAuHgTlPbBiPoRn
+eulav-
+30
+25
+20
+15
+CAbP2inKit ,v sG.T WHI-EPNB2E kvs. WIEN2k 10
+↑non-SRMOLOPTbasissets
+5
+H C N O F Si P S Cl Cu Br 0
+eulav-
+CP2K, DZVP vs Abinit
+CP2K, TZVP vs Abinit
+CP2K, TZV2P vs Abinit
+CP2K, TZV2PX vs Abinit Abinit
+largerBasisSet
+25
+
+
+========== PAGE 36 ==========
+
+Basis Set Verification: CP2K MOLOPT Deltatest Summary & Outlook
+• MOLOPT basis set suitable for • Publication of complete data and
+solid state calculations workflow in Discovery section of
+• Larger-ζ MOLOPT basis sets http://www.materialscloud.org
+systematically improve results • Testing of All-Electron Peintinger4
+• Basis set related errors in same basis set in progress
+order as pseudization error • More benchmarks coming
+• For some elements: basis set
+inadvertently compensates
+pseudopotential error
+4
+MichaelF.Peintingeretal.In:J.Comput.Chem.34.6(2013).00455,pp.451–459.doi: 10.1002/jcc.23153
+26
+
+
+========== PAGE 37 ==========
+
+Performance Optimisation
+
+
+========== PAGE 38 ==========
+
+CP2K Timing Example
+-------------------------------------------------------------------------------
+- -
+- TIMING -
+- -
+SUBROUTINE name contains method -------------------------------------------------------------------------------
+SUBROUTINE CALLS ASD SELFTIME TOTALTIME
+and step descriptors: MAXIMUM AVERAGE MAXIMUM AVERAGE MAXIMUM
+CP2K 1 1.0 0.847 0.8902709.6282709.629
+qs_energies 1 2.0 0.000 0.0002708.2152708.215
+pw Planewave
+scf_env_do_scf 1 3.0 0.001 0.0022705.6072705.607
+scf_env_do_scf_inner_loop 630 4.0 0.038 0.6562607.2322607.239
+fft Fast Fourier Transformation qs_ks_update_qs_env 651 5.0 0.005 0.0061789.3601789.383
+rebuild_ks_matrix 630 6.0 0.002 0.0021788.7291788.736
+mp Message Passing (MPI) qs_ks_build_kohn_sham_matrix 630 7.0 0.080 0.0881788.7281788.734
+pw_transfer 18285 9.3 1.136 1.3561410.1831433.258
+qs Quickstep fft_wrap_pw1pw2 1828510.3 0.171 0.2071409.0471432.022
+fft_wrap_pw1pw2_400 987511.7 148.093 160.0131355.4291377.554
+qs_vxc_create 630 8.0 0.010 0.0121048.6061049.428
+scf Self-consistent field fft3d_ps 1828512.3 615.774 642.0631002.5331028.016
+qs_rho_update_rho 631 5.0 0.005 0.005 896.809 896.810
+ASD measure for how deeply nested a calculate_rho_elec 1262 6.0 19.360 65.700 896.804 896.806
+density_rs2pw 1262 7.0 0.128 0.140 815.787 829.917
+xc_rho_set_and_dset_create 63010.0 19.980 21.160 721.769 777.824
+function is
+rs_pw_transfer 10096 8.7 0.142 0.176 558.560 573.389
+xc_vxc_pw_create 210 9.0 9.400 10.387 531.224 532.044
+SELFTIME time spent in routine and non xc_exc_calc 420 9.0 1.469 1.582 517.372 517.373
+pw_poisson_solve 630 8.0 19.270 21.048 450.545 450.547
+rs_pw_transfer_RS2PW_400 1264 9.0 185.950 197.914 263.644 280.272
+seperately timed subroutines
+[...]
+mp_alltoall_z22v 1828514.3 173.031 215.341 173.031 215.341
+27
+mp_waitany 14144810.7 140.483 179.715 140.483 179.715
+pw_scatter_p 840213.3 168.017 174.224 168.017 174.224
+[...]
+-------------------------------------------------------------------------------
+
+
+========== PAGE 39 ==========
+
+CP2K Timing Guidelines
+• Check that I/O routines are < 50% of total runtime
+→ Remember Amdahl’s law: scaling flattens eventually
+→ Do you really need to write so much/often?
+→ Are you running in the right directory?
+• Compare Average and Maximum values
+→ large difference could mean that nodes are waiting for single rank to finish
+• Check settings for respective sections
+→ Are you using the right algorithms?
+28
+
+
+========== PAGE 40 ==========
+
+General Guidelines
+• Optimization starts with you: Biggest gains by proper setup
+• Cell size
+• SCF settings, preconditioner
+• Choice of basis set
+• ADMM
+• No universal recipe, check scaling of your system
+• Run a small number of MD or GEO_OPT steps
+• Turn off outer-SCF, keep inner-SCF fixed
+• When compiling yourself:
+• Use vendor-supplied BLAS, LAPACK, FFTW3 libraries
+• Build and use libxsmm, ELPA
+• CUDA support available, improvements are coming
+29
+
+
+========== PAGE 41 ==========
+
+Getting Help
+https://www.cp2k.org ......................... Exercises, Lecture Slides
+https://manual.cp2k.org ..........................Input File reference
+<CP2K-SOURCE>/tests ........................Minimal Working Examples
+https://groups.google.com/group/cp2k .......Google Group/Forum
+https://github.com/cp2k/cp2k/issues ................Issue Tracker
+30
+
+
+========== PAGE 42 ==========
+
+Thank you!
+30

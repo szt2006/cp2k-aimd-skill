@@ -1,0 +1,1140 @@
+# SOURCE: 【gpw-庚子计算整理】hutter-gpw.pdf
+# PAGES: 73
+# DUPLICATES: Gaussian and Plane Waves Method - Juerg Hutter.pdf
+# TOPIC: GPW 方法（Hutter，官方 workshop）
+
+
+
+========== PAGE 1 ==========
+
+Gaussian and Plane Waves Method (GPW)
+Jürg Hutter
+Department of Chemistry, University of Zurich
+
+
+========== PAGE 2 ==========
+
+References
+• CP2Kversion7.0(DevelopmentVersion),
+TheCP2Kdevelopersgroup(2019).
+https://www.cp2k.org/
+• Hutter,J;Iannuzzi,M;Schiffmann,F;VandeVondele,J.
+WileyInterdisciplinaryRev.-Comp. Mol. Science,4,15-25
+(2014).
+CP2K:atomisticsimulationsofcondensedmattersystems.
+http://dx.doi.org/10.1002/wcms.1159
+• VandeVondele,J;Krack,M;Mohamed,F;Parrinello,M;
+Chassaing,T;Hutter,J.
+ComputerPhysicsCommunications,167,103-128(2005).
+QUICKSTEP:Fastandaccuratedensityfunctionalcalculations
+usingamixedGaussianandplanewavesapproach.
+http://dx.doi.org/10.1016/j.cpc.2004.12.014
+
+
+========== PAGE 3 ==========
+
+References (cont’d)
+• Lippert,G;Hutter,J;Parrinello,M.
+MolecularPhysics,92,477-487(1997).
+AhybridGaussianandplanewavedensityfunctionalscheme.
+http://dx.doi.org/10.1080/002689797170220
+• VandeVondele,J;Hutter,J.
+J.Chem. Phys.,118,4365-4369(2003).
+Anefficientorbitaltransformationmethodforelectronicstructure
+calculations.
+http://dx.doi.org/10.1063/1.1543154
+• Goedecker,S;Teter,M;Hutter,J.
+Phys. Rev. B,54,1703-1710(1996).
+Separabledual-spaceGaussianpseudopotentials.
+http://dx.doi.org/10.1103/PhysRevB.54.1703
+
+
+========== PAGE 4 ==========
+
+Kohn–Sham (KS) Density Functional Theory (DFT)
+• Hohenberg–Kohn Theorem I
+The total energy can be calculated from a universal
+functional of the density.
+Existence theorem
+• Hohenberg–Kohn Theorem II
+The correct density minimizes the energy functional.
+Variational principle.
+• Kohn–Sham Theorem
+For each density exists a system of non-interacting
+particles in a local external potential with the same density.
+Orbital picture.
+
+
+========== PAGE 5 ==========
+
+Kohn–Sham DFT (II)
+Minimization with constraints
+Min E({Φ})
+i
+(cid:90) (cid:90)
+Φ(r)Φ(r)dr = δ ρ(r)dr = N
+i j ij
+Energy functional
+(cid:90) (cid:90)
+E({Φ}) = − (cid:88) f i Φ∇Φdr + V (r)ρ(r)dr
+i i i i ext
+2
+i
+1 (cid:90)(cid:90) ρ(r)ρ(r(cid:48))
++ dr dr(cid:48)+E [ρ]
+2 |r −r(cid:48)| xc
+(cid:88)
+ρ(r) = f|Φ(r)|2
+i i
+i
+
+
+========== PAGE 6 ==========
+
+Kohn–Sham DFT (III)
+• Kinetic energy
+E = −1 (cid:80) f(Φ|∇2|Φ)
+kin 2 i i i i
+• External energy (electron-nuclei interaction)
+(cid:82)
+E = V (r)ρ(r) dr
+ext ext
+• Hartree (classical Coulomb) energy
+E = (cid:82) (cid:82) ρ(r)ρ(r(cid:48)) dr(cid:48) dr
+H |r−r(cid:48)|
+• Exchange-correlation(non-classicalCoulomb)(XC)energy
+(cid:82)
+E = F[ρ] dr
+xc
+• Orbital orthogonality constraint
+(Φ|Φ) = δ
+i j ij
+• Electron number constraint
+(cid:80)
+f(Φ|Φ) = N
+i i i i
+
+
+========== PAGE 7 ==========
+
+Linear Combination of Atomic Orbitals (LCAO)
+(cid:88)
+Basis set Φ(r) = c ϕ (r)
+i αi α
+α
+(cid:90)
+Overlap S = dr ϕ(cid:63)(r)ϕ (r)
+αβ α β
+(cid:90)
+(cid:88)
+Orthogonality dr Φ(cid:63)(r)Φ(r) = c(cid:63) S c = δ
+i j αi αβ βj ij
+αβ
+(cid:88)
+Density matrix P = f c c(cid:63)
+αβ i αi βi
+i
+(cid:88)
+Density ρ(r) = P ϕ (r)ϕ(cid:63)(r)
+αβ α β
+αβ
+Energy E = Min [E (c)+E (ρ)+E (ρ)+E (ρ)]
+c kin ext H xc
+
+
+========== PAGE 8 ==========
+
+Gaussian Type Orbitals (GTO): General
+• Primitive function
+ϕ(r) = rlY (ˆr)exp[−α(r −A)2]
+lm
+• Contracted GTO
+(cid:88)
+χ(r) = d ϕ (r)
+k k
+k
+Contraction coefficients d and exponents are fixed.
+k
+Contraction over functions with same angular momentum.
+
+
+========== PAGE 9 ==========
+
+Gaussian Type Orbitals: Advantages
+• GTO’s are "atomic orbital-like"
+• Compact basis set (approx. 15-25 functions per atom)
+• Analytic integration possible for many operators.
+• Optimal for regular grids. Fourier transform is again a
+Gaussian.
+• Compact support (finite extend)
+
+
+========== PAGE 10 ==========
+
+Gaussian Type Orbitals: Disadvantages
+• Non-orthogonal basis
+• Linear dependencies for larger basis sets
+• Complicated to generate and no easy way to improve
+• Basis set superposition error (BSSE)
+• Molecules (wavefunction tails) and solids have different
+requirements
+
+
+========== PAGE 11 ==========
+
+KS-DFT with GTO Basis
+• Kinetic energy integrals: analytic
+• External potential integrals: analytic
+• Coulomb: 4 center electron repulsion integrals (ERI)
+Mulliken notation :(αβ|γδ): analytic
+CPU and memory bottleneck
+• XC energy and integrals: numerical integration
+• Overlap integrals: analytic
+
+
+========== PAGE 12 ==========
+
+Hartree Energy
+• Goal: Avoid calculation of ERI
+• Combine all electrostatic energy terms
+Electrostatic Energy
+1 (cid:90) (cid:90) ρ(r)ρ(r(cid:48))
+E = dr dr(cid:48) electron-electron interaction
+Coulomb 2 |r −r(cid:48)|
+(cid:90)
+(cid:88) ρ(r)
+− Z dr electron-core interaction
+A
+|r −R |
+A
+A
++ (cid:88) Z A Z B ion-ion interaction
+|R −R |
+A B
+A<B
+
+
+========== PAGE 13 ==========
+
+Hartree Energy
+Totalchargedensity: electroniccharge+Gaussianatomiccharges:
+(cid:88)
+ρ (r)=ρ (r)+ ρ (r)
+tot e A
+A
+(cid:16)α(cid:17)3/2
+ρ (r)=Z exp(−α(r −A)2)
+A A π
+1(cid:90) (cid:90) ρ (r)ρ (r(cid:48))
+E = tot tot dr dr(cid:48) longrangeinteraction
+Coulomb 2 |r −r(cid:48)|
+− (cid:88) Z (cid:90) erfc(α(r −R A )) ρ (r)dr shortrangeinteraction
+A |r −R | e
+A
+A
+(cid:88)
++ E (R −R ) shortrangepairinteraction
+pair A B
+A<B
+(cid:88)
+− E selfinteractioncorrection
+self
+A
+
+
+========== PAGE 14 ==========
+
+Periodic Boundary Condition (PBC)
+• Optimalforcondensedphasesystems(avoidsinterfaceeffects)
+• Blochstates,Brillouinzonesample,seek-points
+• Energypersimulationcell
+• Γpointsimulation(Integrationwithsinglepointat(0,0,0))
+• (α|O|β)→ (cid:80) (α(0)|O|β(L))
+L
+
+
+========== PAGE 15 ==========
+
+Plane Waves (PW)
+Definition
+1
+ϕ(r) = √ exp[iG·r]
+Ω
++ orthogonal
++ independent of atomic positions
+± naturally periodic
+– many functions needed
+
+
+========== PAGE 16 ==========
+
+Computational Box
+a
+3
+a
+2
+a
+1
+• Box matrix : h = [a ,a ,a ]
+1 2 3
+• Box volume : Ω = det h
+
+
+========== PAGE 17 ==========
+
+Lattice Vectors
+• Direct lattice h = [a ,a ,a ]
+1 2 3
+• Direct lattice vectors : L = i ·a +j ·a +k ·a
+1 2 3
+• Reciprocal lattice 2π(ht)−1 = [b ,b ,b ]
+1 2 3
+b ·a = 2πδ
+i j ij
+• Reciprocal lattice vectors : G = i ·b +j ·b +k ·b
+1 2 3
+Direct and reciprocal space are connected by Fourier
+transforms.
+The expansion of the periodic part of the functions defined in
+real space includes only the G that satisfy the PBC: Fourier
+decomposition.
+
+
+========== PAGE 18 ==========
+
+Properties of Plane Waves
+1
+ϕ (r) = √ exp[iG · r]
+G
+Ω
+• Plane waves are periodic wrt. box h
+• Plane waves are orthonormal
+(cid:104)ϕ |ϕ (cid:105) = δ
+G(cid:48) G G(cid:48),G
+• Plane waves are complete
+1 (cid:88)
+ψ(r) = ψ(r+L) = √ ψ(G)exp[iG·r]
+Ω
+G
+
+
+========== PAGE 19 ==========
+
+Cutoff: Finite Basis Set
+1
+G2 ≤ E
+cut
+2
+1
+3/2
+N ≈ Ω E [a.u.]
+PW 2π2 cut
+Basis set size depends on volume of box and cutoff only
+
+
+========== PAGE 20 ==========
+
+Real Space Grid
+SamplingTheorem: Interval∆= L;Nyquistcriticalfrequency
+N
+f = 1
+c 2∆
+Foragivenplanewavecutoff(frequency)thereisaminimumnumber
+ofequidistantrealspacegridpointsneededforthesameaccuracy.
+Realspacegrid: R =(i −1)∆
+i
+Fast Fourier Transform (FFT)
+ψ(G)←→ψ(R)
+Informationcontainedinψ(G)andψ(R)areequivalent.
+Fouriertransform N2 operations
+fastFouriertransform Nlog[N]operations
+
+
+========== PAGE 21 ==========
+
+Integrals
+(cid:90)
+I = A(cid:63)(r)B(r)dr
+Ω
+(cid:90)
+(cid:88)
+= A(cid:63)(G)B(G(cid:48)) exp[−iG·r]exp[iG(cid:48)·r]dr
+GG(cid:48)
+(cid:88) (cid:88)
+= A(cid:63)(G)B(G(cid:48)) Ω δ = Ω A(cid:63)(G)B(G)
+GG(cid:48)
+GG(cid:48) G
+Parseval’s theorem
+(cid:88) Ω (cid:88)
+Ω A(cid:63)(G)B(G) = A(cid:63)(R)B(R)
+i i
+N
+G i
+Integrals in real space and in reciprocal space are equivalent
+
+
+========== PAGE 22 ==========
+
+Long Range Term in Coulomb Energy
+1 (cid:90) (cid:90) ρ (r)ρ (r(cid:48)) (cid:90)
+E = tot tot dr dr(cid:48) = V (r)ρ (r) dr
+LRT 2 |r −r(cid:48)| H tot
+where V (r) is the solution of Poisson equation
+H
+∇2V (r) = −4πρ (r)
+H tot
+Plane wave expansion of total charge density
+ρ (r) = (cid:88) ρ (G)eiG·r V (G) = 4π ρ tot (G)
+tot tot H G2
+G
+E = 2π (cid:88) ρ∗ tot (G)ρ tot (G)
+LRT Ω G2
+G
+
+
+========== PAGE 23 ==========
+
+Exchange-Correlation (XC) Functionals
+(cid:90)
+(cid:88)
+E = drε (r)ρ(r) = Ω ε (G)ρ(cid:63)(G)
+xc xc xc
+G
+ε (G) is not local in G space. Calculation in real space
+xc
+requires very accurate integration scheme.
+New definition of E
+xc
+Ω (cid:88) (cid:88)
+E = ε (R)ρ(R) = Ω ε˜ (G)n(G)
+xc xc xc
+N N N
+x y z
+R G
+where ε˜ (G) is the finite Fourier transform of ε (R).
+xc xc
+
+
+========== PAGE 24 ==========
+
+Energy and Force of He Atom
+Only translations by a multiple of the grid spacing do not
+change the total energy. This introduces a small modulation of
+the energy hyper surface, known as "ripples".
+
+
+========== PAGE 25 ==========
+
+KS-DFT GPW Energy
+EGPW =E (P)+δE (P)+E (ρ˜)+E (ρ˜)+E −E
+KS kin ext xc H ovrl self
+(cid:88)
+Gaussianorbitalpart: Φ(r)= c ϕ
+i αi α
+α
+(cid:88)
+P = fc c
+αβ i αi βi
+i
+(cid:88)
+PWpart: ρ˜(G)= (ϕ ·ϕ )(G)
+α β
+αβ
+(cid:88)
+ρ˜ (G)=ρ˜(G)+ ρ (G)
+tot A
+A
+(ϕ ·ϕ )(G)=ϕ (G)
+α β αβ
+• EGPW is variational in the GTO coefficients c alone.
+KS αi
+• ρ˜(G) is a function of c and the auxiliary PW basis
+αi
+
+
+========== PAGE 26 ==========
+
+Efficient Calculation of GPW Energy
+Screening
+• Always work with primitive Gaussians
+• Analytic integrals → distance screening with R = A−B
+Overlap S ϕ (r −A) ↔ ϕ (r −B)
+αβ α β
+↓ sparsity pattern
+T
+αβ
+• Density on the real space grid
+(cid:80) P ϕ (R)ϕ (R) F→FT ρ˜(G)
+αβ αβ α β
+↓ overlap screening
+P is only needed with S sparsity pattern
+αβ αβ
+• ϕ (R) (cid:54)= 0 distance (radial) screening
+αβ
+
+
+========== PAGE 27 ==========
+
+Screening
+• All individual screening thresholds can be controlled by
+EPS_DEFAULT
+CP2K_INPUT / FORCE_EVAL / DFT / QS
+• Problems associated with thresholds
+• FailureinCholeskydecompositionofoverlapmatrix
+• Combinationofbasissetconditionnumberandtoobig
+EPS_DEFAULT
+• Inaccuratechargeonrealspacegrid
+• ToolowPWcutoffand/ortoobigEPS_DEFAULT
+(extendofϕ )
+αβ
+
+
+========== PAGE 28 ==========
+
+Real Space Grid
+Finitecutoffandcomputationalboxdefinearealspacegrid{R}
+
+
+========== PAGE 29 ==========
+
+Gaussians and Plane Waves
+(cid:114)
+α (cid:16) (cid:17)
+(cid:18) G2(cid:19)
+exp −αr2 − FF → T exp −
+π 4α
+• Efficient screening in R space
+• Exponential convergence for integration
+
+
+========== PAGE 30 ==========
+
+GTOs and PW
+Integration
+FortheintegartionofaGaussian
+functionwithexponent1an
+accuracyof10−10 requiresan
+integrationrangeof10bohr,a
+cutoffof25Rydberg,resultingin
+22integrationpoints.
+≈ 5000 integration points/integral batch
+
+
+========== PAGE 31 ==========
+
+Multigrid
+
+
+========== PAGE 32 ==========
+
+PW Cutoff
+• Density expansion
+PW cutoff and multigrid settings determine accuracy and
+efficiency of density expansion
+&MGRID...&ENDMGRID section
+• CUTOFF:Maximalcutoffusedinthecalculation
+(default: 280Ry)
+• REL_CUTOFF:MinimalcutoffusedforGaussianwith
+exponentof1(default: 40Ry)
+• NGRIDS:Totalnumberofrealspacegrids(cutoffs)used
+(default: 4)
+• PROGRESSION_FACTOR:factorusedforcutoffreduction
+inmultigrids(default: 3)
+• MULTIGRID_SET:T/Fsetmultigridcutofffrominput
+(default: F)
+• MULTIGRID_CUTOFF:listofcutoffsforNgrids
+
+
+========== PAGE 33 ==========
+
+PW Cutoff
+• XC functional
+Accuracy of density expansion and total PW cutoff
+determine XC energy accuracy
+CP2Kcalculatesgradientofdensityfromplanewave
+expansionofdensity
+Fourierinterpolationmayleadtonegativedensitiesinlow
+densityregions(problemisenhancedbymultigrids!)
+LDAvs. GGAvs. Meta-functionals
+ρvs. (∇ρ)2/ρ4/3 vs. τ
+DENSITY_CUTOFF,GRADIENT_CUTOFF,TAU_CUTOFF
+inFORCE_EVAL / DFT / XC
+Seemoreadvancedoptions
+inFORCE_EVAL / DFT / XC / XC_GRID
+
+
+========== PAGE 34 ==========
+
+Coulomb Potential
+FFT ρ(G) FFT
+P → ρ(R)−−−→ ρ(G) → V (G) = −−−→V (R) → V
+H G2 H
+(cid:124) (cid:123)(cid:122) (cid:125)
+O(nlogn)
+(cid:88) (cid:88)
+ρ(R) = P χ (R)χ (R) = P χ¯ (R)
+µν µ ν µν µν
+µν µν
+(cid:88) (cid:88)
+V = V(R)χ (R)χ (R) = V(R)χ¯ (R)
+µν µ ν µν
+R R
+Efficient screening of sums using χ¯ (R).
+µν
+
+
+========== PAGE 35 ==========
+
+Accuracy of Plane Wave Expansion
+Coulomb Energy
+
+
+========== PAGE 36 ==========
+
+Accuracy of Plane Wave Expansion
+XC Energy
+PBE functional, Bulk Silicon
+
+
+========== PAGE 37 ==========
+
+Accuracy and Numerical Errors
+64 water, 2560 basis functions, LDA functional, 24 cores
+EPS_DEFAULT cutoff(Ry) ngrids time(s) Energy(Ha)
+-12 280(30) 4 1.5 x.0377660911
+-12 400(60) 4 2.7 x.0368292349
+-12 400(60) 1 21.9 x.0368292282
+-12 800(60) 6 3.0 x.0371244786
+-12 800(60) 4 3.0 x.0371244689
+-12 800(60) 1 76.5 x.0371244096
+-8 1600(60) 6 3.7 x.0371421086
+-10 1600(60) 6 4.7 x.0371296795
+-12 1600(60) 6 4.7 x.0371288794
+-14 1600(60) 6 4.9 x.0371287675
+
+
+========== PAGE 38 ==========
+
+Basis Set Superposition Error (BSSE)
+• Localized non-orthogonal AO basis sets are incomplete
+• Local ’completeness’ of basis depends on position of
+atoms
+• Basis set is more complete for molecular clusters than
+single molecules
+−→ overstabilization of bound clusters
+• Overestimation of binding energies (dimers, molecules on
+surfaces, etc.)
+• Counterpoise Correction: Estimation of BSSE
+E ≈ E (A+B)+E (A+B)−E (A)−E (B)
+BSSE A B A B
+with fragments A,B at their cluster geometry.
+
+
+========== PAGE 39 ==========
+
+BSSE in liquid water
+7
+6
+5
+4
+3
+2
+1
+0
+-30 -20 -10 0
+Binding energy [kcal/mol]
+]lom/lack[
+ESSB
+Binding energy in water (BSSE)
+DZVP
+TZV2P
+QZV2P
+QZV3P(f,d)
+
+
+========== PAGE 40 ==========
+
+Non-Periodic Calculations using PW
+Solving Poisson equation for non-periodic boundary conditions
+• Analytic for spherical cutoff or cylindrical or 1-d cutoff
+Marx and Hutter, Ab initio molecular dynamics, NIC Series
+• Wavelet solvers
+Genovese et al, JCP 2006, 125 074105
+• Solvers by Martyna and Tuckerman
+Martyna & Tuckerman, JCP 1999, 110 2810-2821
+
+
+========== PAGE 41 ==========
+
+Pseudopotentials
+Why Pseudopotentials?
+• Reduction of basis set size
+effective speedup of calculation
+• Reduction of number of electrons
+reduces the number of degrees of freedom
+• Inclusion of relativistic effects
+relativistic effects can be included "partially" into effective
+potentials
+
+
+========== PAGE 42 ==========
+
+Frozen Core Approximation
+• Replace inactive electronic degrees of freedom in the
+Hamiltonian by an effective potential
+• The potential should be additive and transferable
+additive most general choice: atomic pseudopotentials
+transferable remove only core electrons
+• Core electrons are chemically inert
+• Core/Valence separation is often not clear
+in plane wave calculations: core = all filled shells
+• Core wavefunctions are transfered from atomic reference
+calculation
+• Core electrons of different atoms do not overlap
+
+
+========== PAGE 43 ==========
+
+Remaining Problems
+• Valence wavefunctions have to be orthogonalized to core
+states
+→ nodal structures → high plane wave cutoff
+• Pseudopotential should produce node-less functions and
+include Pauli repulsion
+• Pseudopotential replaces Hartree and XC potential due to
+the core electrons
+• XC functionals are not linear: approximation
+E (ρ +ρ ) = E (ρ )+E (ρ )
+XC c v XC c XC v
+This assumes that core and valence electrons do not
+overlap. This restriction can be overcome with the
+"non–linear core correction".
+
+
+========== PAGE 44 ==========
+
+General Recipe
+1. Atomic all–electron calculation (reference state)
+⇒ Φv(r) and (cid:15).
+i i
+2. Pseudize Φv ⇒ ΦPS
+i i
+3. Calculate potential from
+(T +V(r))ΦPS(r) = (cid:15)ΦPS(r)
+i i i i
+4. Calculate pseudopotential by unscreening of V(r)
+i
+VPS(r) = V(r)−V (n )−V (n )
+i i H PS XC PS
+VPS is state dependent !
+i
+
+
+========== PAGE 45 ==========
+
+Pseudization of Valence Wavefunctions
+Smooth continuation of orbitals inside a cutoff radius
+up (r)
+r
+rc
+u(r)
+Vp (r)
+V(r)
+
+
+========== PAGE 46 ==========
+
+Semi-local Pseudopotentials
+∞
+(cid:88)
+VPS(r,r(cid:48)) = VPS(r)|Y (cid:105)(cid:104)Y |
+L L L
+L=0
+Separation of Local and Nonlocal Parts
+Approximation: all potentials with L > L are equal to VPS
+max loc
+VPS(r,r(cid:48)) = (cid:88)
+Lmax
+(cid:0) VPS(r)−VPS(r) (cid:1) |Y (cid:105)(cid:104)Y |+VPS(r)
+L loc L L loc
+L=0
+Final Form
+(cid:88)
+Lmax
+VPS(r,r(cid:48)) = VPS(r)+ ∆VPS(r)|Y (cid:105)(cid:104)Y |
+loc L L L
+L=0
+• Local pseudopotential VPS(r)
+loc
+• Non-local pseudopotential ∆VPS(r)
+L
+
+
+========== PAGE 47 ==========
+
+
+
+
+========== PAGE 48 ==========
+
+
+
+
+========== PAGE 49 ==========
+
+Kleinman–Bylander Form
+Basis set expansion with the following approximation for the
+identity:
+1 = (cid:88) | ϕ L (cid:105)(cid:104)∆V L ϕ L |
+(cid:104)ϕ ∆V ϕ (cid:105)
+L L L
+L
+where ϕ is the pseudo–atomic wavefunction from the
+L
+reference calculation.
+(cid:88)(cid:88)
+E = f(cid:104)Φ | ∆V ϕ (cid:105)ω (cid:104)∆V ϕ | Φ(cid:105)
+PS i i L L L L L i
+L i
+where
+ω = (cid:104)ϕ ∆V ϕ (cid:105)
+L L L L
+For an atom with s and p non-local potential this requires the
+calculation of 4 times number of states integrals (cid:104)∆V ϕ | Φ(cid:105).
+L L i
+
+
+========== PAGE 50 ==========
+
+Dual-Space PP
+• Goedeckeretal,PRB,(1996),54,1703
+Hartwigsenetal,PRB,(1998),58,3641
+M.Krack,TCA,(2005),114,145
+• Fully non-local: easy analytic integrals and FFTs
+(cid:88)(cid:88)
+V (r) = V (r)+ |pL(cid:105)hL(cid:104)pL|
+pp loc i ij j
+L ij
+• Gaussian form with few adjustable parameters: [¯r = r ]
+rc
+V (r)=− Z ionerf (cid:20) √ ¯r (cid:21) +exp (cid:20) − ¯r2(cid:21) (cid:2) C +C ¯r2+C ¯r4+C ¯r6(cid:3)
+loc r 2 2 1 2 3 4
+(cid:20) r2 (cid:21)
+pi(r)=N (r)exp −
+L iL l 2r2
+l
+• Global optimization of all parameters to fit atomic orbital
+energies of occupied and virtual orbitals.
+
+
+========== PAGE 51 ==========
+
+Non-Linear Core Correction (NLCC)
+For many atoms (e.g. alkali atoms, transition metals) core
+states overlap with valence states. Linearization assumption for
+XC energy breaks down.
+• Add additional states to valence (semi-core)
+• addsmoreelectrons
+• needshighercutoff
+• Add core charge to valence charge in XC energy ⇒
+non–linear core correction (NLCC)
+S.G. Louie et al., Phys. Rev. B, 26 1738 (1982)
+
+
+========== PAGE 52 ==========
+
+Non-Linear Core Correction (NLCC)
+E = E (n+n˜ ) where n˜ (r) = n (r) if r > r
+xc xc core core core 0
+Core Density
+Modified Core Density
+Valence Density
+
+
+========== PAGE 53 ==========
+
+Basis Sets
+Molecular Optimized Basis Sets (MOLOPT)
+Goals
+• Suitable for gas and condensed phase, interfaces
+• Systematic increase in accuracy
+• Suitable for large scale simulations
+Optimal for small number of functions
+Well conditioned
+• Low BSSE for weak interactions
+
+
+========== PAGE 54 ==========
+
+MOLOPT Basic idea
+Use generally contracted Gaussian basis sets, including diffuse
+primitives, fully optimized on molecular calculations.
+• generally contracted −→ no lone diffuse functions, well
+conditioned
+• diffuse primitives −→ reduced BSSE
+• molecularly optimized −→ small but accurate
+
+
+========== PAGE 55 ==========
+
+MOLOPT
+• generally contracted family basis, all exponents used for all
+angular momenta (including polarization)
+• 6/7 primitive functions (pseudopotentials, valence only)
+• larger sets extend smaller sets
+• currently available for H-Rn
+basis 1st/2nd row Hydrogen
+m-SZV 1s1p 1s
+m-DZVP 2s2p1d 2s1p
+m-TZVP 3s3p1d 3s1p
+m-TZV2P 3s3p2d 3s2p
+m-TZV2PX 3s3p2d1f 3s2p1d
+
+
+========== PAGE 56 ==========
+
+Condition Numbers (Liquids)
+SZV DZVP TZV2P QZV3P
+water 1.00 2.97 4.46 5.64
+BQ/MeOH 1.30 5.11 6.89 8.66
+acetonitrile 1.34 4.15 5.69 7.46
+aug-DZVP aug-TZV2P aug-QZV3P
+water 10.11 12.54 15.11
+BQ/MeOH 11.00 13.52 13.94
+acetonitrile 9.89 14.58 14.23
+m-SZV m-DZVP m-TZV2P m-TZV2PX
+water 0.83 3.20 4.18 4.27
+BQ/MeOH 1.04 3.34 4.46 4.66
+acetonitrile 1.11 3.23 4.18 4.36
+logκ = logσ /σ
+max min
+
+
+========== PAGE 57 ==========
+
+Solving the KS Equations
+Fix Point Methods
+1. initialguessnin(r)
+2. calculatepotentialV(r)
+3. diagonalizeKSmatrix,getcout
+4. calculatenewdensitynout
+5. if|nin−nout |≤(cid:15)stop
+6. calculatenewdensityfromnin andnout (mixing)
+7. gobackto2
+
+
+========== PAGE 58 ==========
+
+Direct Minimization Methods
+(cid:88)
+Minimum[E (c)] with the constraint c(cid:63) c = δ
+KS αi αj ij
+α
+Lagrange function
+(cid:110) (cid:111)
+E ˜ [c,Λ] = E (c)−Tr Λ(c†c−1)
+KS KS
+Gradient
+ 
+∂ ∂ E c ˜ (cid:63) KS = (cid:88) F αβ c βn − (cid:88) c αm (cid:88) c β (cid:63) m F βγ c γn
+αn β m βγ
+
+
+========== PAGE 59 ==========
+
+Orbital Transformation (OT) Method
+J. VandeVondele and J. Hutter, JCP 118 4365 (2003)
+• Direct optimization technique
+• Similar to orbital rotation method
+• Constraint is only linear
+•
+Memory MN M Number of basis functions
+Scaling MN2 N Number of occupied orbitals
+
+
+========== PAGE 60 ==========
+
+• Set of reference occupied orbitals: C
+0
+• New variables X
+C(X) = C cosU +XU−1sinU
+0
+(cid:16) (cid:17)1/2
+U = XTSX
+• Linear constraint XTSC = 0
+0
+• Standard optimization with line serach and preconditioning
+
+
+========== PAGE 61 ==========
+
+
+
+
+========== PAGE 62 ==========
+
+Direct Inversion in Iterative Subspace (DIIS)
+DIIS: Acceleration method for iterative sequences.
+Basic idea : From a series of steps in an optimization
+procedure, try to guess a better trial vector.
+In DIIS we solve exactly (by direct inversion) an optimality
+condition within the subspace of the parameter vectors
+generated by the iterations.
+Assume we have generated a sequence of M parameter
+vectors {x }M and that we are able to guess for each of the
+m 1
+vectors its difference e to the stationary point.
+m
+Ansatz: Find the best linear combination of vectors
+x =
+(cid:80)M
+cx with the constraint
+(cid:80)M
+c = 1.
+M+1 i=1 i i i=1 i
+
+
+========== PAGE 63 ==========
+
+DIIS
+Ansatz
+ 
+M M M
+(cid:88) (cid:88) (cid:88)
+Min< c
+i
+e
+i
+| c
+j
+e
+j
+> with c
+i
+= 1
+i=1 j=1 i=1
+where < .|. > is a suitably defined scalar product. This leads to
+a system of linear equations with b =< e|e >
+ij i j
+    
+b b ... b −1 c 0
+11 12 1m 1
+b 21 b 22 ... b 2m −1c 2  0 
+    
+
+
+. .
+.
+. .
+.
+... . .
+.
+. .
+.
+
+
+
+
+. .
+.
+
+
+= 
+
+. .
+.
+
+
+    
+b m1 b m2 ... b mm −1c m  0 
+−1 −1 ... −1 0 λ −1
+
+
+========== PAGE 64 ==========
+
+What to take for the error vectors?
+Any measure for the distance from the stationary point.
+AO basis sets
+Hartree–Fock and Kohn–Sham Methods (Pulay)
+(cid:88)(cid:0) (cid:1)
+{e} = F P S −S P F
+ij ik kl lj ik kl lj
+kl
+GDIIS (based on Newton–Raphson)
+e = −Pg(x) Preconditioner P
+i i
+
+
+========== PAGE 65 ==========
+
+Preconditioner
+• Preconditioner is essential for good convergence in direct
+minimization
+• Predonditioner matrix P = M−1 is applied to gradient:
+Pg(x)
+i
+• Predonditioner is state dependent (FULL_ALL), single
+state approximations are better in memory usage and CPU
+time
+• Predonditioner depends on Hamiltonian and should not be
+updated during optimizations.
+• Restart of optimization is needed if Precodnitioner is too
+bad (outer SCF procedure in CP2K)
+
+
+========== PAGE 66 ==========
+
+Scaling of GPW Calculations
+• N: Number of occupied orbitals, number of electrons
+• M: Number of basis functions
+Kohn-Sham matrix O(MlogN)
+Density matrix (incomplete sparse) O(MN)
+OT optimization O(MN2)
+
+
+========== PAGE 67 ==========
+
+System Size Scaling
+
+
+========== PAGE 68 ==========
+
+Efficiency: GGA Functionals
+1 ps/day
+10 ps/day
+50 ps/day
+
+
+========== PAGE 69 ==========
+
+Linear Scaling KS-DFT
+Avoid Matrix Diagonalization
+(cid:16) (cid:17)
+P = sign S−1H −µI S−1
+Calculate S−1 and sign(A) using Newton-Schultz iterations
+1 (cid:16) (cid:17)
+A = A 3I −A2
+i+1 2 i i
+Only matrix multiplications required.
+DBCSR: Sparse matrix-matrix multiplication library
+
+
+========== PAGE 70 ==========
+
+Linear Scaling
+
+
+========== PAGE 71 ==========
+
+Linear Scaling
+
+
+========== PAGE 72 ==========
+
+PAO-ML
+O.Schütt,J.VandeVondele,J.Chem. TheoryComput. 2018,14,4168
+
+
+========== PAGE 73 ==========
+
+www.cp2k.org

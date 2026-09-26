@@ -17,15 +17,63 @@ Tooling shims (all tooling-only, NOT input changes):
     unit check trips. We inject fs == femtosecond so the unit check matches
     CP2K's actual semantics. '[fs]' is 100% correct CP2K syntax.
 """
+import glob
 import os
 import subprocess
 import sys
 
+# --- 控制台编码兼容层（中文 Windows/GBK 下输出 ✓ ⑪ Å 等符号不再抛异常）---
+try:
+    import os as _os, sys as _sys
+    _here = _os.path.dirname(_os.path.abspath(__file__))
+    for _d in (_here, _os.path.join(_here, "scripts")):
+        if _d not in _sys.path:
+            _sys.path.insert(0, _d)
+    import _console  # noqa: F401  导入即生效，见 scripts/_console.py
+except Exception:
+    pass
+
+
+def _die_missing_deps(missing, detail):
+    """友好报错并退出，不打印 traceback。exit 3 = 环境依赖缺失。"""
+    sys.stderr.write("\n".join([
+        "", "=" * 70,
+        f"缺少依赖：{missing}", "",
+        "本脚本是 skill 的「权威校验 harness」，属于开发依赖，普通用户无需运行。",
+        "",
+        "安装方式：", "",
+        "  pip install -r requirements-dev.txt",
+        "",
+        detail,
+        "=" * 70, "",
+    ]))
+    sys.exit(3)
+
+
 # --- tooling shims: must run BEFORE importing cp2k_input_tools ---
-import numpy as np
+try:
+    import numpy as np
+except ImportError as _exc:
+    _die_missing_deps(
+        getattr(_exc, "name", "numpy"),
+        "numpy 是校验脚本本身以及 pint 的底层依赖。",
+    )
+
 if not hasattr(np, "cumproduct"):
     np.cumproduct = np.cumprod  # pint 0.23+ removed numpy.cumproduct
-import cp2k_input_tools.parser as P
+
+try:
+    import cp2k_input_tools.parser as P
+    from cp2k_input_tools.parser import CP2KInputParser
+except ImportError as _exc:
+    _die_missing_deps(
+        getattr(_exc, "name", "cp2k-input-tools"),
+        "cp2k-input-tools 自带官方 CP2K 输入参考手册（cp2k_input.xml），\n"
+        "是判定输入语法是否合法的唯一权威来源。\n"
+        "若上面的包名指向 pint 或 lxml，请一并补齐：\n"
+        "  pip install cp2k-input-tools pint lxml",
+    )
+
 try:
     P.UREG.define("fs = femtosecond")  # CP2K 'fs' = femtosecond, not femtosiemens
 except Exception:
@@ -35,7 +83,45 @@ except Exception:
     except Exception:
         pass
 
-from cp2k_input_tools.parser import CP2KInputParser
+# 同一类 tooling 缺陷的又一例：关键字名里的 `+`（`IONS+CENTERS`）。
+#
+# `IONS+CENTERS` 是**官方 XML 里唯一含 `+` 的关键字名**（`<NAME type="default">IONS+CENTERS</NAME>`
+# 在 XML 中出现 19 次、同名，全在 Wannier 打印段 `&WANNIER_CENTERS` 下，官方默认 `F`）。
+# 而 cp2k-input-tools 0.9.1 的关键字正则写作 `(?P<name>[\w\-_]+)` —— **字符类里没有 `+`**，
+# 于是解析到这一行时在 `+` 处截断、把 `IONS` 当成关键字名，报：
+#     InvalidNameError: invalid keyword 'IONS' specified and no default keyword for this section
+# **这是假 error，输入本身完全合法。**
+#
+# 为什么以前没暴露：`_validate_all.py` 的用例里**没有 wannier 用例**，而
+# `gen_inp.py --properties wannier` 正是要发射 `IONS+CENTERS`（不开它 Wannier 中心
+# 就不与原子核写进同一个文件，TRAVIS 要的 `X` 行拿不到）。⇒ 谁加 wannier 用例谁撞。
+# 这里把字符类补上 `+`（只放宽一个字符，其余原样；对不含 `+` 的名字行为不变）。
+try:
+    import re as _re
+    P._KEYWORD_MATCH = _re.compile(r"(?P<name>[\w\-_+]+)\s*(?P<value>.*)")
+except Exception:
+    pass
+
+# 同一类 tooling 缺陷的第二例：cp2k-input-tools 0.9.1 的 pint_units.txt 把
+# `wavenumber_t` **注释掉了**（`# wavenumber_t =` 后无定义），于是官方 parser 会报
+# `'wavenumber_t' is not defined in the unit registry`。
+#
+# 但 `[wavenumber_t]` 是**合法的 CP2K 时间单位**（G 层
+# references/official/01_global_and_units.md 列出；真实生产 .out 回显
+# `Nose-Hoover-Chain time constant [  fs] 33.36` 佐证 `[wavenumber_t] 1000` = 33.36 fs）。
+# 不补这一条，**新生成的 `TIMECON [wavenumber_t] 1000`（生产卡写法）就无法被
+# 官方 parser 校验**，等于把最该校验的写法排除在外。
+#
+# 语义：值取波数（cm^-1），CP2K 换算成该振子的周期 t[fs] = 33356.40952 / ν̃[cm^-1]。
+# 这里只让单位**可被识别**（量纲 1/长度），不改变 pint 的换算行为。
+try:
+    P.UREG.define("wavenumber_t = 1 / centimeter")
+except Exception:
+    try:
+        P.UREG._units.pop("wavenumber_t", None)
+        P.UREG.define("wavenumber_t = 1 / centimeter")
+    except Exception:
+        pass
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 GEN = os.path.join(HERE, "scripts", "gen_inp.py")
@@ -79,9 +165,14 @@ def show_section(path):
 
 def gen(out, *args):
     cmd = [PY, GEN, "-o", out] + list(args)
-    r = subprocess.run(cmd, capture_output=True, text=True)
+    # 必须显式 UTF-8：子进程（gen_inp.py）经 _console 统一输出 UTF-8，
+    # 若按 locale(GBK) 解码，遇到中文报错会让内部读取线程抛
+    # UnicodeDecodeError，r.stderr 变成 None，随后 .strip() 抛 AttributeError
+    # —— 生成失败的诊断信息反而把 harness 自己搞崩。
+    r = subprocess.run(cmd, capture_output=True, text=True,
+                       encoding="utf-8", errors="replace")
     if r.returncode != 0:
-        print(f"  [GEN FAILED] {out}: {r.stderr.strip()}")
+        print(f"  [GEN FAILED] {out}: {(r.stderr or '').strip()}")
         return False
     return True
 
@@ -89,11 +180,15 @@ def gen(out, *args):
 def parse(path):
     """Parse with the official CP2KInputParser (validates vs cp2k_input.xml).
 
-    Reclassifies the known cp2k-input-tools tooling limitation around CP2K's
-    time unit '[fs]' (pint mis-reads it as femtosiemens) as a non-fatal NOTE,
-    not a real input error.
+    Returns ``(errors, warnings, notes)``.
+
+    ``notes`` holds the known cp2k-input-tools tooling limitation around CP2K's
+    time unit '[fs]' (pint mis-reads it as femtosiemens). It is recorded for
+    transparency but is **not** a real input error and **not** a warning — so it
+    neither fails the run nor inflates the warning count.
     """
     parser = CP2KInputParser()
+    notes = []
     try:
         with open(path, "r", encoding="utf-8", errors="replace") as fh:
             list(parser.parse(fh))  # force generator so all errors surface
@@ -102,17 +197,17 @@ def parse(path):
     except Exception as e:
         msg = str(e)
         if "femtosiemens" in msg or "femtosecond" in msg:
-            return [], ["NOTE(unit-tooling): pint mis-reads CP2K '[fs]' as "
-                        "femtosiemens; not an input error."]
-        return [msg], []
+            return [], [], ["NOTE(unit-tooling): pint mis-reads CP2K '[fs]' as "
+                            "femtosiemens; not an input error."]
+        return [msg], [], []
     real_errs = []
     for e in errs:
         s = e.msg if hasattr(e, "msg") else str(e)
         if "femtosiemens" in s or "femtosecond" in s:
-            warns.append("NOTE(unit-tooling): " + s)
+            notes.append("NOTE(unit-tooling): " + s)
         else:
             real_errs.append(s)
-    return real_errs, warns
+    return real_errs, warns, notes
 
 
 def main():
@@ -338,29 +433,139 @@ def main():
             "--potential", "GTH-PBE-q6", "GTH-PBE-q1",
             "--constraint-hbonds", "--hbond-atom-type", "O",
             "--hbond-targets", "0.96 1.0", "--thermostat", "langevin"]),
+        # --- Wannier：**唯一行使 `+` 关键字 shim 的用例，别删** ---
+        # `--properties wannier` 会发射 `IONS+CENTERS`（官方 XML 里唯一含 `+` 的关键字名）。
+        # 没有这个用例，文件顶部的 `_KEYWORD_MATCH` 补丁就是**死代码**，
+        # 一旦 cp2k-input-tools 升级或补丁被误删，也没人会发现 —— 直到某天有人
+        # 真去算 Wannier 中心，才收到一个莫名其妙的假 `InvalidNameError`。
+        ("wannier_aimd", [
+            "--type", "aimd_md", "--project", "t28", "--elem", "Cu", "O", "H",
+            "--basis", "DZVP-MOLOPT-SR-GTH", "DZVP-MOLOPT-SR-GTH",
+            "DZVP-MOLOPT-SR-GTH",
+            "--potential", "GTH-PBE", "GTH-PBE-q6", "GTH-PBE-q1",
+            "--periodic", "xyz", "--properties", "wannier"]),
     ]
 
     total_err = 0
     total_warn = 0
+    total_note = 0
+    gen_failed = []
+
     for name, args in cases:
         out = os.path.join(HERE, "_chk_" + name + ".inp")
         if not gen(out, *args):
+            # 生成失败**必须**计入结果。此前这里只是 `continue`，
+            # 于是 summary 照样声称「28 cases 全过」且退出码恒为 0 ——
+            # 假绿会让 CI 永远拦不住回归（v2.7.0 的 aimd_md 崩溃就是这样漏掉的）。
+            gen_failed.append(name)
+            print(f"[GEN-FAIL] {name}: gen_inp.py 未能生成输入")
             continue
-        errs, warns = parse(out)
-        status = "OK" if not errs else "ERROR"
-        print(f"[{status}] {name}: {len(errs)} err, {len(warns)} warn")
+        errs, warns, notes = parse(out)
+        status = "ERROR" if errs else ("WARN" if warns else "OK")
+        extra = f", {len(notes)} note" if notes else ""
+        print(f"[{status}] {name}: {len(errs)} err, {len(warns)} warn{extra}")
         for e in errs:
             print(f"    ERR: {e}")
         for w in warns:
             print(f"    WARN: {w}")
+        for n in notes:
+            print(f"    {n}")
         total_err += len(errs)
         total_warn += len(warns)
+        total_note += len(notes)
+
+    checked = len(cases) - len(gen_failed)
+
+    # ---- 另把**仓库里现有的 .inp**（examples/ + verify_out/）也过一遍官方 parser ----
+    #
+    # 为什么必须做：`examples/*.inp` 对外宣称"已校验的输入"，但它们此前**不在**
+    # 本 harness 的覆盖里（本 harness 只解析自己生成的 `_chk_*.inp`）。于是
+    # `examples/05_metadyn_fes/metadyn.inp` 把 `K` / `DIRECTION` 直接写在 `&WALL`
+    # 下（官方 schema 里它们属于 `&WALL/&QUADRATIC`）**长期没人发现** ——
+    # 是给 `_official_validate.py` 加 unit-tooling 分类时才顺带暴露出来的。
+    repo_inputs = sorted(glob.glob(os.path.join(HERE, "examples", "*", "*.inp"))
+                         + glob.glob(os.path.join(HERE, "verify_out", "*.inp")))
+    if repo_inputs:
+        print()
+        print("#" * 70)
+        print("# 3. 仓库现有 .inp（examples/ + verify_out/）过官方 parser")
+        print("#" * 70)
+        # 复用 `_official_validate.validate_file`，**不另写一份**错误分类 ——
+        # 两份逻辑迟早漂移。它已处理两类已知 tooling 限制（`fs`→femtosiemens、
+        # `internal_cp2k` 关键字上的显式单位覆盖），并且对后者做了严格前置判定
+        # （单位名 pint 认得 + 值全是数字），真错误照常判死。
+        try:
+            import importlib.util as _ilu
+            _spec = _ilu.spec_from_file_location(
+                "_ov", os.path.join(HERE, "_official_validate.py"))
+            _ov = _ilu.module_from_spec(_spec)
+            _spec.loader.exec_module(_ov)
+            _validate_file = _ov.validate_file
+        except Exception as _exc:            # pragma: no cover
+            _validate_file = None
+            print("# [SKIP] 无法导入 _official_validate.py：{}".format(_exc))
+        for path in repo_inputs:
+            rel = os.path.relpath(path, HERE)
+            if _validate_file is None:
+                break
+            msgs = _validate_file(path)
+            real = [m for m in msgs if not m.startswith("NOTE")]
+            notes = [m for m in msgs if m.startswith("NOTE")]
+            if real:
+                total_err += len(real)
+                print(f"[ERROR] {rel}: {len(real)} err")
+                for e in real:
+                    print(f"    ERR: {e}")
+            else:
+                total_note += len(notes)
+                extra = f", {len(notes)} note" if notes else ""
+                print(f"[OK]    {rel}: 0 err{extra}")
+            checked += 1
+
+    # ---- 仓库现有 .inp 还要过一遍**我们自己的** validate_inp.py ----
+    #
+    # 官方 parser 只查**语法/schema**，查不出"语义上配错了"的东西。实测它放过了
+    # 一批真缺陷（都是本轮存疑查证顺带发现的）：
+    #   * `BASIS_SET_FILE_NAME BASIS_SET` + 用了 MOLOPT 族基组 —— MOLOPT 住在
+    #     `BASIS_MOLOPT`，跑起来直接 "basis set not found"（8 个文件中招）
+    #   * `&POISSON PERIODIC` 与 `&CELL PERIODIC` 不一致（5 个文件中招）
+    # 所以这里把 `validate_inp.py` 也跑一遍，**它的 warning 也算失败** ——
+    # 否则"示例输入是正确的"这句话就没人守。
+    if repo_inputs:
+        print()
+        print("#" * 70)
+        print("# 4. 仓库现有 .inp 过 validate_inp.py（语义检查，warning 也算失败）")
+        print("#" * 70)
+        VI = os.path.join(HERE, "scripts", "validate_inp.py")
+        for path in repo_inputs:
+            rel = os.path.relpath(path, HERE)
+            r = subprocess.run([PY, VI, path], capture_output=True, text=True,
+                               encoding="utf-8", errors="replace")
+            warns = [l for l in (r.stdout or "").splitlines() if "[warn]" in l]
+            errs = [l for l in (r.stdout or "").splitlines() if "[ERROR]" in l]
+            if errs or warns:
+                total_err += len(errs)
+                total_warn += len(warns)
+                print(f"[ISSUE] {rel}: {len(errs)} err, {len(warns)} warn")
+                for l in errs + warns:
+                    print("    " + l.strip()[:160])
+            else:
+                print(f"[OK]    {rel}: 0 err, 0 warn")
 
     print()
     print("#" * 70)
-    print(f"# SUMMARY: {total_err} errors, {total_warn} warnings across {len(cases)} cases")
+    print(f"# SUMMARY: {total_err} errors, {total_warn} warnings"
+          + (f", {total_note} note(s)" if total_note else "")
+          + f" across {checked}/{len(cases) + len(repo_inputs)} cases"
+          + f" ({len(cases)} 生成 + {len(repo_inputs)} 仓库现有)")
+    if gen_failed:
+        print(f"# 生成失败 {len(gen_failed)} 个（**未**计入「解析通过」）："
+              + ", ".join(gen_failed))
     print("#" * 70)
+
+    # 退出码：生成失败 / error / warning 任一项都算失败，CI 才拦得住
+    return 1 if (gen_failed or total_err or total_warn) else 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

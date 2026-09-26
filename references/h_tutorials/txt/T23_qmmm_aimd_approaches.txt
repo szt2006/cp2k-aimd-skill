@@ -1,0 +1,1944 @@
+# SOURCE: 【QMMM-庚子计算整理】QMMM approaches in ab initio molecular dynamics.pdf
+# PAGES: 86
+# TOPIC: AIMD 中的 QM/MM 方法
+
+
+
+========== PAGE 1 ==========
+
+CP2K UK Workshop 2014!
+27-28 August, Imperial College, London
+QM/MM approaches
+in ab initio molecular
+dynamics
+Marcella Iannuzzi !
+University of Zurich!
+!
+Teodoro Laino!
+IBM Zurich Research Laboratory
+
+
+========== PAGE 2 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+Outline
+Overview of the QM/MM methodology!
+Available QM/MM Electrostatic
+Schemes !
+GEEP: CP2K QM/MM driver !
+Charged Oxygen Vacancies in SiO2
+
+
+========== PAGE 3 ==========
+
+Nobel Prize in Chemistry 2013
+Martin Karplus, Harvard U., Cambridge, MA, USA
+Micheal Levitt, Stanford U., Stanford, CA, USA
+Arieh Warshel, U. Southern Ca., Los Angeles, CA, USA
+Development of Multiscale Models of Complex
+Chemical Systems
+
+
+========== PAGE 4 ==========
+
+Combine QM and MM
+QM/MM
+QM/MM
+Combine Quantum Mechanics and Molecular Mechanics
+full atomistic by
+classical FF
+Separate system in QM and MM part, single out electrons to be
+V (R) = V (R) + V (R) + V (R)
+treated byQQMM MM int
+Define potential energy surface
+V (R) = V (R) + V (R) + V (R)
+QM MM int
+Find solutions to many technical problems.
+
+
+========== PAGE 5 ==========
+
+Combine QM and MM
+QM: modelling of electronic rearrangements!
+MM: efficient inclusion of wider environment!
+Choice of QM method (semi empirical, DFT, QC)!
+Choice of the force field!
+Partitioning and treatment of the boundary
+
+
+========== PAGE 6 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+738,000 atoms - 50 nanometers
+Ligand binding affinity in docking!
+Free energy simulations!
+Complex biomolecular structures
+P.D. Blood and G.A. Voth, PNAS, 103, 2006, pp. 15068-15072
+
+
+========== PAGE 7 ==========
+
+Current Topic
+pubs.acs.org/biochemistry
+Combined Quantum Mechanics/Molecular Mechanics (QM/MM)
+Methods in Computational Enzymology
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+* *
+Marc W. van der Kamp and Adrian J. Mulholland
+Centre for Computational Chemistry, School of Chemistry, University of Bristol, Bristol BS8 1TS, U.K.
+fi
+ABSTRACT: Computational enzymology is a rapidly maturing eld that is
+increasingly integral to understanding mechanisms of enzyme-catalyzed reactions
+and their practical applications. Combined quantum mechanics/molecular
+fi
+mechanics (QM/MM) methods are important in this eld. By treating the
+reacting species with a quantum mechanical method (i.e., a method that calculates
+the electronic structure of the active site) and including the enzyme environment
+with simpler molecular mechanical methods, enzyme reactions can be modeled.
+Here, we review QM/MM methods and their application to enzyme-catalyzed
+reactions to investigate fundamental and practical problems in enzymology. A
+range of QM/MM methods is available, from cheaper and more approximate
+methods, which can be used for molecular dynamics simulations, to highly accurate electronic structure methods. We discuss how
+Environment effects on reaction energetics
+modeling of reactions using such methods can provide detailed insight into enzyme mechanisms and illustrate this by reviewing
+some recent applications. We outline some practical considerations for such simulations. Further, we highlight applications that
+show how QM/MM methods can contribute to the practical development and application of enzymology, e.g., in the
+ff
+interpretation and prediction of the e ects of mutagenesis and in drug and catalyst design.
+E fi 4,5
+nzymes are both essential and extraordinary due to their ods have been involved in this eld, ever since the pioneering
+6
+phenomenal capability to catalyze biochemical reactions work of Warshel and Levitt in 1976. The desire to model
+ffi fi
+e ciently, typically with high speci city and under mild, reactions within enzymes has been an important driving force
+physiological conditions. Understanding how enzymes achieve in the development of QM/MM methods. This review will
+these remarkable feats is not only one of the most important primarily focus on QM/MM methods in computational
+fundamental problems in biology, it will also contribute to a enzymology; other simulation and modeling methods are also
+fi
+range of technological applications such as designing inhibitors important in this eld. In particular, the empirical valence bond
+that serve as lead compounds in drug discovery, predicting the (EVB) approach (which typically uses a combination of
+fi
+metabolism of drugs, and designing catalysts for speci c molecular mechanics representations rather than a molecular
+transformations. A wide variety of experiments in structural mechanics and an electronic structure QM method) has
+7−9
+provided many fundamental insights into enzyme catalysis.
+biology, enzyme kinetics, and mutagenesis have given insight
+10
+Calculations that employ QM methods only also provide a
+into enzymes. Because of the complexity of enzymes and the
+ff
+ffi
+good route to modeling many enzyme mechanisms, di ering
+di culty of studying reactions in them, however, many
+from QM/MM calculations mostly in the size of the system
+questions and uncertainties remain, giving rise to many heated
+ff
+that can be modeled. In this review, we discuss di erent types
+debates in enzymology. Computational modeling and simu-
+ff
+of QM/MM methods, their scope, and practical considerations
+lation, with their unique potential to o er detailed, atomic-
+in their application to modeling enzyme reactions. We indicate
+resolution insight into the dynamics and reactions of
+1 how QM/MM methods have contributed to debates on the
+biomolecules, can help resolve such controversial questions
+sources of enzyme catalytic power and provide detailed insight
+by interpreting, complementing, and expanding results
+into individual mechanisms. We further highlight how modeling
+obtained from experiment. Perhaps most obviously, calculations
+of reactions with QM/MM methods is contributing to
+can study transition state structures, which are central to
+developments in drug design, drug metabolism, and biocatalyst
+reactivity but cannot be studied directly by experiments on
+design. QM/MM methods are also being applied to other types
+enzymes.
+fi of problems in biomolecular science, e.g., in the calculation of
+Computational enzymology can be de ned broadly as the
+spectroscopic properties, photochemistry, pK ’s, and predic-
+study of enzymes and their reaction mechanisms by molecular
+a
+ffi
+fi tions of ligand binding a nities in docking and free energy
+modeling and simulation. This eld has matured rapidly in
+11−17
+simulations, but such applications are outside the scope of
+recent years, and increasingly experimental and computational
+this review.
+enzymologists are collaborating to explain experimental data
+(see, e.g., refs 2 and 3) and use insights from modeling to guide
+ff
+further experiments. A number of di erent types of simulation Received: February 19, 2013
+have proved useful in computational enzymology. Combined Revised: April 2, 2013
+quantum mechanics/molecular mechanics (QM/MM) meth- Published: April 4, 2013
+© 2013 American Chemical Society 2708 dx.doi.org/10.1021/bi400215w | Biochemistry 2013, 52, 2708−2728
+
+
+========== PAGE 8 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+QMMM: overview
+0.11 million atoms!
+5 QM regions: effects of O implantation into Si!
+adaptive QM regions
+simoX technology
+Yoshio Tanaka (AIST) and Aiichiro Nakano (USC)
+
+
+========== PAGE 9 ==========
+
+MM Environment
+N
+(R ) = (R ) + (R , R ) + (R , R , R ) + ...
+1 i 2 i j 3 i j k
+U U U U
+i i j>i i j>i k>j
+X X X X X X
+N n
+(R ,   p)
+U
+
+
+========== PAGE 10 ==========
+
+Empirical Force Fields
+MM Environment
+Interatomic Potentials
+Parameterization and Transferability
+Intra-molecular Interactions
+Reducing the Complexity
+Typical Functional Form
+N
+(R ) = (R ) + (R , R ) + (R , R , R ) + ...
+1 i 2 i j 3 i j k
+U U U U
+i i j>i i j>i k>j
+X X X X X X
+k b k a V
+N i 2 j 2 n
+(r ) = (l l ) + (✓ ✓ ) + (1 + cos(n!   ))
+i i,0 j j,0 k n
+U 2   2   2 N  n
+bond angles torsion (R ,   p)
+X X X
+U
+12 6
+    q q
+ij ij i j
++ 4" +
+ij
+j>i " r ij !   r ij ! # 4" 0 r ij !
+X
+k (b) k (a)
+(R N ) = i (l l ) 2 + j (✓ ✓ ) 2
+i i,0 j j,0
+U 2   2  
+i bonds j angles
+2X 2X
+s
++ V (1 + cos(n !   ))
+s s
+2  
+s torsion
+2X
+12 6
+    q q
+ij ij i j
++ 4" +
+ij
+R   R 4" R
+" ij ij # 0 ij !
+j>i ✓ ◆ ✓ ◆ | |
+X
+(b) bon (a) ang tor pair at
+  : [(k , l ) ; (k , ✓ ) ; ( ,   ) ; (",  ) ; q ]
+0 0 s s
+V
+7/64
+
+
+========== PAGE 11 ==========
+
+Topology
+Alanine for CHARMM
+Alanine Topology Entry
+RESI ALA 0.00
+GROUP
+ATOM N NH1 -0.47 ! |
+ATOM HN H 0.31 ! HN-N
+ATOM CA CT1 0.07 ! | HB1
+ATOM HA HB 0.09 ! | /
+GROUP ! HA-CA--CB-HB2
+ATOM CB CT3 -0.27 ! | \
+ATOM HB1 HA 0.09 ! | HB3
+ATOM HB2 HA 0.09 ! O=C
+ATOM HB3 HA 0.09 ! |
+GROUP !
+ATOM C C 0.51
+ATOM O O -0.51
+BOND CB CA N HN N CA
+BOND C CA C +N CA HA CB HB1 CB HB2 CB HB3
+DOUBLE O C
+IMPR N -C CA HN C CA +N O
+DONOR HN N
+ACCEPTOR O C
+IC -C CA *N HN 1.3551 126.4900 180.0000 115.4200 0.9996
+IC -C N CA C 1.3551 126.4900 180.0000 114.4400 1.5390
+IC N CA C +N 1.4592 114.4400 180.0000 116.8400 1.3558
+IC +N CA *C O 1.3558 116.8400 180.0000 122.5200 1.2297
+IC CA C +N +CA 1.5390 116.8400 180.0000 126.7700 1.4613
+IC N C *CA CB 1.4592 114.4400 123.2300 111.0900 1.5461
+IC N C *CA HA 1.4592 114.4400 -120.4500 106.3900 1.0840
+IC C CA CB HB1 1.5390 111.0900 177.2500 109.6000 1.1109
+IC HB1 CA *CB HB2 1.1109 109.6000 119.1300 111.0500 1.1119
+IC HB1 CA *CB HB3 1.1109 109.6000 -119.5800 111.6100 1.1114
+The entries in the topology file provide the following information:
+3 RESI ALA 0.00
+indicates a new residue with the name ALA and total charge of 0.00.
+4 GROUP
+indicates that the following atoms (up to the next GROUP command) are
+part of a “group” of atoms which carries an integer charge. Groups are
+often made up of atoms which interact electronically, sharing electron
+density.
+5 ATOM N NH1 -0.47 ! |
+indicates a new atom with the name N, the type NH1, and a charge of
+-0.47. The ! sign is a comment signal. Anything appearing after it on
+the line will be ignored. Thus, the stick representation of alanine is simply
+a comment in the file. It is only there so the user may see the topology
+of the residue. Note that atoms N, HN, CA, and HA form a group with net
+charge 0.00.
+6 BOND CB CA N HN N CA
+indicates sets of 2 atoms which are connected by a single bond. The bonds
+are created between consecutive atoms. Thus, one bond is placed between
+9
+
+
+========== PAGE 12 ==========
+
+MM CP2K input
+&FORCE_EVAL
+!
+METHOD FIST
+!
+&POISSON
+&MM &EWALD
+!
+EWALD_TYPE SPME
+&FORCEFIELD ALPHA .44
+PARM_FILE_NAME acn.pot GMAX 32
+PARMTYPE CHM O_SPLINE 6
+&CHARGE &END EWALD
+ATOM CT &END POISSON
+!
+CHARGE -0.479
+&END CHARGE &END MM
+!
+&CHARGE
+ATOM YC &SUBSYS
+CHARGE 0.481 &CELL
+&END CHARGE ABC 27.0 27.0 27.0
+&CHARGE &END CELL
+ATOM YN &TOPOLOGY
+CHARGE -0.532 CONNECTIVITY PSF
+&END CHARGE CONN_FILE_NAME acn_topology.psf
+&CHARGE COORD_FILE_NAME acn_topology.pdb
+ATOM HC COORDINATE pdb
+CHARGE 0.177 &END TOPOLOGY
+&END CHARGE &END SUBSYS
+&END FORCEFIELD STRESS_TENSOR ANALYTICAL
+!
+&END FORCE_EVAL
+!
+
+
+========== PAGE 13 ==========
+
+Subtractive QM/MM
+E = E + E E
+total MM,tot QM(QM) MM(QM)
+ 
+MM FF also for active region!
+QM density not polarised
+
+
+========== PAGE 14 ==========
+
+Subtractive QM/MM
+E = E + E E
+total MM,tot QM(QM) MM(QM)
+ 
+MM FF also for active region!
+QM density not polarised
+! !
+&MULTIPLE_FORCE_EVALS
+FORCE_EVAL_ORDER 1 2 3 4 &FORCE_EVAL &SUBSYS
+&END MULTIPLE_FORCE_EVALS METHOD FIST &TOPOLOGY
+!
+&MM COORD_FILE_NAME qmsys.xyz
+&FORCE_EVAL ……… &END TOPOLOGY
+METHOD MIXED &END MM &CELL
+&MIXED &SUBSYS ABC 19.729 19.729 19.729
+MIXING_TYPE GENMIX &TOPOLOGY &END CELL
+&GENERIC CONNECTIVITY PSF &END SUBSYS
+# X: Energy force_eval 2 CONN_FILE_NAME topo.psf &END FORCE_EVAL
+!
+# Y: Energy force_eval 3 COORD_FILE_NAME totsys.xyz
+# Z: Energy force_eval 4 &END TOPOLOGY &FORCE_EVAL
+MIXING_FUNCTION X+Y-Z &CELL METHOD FIST
+VARIABLES X Y Z ABC 19.729 19.729 19.729 &MM
+&END GENERIC &END CELL ………
+&END MIXED &END SUBSYS &END MM
+&SUBSYS &END FORCE_EVAL &SUBSYS
+!
+&TOPOLOGY &TOPOLOGY
+!
+CONNECTIVITY PSF CONNECTIVITY PSF
+!
+CONN_FILE_NAME topo.psf CONN_FILE_NAME qmtopo.psf
+!
+COORD_FILE_NAME totsys.xyz COORD_FILE_NAME qmsys.xyz
+&END TOPOLOGY &FORCE_EVAL &END TOPOLOGY
+&CELL METHOD QS &CELL
+ABC 19.729 19.729 19.729 &DFT ABC 19.729 19.729 19.729
+&END CELL ……… &END CELL
+&END SUBSYS &END DFT &END SUBSYS
+!
+&END FORCE_EVAL &END FORCE_EVAL
+
+
+========== PAGE 15 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+Additive QM/MM
+E = E + E + E
+total MM,tot QM(QM) QM/MM
+el vdw b
+E = E + E + E
+MM(QM) MM(QM) MM(QM) MM(QM)
+Electrostatic coupling is the most
+involved term!
+Mechanical embedding possible!
+Linked atom scheme!
+vdW might need ad hoc
+parameterisation
+
+
+========== PAGE 16 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+Outline
+Overview of the QM/MM methodology!
+Available QM/MM Electrostatic
+Schemes !
+GEEP: CP2K QM/MM driver !
+Charged Oxygen Vacancies in SiO2
+
+
+========== PAGE 17 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+Available Electrostatic Schemes
+on the same
+cell on which is defined
+QM box
+Cost ≈ N * P1
+MM
+MM box
+
+
+========== PAGE 18 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+Available Electrostatic Schemes
+Spherical Cutoff
+QM box
+Cost ≈ Nc * P1
+MM
+MM box
+
+
+========== PAGE 19 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+Available Electrostatic Schemes
+Multi-pole!
+QM box
+Expansion
+MM box
+A. Laio, J. VandeVondele, U. Rothlisberger , J. Chem. Phys., 116, 2002, pp. 6941
+
+
+========== PAGE 20 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+Outline
+Overview of the QM/MM methodology!
+Available QM/MM Electrostatic
+Schemes !
+GEEP: CP2K QM/MM driver !
+Charged Oxygen Vacancies in SiO2
+
+
+========== PAGE 21 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+QM/MM
+
+
+========== PAGE 22 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+QM/MM
+E (R , R ) = E (R ) + E (R ) + E (R , R )
+TOT QM MM QM QM MM MM QM/MM QM MM
+n(r)
+E (R , R ) = q dr + u (R , R )
+QM/MM QM MM MM vdW QM MM
+r R
+MM
+MM Z |   | QM,MM
+X X
+
+
+========== PAGE 23 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+QM/MM
+Gaussians
+Plane Waves
+
+
+========== PAGE 24 ==========
+
+Gaussian charge distribution
+3
+r
+c,MM ( r R /r ) 2
+n(r, R ) = e MM c,MM
+MM   |   |
+p⇡
+✓ ◆
+r R
+Erf MM
+|   |
+r
+c,MM
+v (r, R ) =
+MM MM
+⇣ ⌘
+r R
+MM
+|   |
+prevent spill out problem!
+accelerate calculations of electrostatics
+
+
+========== PAGE 25 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+GEEP
+Sum of functions with different cutoffs, derived from the new
+Gaussian expansion of the electrostatic potential
+1178 J. Chem. Theory Comput., Vol. 1, No. 6, 2005 Laino et al.
+4⇡
+g2r2
+c,MM
+v˜ (g) = exp
+MM
+g2   4
+!
+✓ ◆
+Distance
+Figure1. On the left: Gaussian expansion of the electrostatic potential (GEEP). The picture shows the components of the fit
+for the value r ) 1.1 Å. On the right: Fourier transform of the potential in eq 3 (in red) and Fourier transform of the residual
+c,a
+function R in eq 5 (in green). For this particular case (r ) 1.1) we can define for the residual function a G 1.0.
+low c,a cut
+≈
+small r. In the contest of QM/MM calculations,37,38 the MM different cutoffs. The most general representation of the
+charges have been Gaussian smeared as a means to repair electrostatic potential eq 3 in terms of Gaussian functions
+the broken covalent bonds at the QM/MM boundaries. In with different cutoffs is
+contrast here, we do not address the issue of treating QM/
+( r - r )
+MM regions crossed by a covalent bond, and the smearing
+a
+| |
+Erf
+of all MM charges is exploited in order to prevent the spill-
+r ( ( r - r )2)
+c,a a
+out problem and to accelerate the calculation of the electro- | |
+V (r,r ) ) ) ∑A exp - +
+a a g
+static interactions. r - r G
+| a | N g g
+Due to the Coulomb long-range behavior, the computa-
+R ( r - r ) (5)
+low a
+| |
+tional cost of the integral in eq 2 is surprisingly large. When
+using a localized basis set like GTOs, the most natural way
+where the smoothed Coulomb potential is expressed as a sum
+to handle this term is to modify the one-electron Hamiltonian
+of N Gaussian functions and of a residual function R .
+g low
+by adding to it the contribution of the MM classical field
+The A are the amplitudes of the Gaussian functions, and
+g
+G are their width. If the parameters A and G are properly
+g g g
+q
+a chosen, the residual function R will be smooth, i.e., its
+H µν ) - φ (r,r ) ∑ φ (r,r )dr (4) low
+QM/MM µ R ν R Fourier transform will have a compact domain for very small
+∫ r - r
+a MM a
+∈ | | g vectors, and will be approximately zero for g . G . The
+cut
+G parameter is related to the spacing of the grid on which
+φ and φ being Gaussian basis functions and q the atomic cut
+µ ν a
+the R function will be mapped. We performed the fit of
+charge of classical atom a with coordinates r . In this case low
+a
+eq 5 by a least-squares approach in Fourier space, using the
+a suitable prescreening procedure has to be applied for the
+analytical expression of the g-representation of the modified
+integral evaluation, to effectively compute only the nonzero
+electrostatic potential:39
+terms and thus avoiding the quadratically scaling construction
+of the core Hamiltonian with respect to the number of
+[ ] ( 2 2)
+g r
+elements of the basis set. When using a fully delocalized 4π
+c,a
+v˜ (g) ) exp - (6)
+basis set like PWs, on the other hand, the QM/MM a 2 4
+g
+interaction term is evaluated by modifying the external
+potential and collocating on the grid nodes the contribution In Figure 1 we show the result of the fitting procedure in
+coming from the MM potential. Unfortunately the number G-space with r ) 1.1 Å, comparing the Fourier components
+c,a
+of operations that a direct evaluation of eq 2 requires is of of the modified Coulomb potential with the Fourier com-
+the order of N N , where N is the number of grid points, ponents of the residual function R . In this case the compact
+u MM u low
+usually of the order of 106 points, and N is the number of support of R is truncated at G 1.0 which should be
+MM low cut
+≈
+classical atoms, usually of the order of 104 or more in systems compared with the value of G 3.0 needed to achieve
+cut
+≈
+of biochemical interest. It is evident that in a real system a the same accuracy when using V (r,r ). This implies that the
+a a
+brute force computation of the integral in eq 2 is imprac- residual function can be mapped on a grid with a spacing 1
+tical. order of magnitude bigger than the one required to map the
+V function.
+a
+In Figure 1 we show the same result of the fit in real space,
+GEEP: Gaussian Expansion of the QM/MM
+and in Table 1 we provide coefficients for selected values
+Electrostatic Potential
+of r .
+c,a
+The key to our method is the efficient decomposition of the The advantage of this decomposition scheme is that grids
+electrostatic potential in terms of Gaussian functions with of different spacing can be used to represent the different
+].u.a[
+ygrenE
+
+
+========== PAGE 26 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+GEEP
+Sum of functions with different cutoffs, derived from the new
+Gaussian expansion of the electrostatic potential
+1178 J. Chem. Theory Comput., Vol. 1, No. 6, 2005 Laino et al.
+4⇡
+g2r2
+c,MM
+v˜ (g) = exp
+MM
+g2   4
+!
+✓ ◆
+G vectors Distance
+Figure1. On the left: Gaussian expansion of the electrostatic potential (GEEP). The picture shows the components of the fit
+for the value r ) 1.1 Å. On the right: Fourier transform of the potential in eq 3 (in red) and Fourier transform of the residual
+c,a
+T. Laino, F. Mohamed, A. Laio and M. Parrinello, J. Chem. Th. Comp., 1, 2005, pp. 1176-1184
+function R in eq 5 (in green). For this particular case (r ) 1.1) we can define for the residual function a G 1.0.
+low c,a cut
+≈
+small r. In the contest of QM/MM calculations,37,38 the MM different cutoffs. The most general representation of the
+charges have been Gaussian smeared as a means to repair electrostatic potential eq 3 in terms of Gaussian functions
+the broken covalent bonds at the QM/MM boundaries. In with different cutoffs is
+contrast here, we do not address the issue of treating QM/
+( r - r )
+MM regions crossed by a covalent bond, and the smearing
+a
+| |
+Erf
+of all MM charges is exploited in order to prevent the spill-
+r ( ( r - r )2)
+c,a a
+out problem and to accelerate the calculation of the electro- | |
+V (r,r ) ) ) ∑A exp - +
+a a g
+static interactions. r - r G
+| a | N g g
+Due to the Coulomb long-range behavior, the computa-
+R ( r - r ) (5)
+low a
+| |
+tional cost of the integral in eq 2 is surprisingly large. When
+using a localized basis set like GTOs, the most natural way
+where the smoothed Coulomb potential is expressed as a sum
+to handle this term is to modify the one-electron Hamiltonian
+of N Gaussian functions and of a residual function R .
+g low
+by adding to it the contribution of the MM classical field
+The A are the amplitudes of the Gaussian functions, and
+g
+G are their width. If the parameters A and G are properly
+g g g
+q
+a chosen, the residual function R will be smooth, i.e., its
+H µν ) - φ (r,r ) ∑ φ (r,r )dr (4) low
+QM/MM µ R ν R Fourier transform will have a compact domain for very small
+∫ r - r
+a MM a
+∈ | | g vectors, and will be approximately zero for g . G . The
+cut
+G parameter is related to the spacing of the grid on which
+φ and φ being Gaussian basis functions and q the atomic cut
+µ ν a
+the R function will be mapped. We performed the fit of
+charge of classical atom a with coordinates r . In this case low
+a
+eq 5 by a least-squares approach in Fourier space, using the
+a suitable prescreening procedure has to be applied for the
+analytical expression of the g-representation of the modified
+integral evaluation, to effectively compute only the nonzero
+electrostatic potential:39
+terms and thus avoiding the quadratically scaling construction
+of the core Hamiltonian with respect to the number of
+[ ] ( 2 2)
+g r
+elements of the basis set. When using a fully delocalized 4π
+c,a
+v˜ (g) ) exp - (6)
+basis set like PWs, on the other hand, the QM/MM a 2 4
+g
+interaction term is evaluated by modifying the external
+potential and collocating on the grid nodes the contribution In Figure 1 we show the result of the fitting procedure in
+coming from the MM potential. Unfortunately the number G-space with r ) 1.1 Å, comparing the Fourier components
+c,a
+of operations that a direct evaluation of eq 2 requires is of of the modified Coulomb potential with the Fourier com-
+the order of N N , where N is the number of grid points, ponents of the residual function R . In this case the compact
+u MM u low
+usually of the order of 106 points, and N is the number of support of R is truncated at G 1.0 which should be
+MM low cut
+≈
+classical atoms, usually of the order of 104 or more in systems compared with the value of G 3.0 needed to achieve
+cut
+≈
+of biochemical interest. It is evident that in a real system a the same accuracy when using V (r,r ). This implies that the
+a a
+brute force computation of the integral in eq 2 is imprac- residual function can be mapped on a grid with a spacing 1
+tical. order of magnitude bigger than the one required to map the
+V function.
+a
+In Figure 1 we show the same result of the fit in real space,
+GEEP: Gaussian Expansion of the QM/MM
+and in Table 1 we provide coefficients for selected values
+Electrostatic Potential
+of r .
+c,a
+The key to our method is the efficient decomposition of the The advantage of this decomposition scheme is that grids
+electrostatic potential in terms of Gaussian functions with of different spacing can be used to represent the different
+
+
+========== PAGE 27 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+Multigrid Framework
+N = 8N
+i+1 i
+T. Laino, F. Mohamed, A. Laio and M. Parrinello, J. Chem. Th. Comp., 1, 2005, pp. 1176-1184
+
+
+========== PAGE 28 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+Multigrid Framework
+interpolate restrict
+interpolate restrict
+interpolate restrict
+Cubic Splines
+T. Laino, F. Mohamed, A. Laio and M. Parrinello, J. Chem. Th. Comp., 1, 2005, pp. 1176-1184
+
+
+========== PAGE 29 ==========
+
+Collocation in the QM Box
+QM/MM
+E (R , R ) = n(r, R )V (r, R )dr
+QM/MM QM MM QM MM
+Z
+potential on the finest QM grid
+QM/MM i
+V (r,R ) = v (r,R )
+i MM MM MM
+MM
+X
+optimal!
+grid levels!
+!
+60-80% of time
+QM box
+
+
+========== PAGE 30 ==========
+
+QM box
+
+
+========== PAGE 31 ==========
+
+QM box
+
+
+========== PAGE 32 ==========
+
+compact Gaussian!
+functions
+
+
+========== PAGE 33 ==========
+
+compact Gaussian!
+functions
+
+
+========== PAGE 34 ==========
+
+compact Gaussian!
+functions
+
+
+========== PAGE 35 ==========
+
+compact Gaussian!
+functions
+
+
+========== PAGE 36 ==========
+
+
+
+
+========== PAGE 37 ==========
+
+
+
+
+========== PAGE 38 ==========
+
+
+
+
+========== PAGE 39 ==========
+
+
+
+
+========== PAGE 40 ==========
+
+
+
+
+========== PAGE 41 ==========
+
+
+
+
+========== PAGE 42 ==========
+
+
+
+
+========== PAGE 43 ==========
+
+
+
+
+========== PAGE 44 ==========
+
+3
+Scaling ~ Nc
+
+
+========== PAGE 45 ==========
+
+real space
+interpolation from
+coarsest to finest!
+fine fine 1
+ 
+QM/MM k QM/MM
+V (r, R ) = I V (r, R )
+MM k 1 i MM
+ 
+i=coarse k=i
+X Y
+
+
+========== PAGE 46 ==========
+
+real space
+interpolation from
+coarsest to finest!
+fine fine 1
+ 
+QM/MM k QM/MM
+V (r, R ) = I V (r, R )
+MM k 1 i MM
+ 
+i=coarse k=i
+X Y
+
+
+========== PAGE 47 ==========
+
+fine fine 1
+ 
+QM/MM k QM/MM
+V (r, R ) = I V (r, R )
+MM k 1 i MM
+ 
+i=coarse k=i
+X Y
+
+
+========== PAGE 48 ==========
+
+fine fine 1
+ 
+QM/MM k QM/MM
+V (r, R ) = I V (r, R )
+MM k 1 i MM
+ 
+i=coarse k=i
+X Y
+
+
+========== PAGE 49 ==========
+
+fine fine 1
+ 
+QM/MM k QM/MM
+V (r, R ) = I V (r, R )
+MM k 1 i MM
+ 
+i=coarse k=i
+X Y
+
+
+========== PAGE 50 ==========
+
+Electrostatic Potential
+interpolation !
+20-40% of time
+
+
+========== PAGE 51 ==========
+
+!
+&QMMM
+!
+&MM
+&CELL …..
+ABC 6.0 6.0 6.0 &END MM
+&END CELL !
+USE_GEEP_LIB 9
+&DFT
+ECOUPL GAUSS
+….
+!
+&END DFT
+&MM_KIND H !
+RADIUS 0.44
+&SUBSYS
+&END MM_KIND
+&CELL
+&MM_KIND O
+ABC 15.0 15.0 15.0
+RADIUS 0.78
+&END CELL
+&END MM_KIND
+!
+!
+&TOPOLOGY
+&QM_KIND H
+COORD_FILE_NAME sys.pdb
+MM_INDEX 8 9
+COORDINATE pdb
+&END QM_KIND
+&END TOPOLOGY
+&QM_KIND O
+&END SUBSYS
+MM_INDEX 7
+&END QM_KIND
+!
+&END QMMM
+
+
+========== PAGE 52 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+Extension to PBC
+How to handle the electrostatic potential in presence of
+periodic boundary conditions (PBC)?
+Ewald Summation scheme:
+
+
+========== PAGE 53 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+Extension to PBC
+How to handle the electrostatic potential in presence of
+periodic boundary conditions (PBC)?
+Ewald Summation scheme:
+Reciprocal space
+Real space
+
+
+========== PAGE 54 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+QM/MM fully periodic
+MM MM MM
+QM QM QM
+MM MM MM
+QM QM QM
+MM MM MM
+QM QM QM
+T. Laino, F. Mohamed, A. Laio and M. Parrinello, J. Chem. Th. Comp., 2 (5), 2006, pp.1370-1378
+
+
+========== PAGE 55 ==========
+
+Total ES Energy
+QM MM
+n(r) = n (r) + n (r)
+
+
+========== PAGE 56 ==========
+
+Total ES Energy
+QM MM
+n(r) = n (r) + n (r) B
+n
+±
+background charge
+
+
+========== PAGE 57 ==========
+
+Total ES Energy
+QM MM
+n(r) = n (r) + n (r) B
+n
+±
+background charge
+1 n(r)n(r )
+0
+TOT
+E = drdr
+0
+2 r r
+0
+Z Z |   |
+1 (nMM(r) + nB,MM)(nMM(r ) + nB,MM)
+MM 0
+E = drdr
+0
+2 r r
+0
+Z Z |   |
+QM B,QM QM B,QM
+1 (n (r) + n )(n (r ) + n )
+0
+QM
+E = drdr
+0
+2 r r
+0
+Z Z |   |
+(nQM(r) + nB,QM)(nMM(r ) + nB,MM)
+QM/MM 0
+E = drdr
+0
+r r
+0
+Z Z |   |
+
+
+========== PAGE 58 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+MM/MM fully periodic
+MM MM MM
+MM MM MM
+MM MM MM
+T. Laino, F. Mohamed, A. Laio and M. Parrinello, J. Chem. Th. Comp., 2 (5), 2006, pp.1370-1378
+
+
+========== PAGE 59 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+QM/MM fully periodic
+MM MM MM
+MM MM
+QM
+MM MM MM
+T. Laino, F. Mohamed, A. Laio and M. Parrinello, J. Chem. Th. Comp., 2 (5), 2006, pp.1370-1378
+
+
+========== PAGE 60 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+GEEP with PBC
+T. Laino, F. Mohamed, A. Laio and M. Parrinello, J. Chem. Th. Comp., 2 (5), 2006, pp.1370-1378
+
+
+========== PAGE 61 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+GEEP with PBC
+smooth!
+coarsest grid
+T. Laino, F. Mohamed, A. Laio and M. Parrinello, J. Chem. Th. Comp., 2 (5), 2006, pp.1370-1378
+
+
+========== PAGE 62 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+QM/MM real space term
+r R + L 2
+QM/MM MM
+V (r,R ) = A exp |   |
+rs MM 2 g   G2 3
+L L MM N ✓ g ◆
+Xcut X Xg
+| 
+4 5
+T. Laino, F. Mohamed, A. Laio and M. Parrinello, J. Chem. Th. Comp., 2 (5), 2006, pp.1370-1378
+
+
+========== PAGE 63 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+QM/MM reciprocal space term
+T. Laino, F. Mohamed, A. Laio and M. Parrinello, J. Chem. Th. Comp., 2 (5), 2006, pp.1370-1378
+
+
+========== PAGE 64 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+QM/MM reciprocal space term
+low cutoff function!
+only few k vectors!
+needed
+T. Laino, F. Mohamed, A. Laio and M. Parrinello, J. Chem. Th. Comp., 2 (5), 2006, pp.1370-1378
+
+
+========== PAGE 65 ==========
+
+&QMMM
+&CELL
+ABC 17.320500 17.320500 17.320500
+&END CELL
+!
+ECOUPL GAUSS
+USE_GEEP_LIB 6
+!
+&MM_KIND NA
+RADIUS 1.5875316249000
+&END MM_KIND
+&MM_KIND CL
+RADIUS 1.5875316249000
+&END MM_KIND
+!
+&PERIODIC
+GMAX 0.5
+&MULTIPOLE
+EWALD_PRECISION 0.00000001
+RCUT 8.0
+NGRIDS 20 20 20
+ANALYTICAL_GTERM
+&END MULTIPOLE
+&END PERIODIC
+!
+&END QMMM
+
+
+========== PAGE 66 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+GEEP Summary
+GEEP to speed up the evaluation of a function on a grid!
+The speed up factor is ~ (Nf/Nc)3=23(Ngrid-1)!
+Usually 3-4 grid levels are used corresponding to a
+speed up of 64-512 ~ 102 times faster than the simple
+collocation algorithm (Interpolations and Restrictions
+account for a negligible amount of time)!
+Since the residual function is different from zero only for
+few k vectors, the sum in reciprocal space is restrained to
+few points.!
+Small computational overhead between the fully
+periodic and non-periodic
+
+
+========== PAGE 67 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+Sources of Errors
+Cutoff of grid level appropriate to the
+cutoff of the mapped Gaussian (~ 20-25
+points per linear direction)!
+Error in Cubic Spline interpolation !
+Cutoff of the coarse grid level
+comparable to the cutoff of the long
+range function.
+
+
+========== PAGE 68 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+QM fully periodic
+QM QM QM
+QM QM QM
+QM QM QM
+T. Laino, F. Mohamed, A. Laio and M. Parrinello, J. Chem. Th. Comp., 2 (5), 2006, pp.1370-1378
+
+
+========== PAGE 69 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+QM fully periodic
+QM QM QM QM QM QM
+QM QM QM QM QM QM
+QM QM QM QM QM QM
+QM QM QM QM QM QM
+QM QM QM QM QM QM
+T. Laino, F. Mohamed, A. Laio and M. Parrinello, J. Chem. Th. Comp., 2 (5), 2006, pp.1370-1378
+
+
+========== PAGE 70 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+De-coupling and re-coupling
+QM QM QM QM QM QM
+QM QM QM QM QM QM
+QM QM QM QM QM QM
+QM QM QM QM QM QM
+QM QM QM QM QM QM
+T. Laino, F. Mohamed, A. Laio and M. Parrinello, J. Chem. Th. Comp., 2 (5), 2006, pp.1370-1378
+
+
+========== PAGE 71 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+De-coupling and re-coupling
+QM QM QM
+QM QM QM
+QM QM QM
+T. Laino, F. Mohamed, A. Laio and M. Parrinello, J. Chem. Th. Comp., 2 (5), 2006, pp.1370-1378
+
+
+========== PAGE 72 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+Bloechl Scheme
+Density fitting in g-space of the total density!
+!
+nˆ(r, R ) = q g (r, R )
+QM QM QM QM
+!
+QM
+X
+!
+Reproduce the correct Long-Range electrostatics!
+!
+l
+ Q = dr r (n(r, R ) nˆ(r, R ))
+l l QM QM
+Y  
+!  Z  
+minimise
+   
+   
+2
+!  W =  dr r (n(r, R ) nˆ(r, R ))  
+QM QM
+ 
+ Z  
+!
+   
+   
+   
+Decoupling and Recoupling using these charges
+P. E. Bloechl, J. Chem. Phys., 103 (17), 1995, pp.7422-7428
+T. Laino, F. Mohamed, A. Laio and M. Parrinello, J. Chem. Th. Comp., 2 (5), 2006, pp.1370-1378
+
+
+========== PAGE 73 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+Charged OV
+Migration of charged oxygen vacancy defects in silica
+dimer!
+deloc. el.
+E’
+δ
+T. Laino, D. Donadio, I-Feng W. Kuo, Phys. Rev. B, 2007
+
+
+========== PAGE 74 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+Charged OV
+Migration of charged oxygen vacancy defects in silica
+dimer!
+deloc. el.
+E’ E’
+δ 1
+T. Laino, D. Donadio, I-Feng W. Kuo, Phys. Rev. B, 2007
+
+
+========== PAGE 75 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+Charged OV
+Migration of charged oxygen vacancy defects in silica
+dimer!
+deloc. el.
+*
+E’ E’ E
+δ 1 1
+T. Laino, D. Donadio, I-Feng W. Kuo, Phys. Rev. B, 2007
+
+
+========== PAGE 76 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+
+
+========== PAGE 77 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+
+
+========== PAGE 78 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+NEB: Minimum Energy Path
+T. Laino, D. Donadio, I-Feng W. Kuo, Phys. Rev. B, 2007
+
+
+========== PAGE 79 ==========
+
+QMMM:overview QMMM Schemes GEEP Application: cOVD Conclusion
+NEB: Minimum Energy Path
+T. Laino, D. Donadio, I-Feng W. Kuo, Phys. Rev. B, 2007
+
+
+========== PAGE 80 ==========
+
+Image Charge & QMMM
+7
+QM molecule + EAM metal
+nitrobenzene/Au(111)
+Siepmann Sprik., JCP (1995) 102
+Golze Iannuzzi Passerone Hutter, JCTC (2013)
+Figure 2: DFT optimized structures of the five investigated molecules adsorbed on a metallic
+surface: (a) nitrobenzene, (b) thymine, (c) guanine, (d) benzene on Au(111) and
+(e) water on Pt(111). Color code: orange: C, white: H, blue: N, red: O, yellows:
+Au, grey: Pt.
+52
+However, for large N , computing the single Gaussian potentials v on the full grid can
+IC b
+become a bottleneck for the performance.
+The iterative CG scheme can be used as alternative algorithm to solve the set of linear
+equations. The expansion coe cients c are initially guessed and ⇢ and V are calculated.
+a m m
+The CG procedure is then applied to update the coe cients iteratively until the electrostatic
+energy is minimized. At each iteration of the CG, only two FFTs and the calculation of N
+IC
+numerical integrals are required, which can, in principle, be computationally more e cient
+than the exact calculation of matrix T. However, the CG optimization requires several
+iterations that need to be performed at every SCF step. To ensure a fast convergence of
+the CG, a proper preconditioning of the gradient is applied. The optimal choice for the
+preconditioner is a good approximation of the matrix T. In practice, we always compute
+T in the first step. Geometry optimizations and MD simulations can exploit the fact that
+the same matrix T can be used as CG preconditioner for several configurations before being
+updated. Therefore, the Gaussian elimination scheme is always the method of choice for
+single point calculations. The preconditioned-CG is used for geometry optimizations and
+MD simulations.
+Our implementation is designed to enable simulations of large systems and takes advantage
+of the massive parallelization procedures already present in the CP2K program package.
+3 Computational details
+3.1 Static simulations
+The IC-QM/MM approach has been tested on five di↵erent adsorbate-metal systems in-
+volving physi- and chemisorbed molecules. These are benzene, nitrobenzene, thymine and
+guanine adsorbed on Au(111) as well as water adsorbed on Pt(111). The DFT optimized
+structures are displayed in Fig 2. In the case of H2O/Pt, a water dimer and a cluster of 12
+molecules have also been considered. The metallic substrates are modeled by a four layer
+slab and PBC are applied in all three dimensions. In order to properly accommodate the
+
+
+========== PAGE 81 ==========
+
+Image Charge & QMMM
+7
+QM molecule + EAM metal
+nitrobenzene/Au(111) 2
+⇢ (r) = C exp ↵ r R
+IC I I
+met   |   met|
+I
+Xmet
+⇥ ⇤
+⇢(r ) + ⇢ (r )
+0 IC 0
+V (r) + V (r) = dr = V
+H IC 0 0
+r r
+0
+Z |   |
+IC induce polarization, solved selfconsistently
+Siepmann Sprik., JCP (1995) 102
+Golze Iannuzzi Passerone Hutter, JCTC (2013)
+Figure 2: DFT optimized structures of the five investigated molecules adsorbed on a metallic
+surface: (a) nitrobenzene, (b) thymine, (c) guanine, (d) benzene on Au(111) and
+(e) water on Pt(111). Color code: orange: C, white: H, blue: N, red: O, yellows:
+Au, grey: Pt.
+52
+However, for large N , computing the single Gaussian potentials v on the full grid can
+IC b
+become a bottleneck for the performance.
+The iterative CG scheme can be used as alternative algorithm to solve the set of linear
+equations. The expansion coe cients c are initially guessed and ⇢ and V are calculated.
+a m m
+The CG procedure is then applied to update the coe cients iteratively until the electrostatic
+energy is minimized. At each iteration of the CG, only two FFTs and the calculation of N
+IC
+numerical integrals are required, which can, in principle, be computationally more e cient
+than the exact calculation of matrix T. However, the CG optimization requires several
+iterations that need to be performed at every SCF step. To ensure a fast convergence of
+the CG, a proper preconditioning of the gradient is applied. The optimal choice for the
+preconditioner is a good approximation of the matrix T. In practice, we always compute
+T in the first step. Geometry optimizations and MD simulations can exploit the fact that
+the same matrix T can be used as CG preconditioner for several configurations before being
+updated. Therefore, the Gaussian elimination scheme is always the method of choice for
+single point calculations. The preconditioned-CG is used for geometry optimizations and
+MD simulations.
+Our implementation is designed to enable simulations of large systems and takes advantage
+of the massive parallelization procedures already present in the CP2K program package.
+3 Computational details
+3.1 Static simulations
+The IC-QM/MM approach has been tested on five di↵erent adsorbate-metal systems in-
+volving physi- and chemisorbed molecules. These are benzene, nitrobenzene, thymine and
+guanine adsorbed on Au(111) as well as water adsorbed on Pt(111). The DFT optimized
+structures are displayed in Fig 2. In the case of H2O/Pt, a water dimer and a cluster of 12
+molecules have also been considered. The metallic substrates are modeled by a four layer
+slab and PBC are applied in all three dimensions. In order to properly accommodate the
+
+
+========== PAGE 82 ==========
+
+Image Charge & QMMM
+7
+QM molecule + EAM metal
+nitrobenzene/Au(111) 2
+⇢ (r) = C exp ↵ r R
+IC I I
+met   |   met|
+I
+Xmet
+⇥ ⇤
+⇢(r ) + ⇢ (r )
+0 IC 0
+V (r) + V (r) = dr = V
+H IC 0 0
+r r
+0
+Z |   |
+IC induce polarization, solved selfconsistently
+Siepmann Sprik., JCP (1995) 102
+Golze Iannuzzi Passerone Hutter, JCTC (2013)
+Figure 2: DFT optimized structures of the five investigated molecules adsorbed on a metallic
+surface: (a) nitrobenzene, (b) thymine, (c) guanine, (d) benzene on Au(111) and
+IC-QMMM
+(e) water on Pt(111). Color code: orange: C, white: H, blue: N,Vre+dV: O, yellows:
+DFT V IC H
+H
+Au, grey: Pt.
+52
+However, for large N , computing the single Gaussian potentials v on the full grid can
+IC b
+become a bottleneck for the performance.
+The iterative CG scheme can be used as alternative algorithm to solve the set of linear
+equations. The expansion coe cients c are initially guessed and ⇢ and V are calculated.
+a m m
+The CG procedure is then applied to update the coe cients iteratively until the electrostatic
+energy is minimized. At each iteration of the CG, only two FFTs and the calculation of N
+IC
+numerical integrals are required, which can, in principle, be computationally more e cient
+than the exact calculation of matrix T. However, the CG optimization requires several
+iterations that need to be performed at every SCF step. To ensure a fast convergence of
+the CG, a proper preconditioning of the gradient is applied. The optimal choice for the
+preconditioner is a good approximation of the matrix T. In practice, we always compute
+T in the first step. Geometry optimizations and MD simulations can exploit the fact that
+the same matrix T can be used as CG preconditioner for several configurations before being
+updated. Therefore, the Gaussian elimination scheme is always the method of choice for
+single point calculations. The preconditioned-CG is used for geometry optimizations and
+MD simulations.
+Our implementation is designed to enable simulations of large systems and takes advantage
+of the massive parallelization procedures already present in the CP2K program package.
+3 Computational details
+3.1 Static simulations
+The IC-QM/MM approach has been tested on five di↵erent adsorbate-metal systems in-
+volving physi- and chemisorbed molecules. These are benzene, nitrobenzene, thymine and
+guanine adsorbed on Au(111) as well as water adsorbed on Pt(111). The DFT optimized
+structures are displayed in Fig 2. In the case of H2O/Pt, a water dimer and a cluster of 12
+molecules have also been considered. The metallic substrates are modeled by a four layer
+slab and PBC are applied in all three dimensions. In order to properly accommodate the
+
+
+========== PAGE 83 ==========
+
+10
+IC distribution
+(V (r) + V (r) V ) g (r) =
+H IC 0 I
+ 
+Z
+g (r )g (r)
+J 0 I
+(V (r) V ) g (r) + C drdr
+H 0 I J 0
+  r r
+0
+Z J Z Z |   |
+X
+linear set of eq. (CG iterative scheme)
+12
+Figure 3: Technical parameters. (a) Dependence of total energy and x-gradients (of an
+arbitrary metal atom) on parameter ↵. The x-gradients refer to the image charge
+contribution, see Eq.9. (b) Execution time of a single point calculation of thymine
+on Au(111) performed on Cray XK6 system. Note that a double logarithmic scale
+is employed.
+4 Tests and applications
+4.1 Gaussian width ↵ and performance
+The only adjustable variable in the IC-QM/MM scheme is the width ↵ of the Gaussian charge 53
+distribution ⇢ , see Eq.1. To assess the influence of ↵ on the electrostatic interaction energy,
+m
+test calculations using the thymine-gold system have been performed. The dependence of
+Figure 5: Image charges induced in a 4 layer Au(111) slab by a nitrobenzene molecule.
+total energy and gradients on the Gaussian width is reported in Fig.3. For values of ↵ larger
+than 3.0˚A 2, neither the total energy nor the image cChahrgaergceondtirsibturitbiountitoonthinedguracdeidenitns the first (a) and second (b) metal layer. Magnitude
+ 
+show a significant dependency on ↵. However, drastic changes are found for smaller values.
+q of the induced charges in layer 1-4 (c).
+i
+Small values of ↵ correspond to very broad Gaussians, which results in a uniform charge
+distribution across the metal, i.e. the Gaussians are no longer localized at the atomic centers.
+vestigation of induced charges at an atomistic level reveals some interesting features. The
+This leads obviously to non-physical results arising from technical artifacts. Using extremely
+large values for ↵ is also not recommendableIbCecdauissterviebruytsitoenepinGdauuscseiadnbarye nnoittraocbcuernazteelnye on Au(111) are displayed in the contour plots of
+Fig. 5(a) and (b). The induction e↵ect occurs mainly in the first layer, while its magnitude
+decreases rapidly with the distance from the surface. Compared to the first layer, charges
+induced in the second layer are an order of magnitude smaller. In the third and fourth
+layer, the induction e↵ect essentially vanishes, see Fig. 5(c). It is further observed that, as
+expected, the electronegative nitro group induces positive charges and the electropositive
+benzene ring induces negative image charges in the first layer. The inverse distribution is
+found in the second layer.
+2
+The total sum of the image charges for the given test system is in the order of 10 . This
+ 
+sum is expected to converge to zero when reaching the macroscopic continuum limit [15,18],
+i.e. in the limit of an infinite metal slab (see also Fig. S1). However, the finite sum of the
+image charges does not correspond to a physical charge since the image charges are merely
+a computational tool to impose the correct behavior of the electrostatic potential within the
+metal.
+4.2.2 Geometries and energetics
+For nitrobenzene, thymine and guanine adsorbed on Au(111), full DFT structure optimiza-
+tions yield basically a planar geometry of the adsorbate with an adsorbate-surface separation
+˚
+d of about 3.1 A. An almost planar structure has been obtained for benzene/Au(111)
+ad metal
+ 
+˚
+with benzene adsorbed at an fcc threefold hollow site and d =3.0 A, which is in agree-
+ad metal
+ 
+ment with the results reported in Ref. [47]. High symmetry adsorption sites are not ob-
+served for nitrobenzene, thymine and guanine. The optimization of the molecular structures
+by QM/MM also results in planar geometries, and the metal-molecule separations are in
+agreement with the DFT ones. The QM/MM structures are almost unchanged upon the
+
+
+========== PAGE 84 ==========
+
+H O cluster on Pt(111)
+2
+H O QM, Pt EAM, H O-Pt Siepmann-Sprik + IC
+2 2
+Page 25 of 36 Journal of Chemical Theory and Computation
+1
+2
+3
+Table 3: Interaction E (kJ/mol) and adsorption energies E (kJ/mol) of water clusters on
+int ads
+4
+Pt(111). E includes intermolecular hydrogen bonding E (kJ/mol per molecule). Ener-
+5 ads H bond
+ 
+gies are given for the structure optimized with the respective method.
+6
+7
+8
+1 H O 2H O 12H O
+9 2 2 2
+10
+kJ/mol E E E E E E E E
+11 int ads int ads H bond int ads H bond
+   
+12
+QM/MM 41.6 37.3 40.9 49.2 10.6 36.4 61.9 26.0
+13                
+14 IC-QM/MM 44.2 43.6 43.7 52.9 10.5 42.8 66.6 24.4
+               
+15
+full DFT 44.9 43.5 50.6 56.8 7.0 44.2 63.0 19.7
+16
+               
+17
+54
+18
+19 with the full DFT results. The deviation is less than 4.0 kJ/mol for all water systems. Comparing
+20
+21 interaction and adsorption energies, it is to note that the latter contain also intermolecular hydrogen
+22
+23 bonding E resulting in more negative values for the adsorption energies of the clusters.
+H bond
+24  
+25 The increase in dipole moment is almost marginal for a single molecule upon introduction
+26
+27 of polarization. However, the changes in electronic structure are much more pronounced for a
+28
+29
+whole water cluster. Table 4 summarizes the results for 12H O. The dipole moments obtained
+2
+30
+31
+with QM/MM and IC-QM/MM have been calculated for the respective structures presented in
+32
+33
+Figure 10. The numbering of the molecules corresponds to the one shown in Figure 10. The
+34
+35
+dipole moment of a single water molecule in the cluster can be up to 0.7 Debye larger than in gas
+36
+37
+57
+phase (1.85 Debye ) due to the formation of hydrogen bonds (H-bonds) with neighboring water
+38
+39
+molecules. Significantly larger dipole moments are already obtained by the QM/MM descrip-
+40
+41
+58,59
+tion omitting polarization. Several theoretical studies have already exhaustively discussed this
+42
+43
+phenomenon. For reference, DFT simulations with the PBE functional predict average dipole mo-
+44
+45
+58,60,61
+ments of bulk water between 3.10 to 3.27 Debye . In addition to that, the effect of the IC
+46
+47
+polarization induces a further enhancement of the molecular dipoles up to 0.3 Debye. In particu-
+48
+49
+lar, molecule 3 undergoes the largest dipole-change. Namely, by introducing the IC polarization,
+50
+51
+molecule 3 changes its orientation and moves towards molecule 6 (see Figure 10(a)), strengthen-
+52
+53
+ing the corresponding H-bond. In general, the changes in dipole moments are due to both, the
+54
+55
+56 structural changes and the difference in the electrostatic potential given by the image charges.
+57
+58
+59
+60
+25
+ACS Paragon Plus Environment
+
+
+========== PAGE 85 ==========
+
+Page 27 of 36 Journal of Chemical Theory and Computation
+Page 27 of 36 Journal of Chemical Theory and Computation
+1
+1
+Liquid Water at Pt(111)
+2
+2 Page 27 of 36 3 Journal of Chemical Theory and Computation
+4
+3 1 5
+2
+6
+3
+4
+4 7
+5
+8
+5 6
+7 9 honeycomb arrangement
+8
+10
+6 9 70% on-top site occupied
+10 11
+11
+7 12
+12
+13 13
+8 14 14
+15
+15
+16
+9 17 16
+18
+17
+19
+10
+20 18
+density
+21
+19
+11 22
+23 20
+24
+21
+12
+25
+26 22
+13 27 23
+28
+24
+29
+14 30 25
+31
+26
+32
+15
+33 27
+34
+28
+16 35
+36 Figure 11: 2S9tructural and electronic properties obtained for a water film on Pt(111). (a) Typical
+37 snapshotof3th0ewater/Pt(111)simulationcell. (b)Snapshotofthewateradlayer. (c)Plane-averaged
+17 38
+water density r along the surface normal. The arrows indicate the division of the water film in
+39 31 w
+4 different layers. (d) Plane-averaged particle density r for O and H atoms. (e) Plane-integrated
+40 p
+18 32
+41 electronicdensitydifferenceDr1D betweenwaterandPt(111).
+elec
+42 33
+19 43 34
+44 the water molecules in these regions are expected to be massively overstructured. Further away
+55
+35
+45
+20
+46 fromthesu3rf6ace,thedensityosFciilglautiorens1de1ca:ySratpriudlcy.tuForradlisatanncdeselalergcertrthoanni1c0Åp,rtohepdeerntsiietys obtained for a water film on Pt(111). (a) Typical
+47
+21 48 corresponds 3 t 7 otheoneofbulk s w n a a te p r. s A h t o th t e o li f qu th id e -va w cu a u t m er in /P ter t f ( a 1 ce 1 , 1 th ) e s d i e m nsi u ty la fi t n i a o lly n d c e e cr l e l a . se ( s b) Snapshot of the water adlayer. (c) Plane-averaged
+49 38
+water density r along the surface normal. The arrows indicate the division of the water film in
+50 tozero. w
+39
+22 51
+4 different layers. (d) Plane-averaged particle density r for O and H atoms. (e) Plane-integrated
+52 For furt4he0r discussion of structural and electronic properties, the water film was split in four p
+23 53 41 electronic density difference Dr 1D between water and Pt(111).
+54 separatelayersguidedbytheoscillationsinthedensityprofile,seeFigure11(c e ) l . e R c adialdistribution
+55 42
+24 56 functions (R4D3Fs) for each layer are reported for oxygen-oxygen (O-O) and oxygen-hydrogen (O-
+57
+58 44 the water molecules in these regions are expected to be massively overstructured. Further away
+25 59 45
+60
+46 from the sur2f7ace, the density oscillations decay rapidly. For distances larger than 10Å, the density
+26 ACS Paragon Plus Environment
+47
+48 corresponds to the one of bulk water. At the liquid-vacuum interface, the density finally decreases
+27
+49
+28 50 to zero.
+51
+29 52 For further discussion of structural and electronic properties, the water film was split in four
+53
+30
+54
+separate layers guided by the oscillations in the density profile, see Figure 11(c). Radial distribution
+55
+31
+56
+functions (RDFs) for each layer are reported for oxygen-oxygen (O-O) and oxygen-hydrogen (O-
+57
+32
+58
+59
+33
+60
+27
+34
+ACS Paragon Plus Environment
+35
+36 Figure 11: Structural and electronic properties obtained for a water film on Pt(111). (a) Typical
+37
+snapshot of the water/Pt(111) simulation cell. (b) Snapshot of the water adlayer. (c) Plane-averaged
+38
+water density r along the surface normal. The arrows indicate the division of the water film in
+w
+39
+4 different layers. (d) Plane-averaged particle density r for O and H atoms. (e) Plane-integrated
+40 p
+1D
+electronic density difference Dr between water and Pt(111).
+41
+elec
+42
+43
+44 the water molecules in these regions are expected to be massively overstructured. Further away
+45
+46 from the surface, the density oscillations decay rapidly. For distances larger than 10 Å, the density
+47
+48 corresponds to the one of bulk water. At the liquid-vacuum interface, the density finally decreases
+49
+50
+to zero.
+51
+52
+For further discussion of structural and electronic properties, the water film was split in four
+53
+54
+separate layers guided by the oscillations in the density profile, see Figure 11(c). Radial distribution
+55
+56
+functions (RDFs) for each layer are reported for oxygen-oxygen (O-O) and oxygen-hydrogen (O-
+57
+58
+59
+60
+27
+ACS Paragon Plus Environment
+
+
+========== PAGE 86 ==========
+
+Journal of Chemical Theory and Computation Page 28 of 36
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+H-bond distribution
+14
+15
+16
+17
+18
+19
+Figure S2: Difference in electronic density Dr upon adsorption of benzene on Au(111) as ob-
+20 elec
+tained by full DFT calculations. (a) Three-dimensional plot. Red regions correspond to increased
+21
+and blue regions to decreased electronic density. (b) Plane-integrated electron density difference
+22 Dr1D . Brown spheres indicate the position of the metal layers and the red sphere the position of
+elec
+23 the benzene molecule. The cumulative or “running” integral of Dr1D (starting integration from
+elec
+24 the vacuum) corresponds to the number of electrons lost (negative) or gained (positive).
+25
+26
+Figure 12: Structural properties for the four different layers of the water film defined in Fig-
+27
+ure 11(c). (a) Oxygen-oxygen and (b) oxygen-hydrogen RDFs. (c) Distribution of the total number
+28
+29 of H-bonds per molecule.
+30
+31
+32 H) in Figure 12(a) and (b). The curves for the second and third layer resemble RDFs of bulk liquid
+33
+34 water obtained with DFT-PBE in previous studies 58,64 . The peaks for the water-metal and water-
+35
+36
+vacuum layers are located at the same distance. However, the peak heights of the fourth layer are
+37
+38
+significantly smaller due the reduced coordination at the water-vacuum interface. Even though the
+39
+40
+coordination is also reduced for the adlayer along the z-axis, the peak heights at 2.7 Å (O-O) and
+56
+41
+42 Figure S3: Plane-averaged electrostatic potentialV1D of 151 H O on Pt(111) for a particular snap-
+1.7 Å (O-H) are comparable to bulk water. For larHger dista2nces, the RDFs decay to values smaller
+shot of the MD simulation. Brown spheres indicate the position of the metal layers. V1D has been
+43
+H
+averaged along the surface normal (z-direction).
+44
+than 1 and show several additional peaks. This is in agreement with the plane-averaged density
+45
+46
+profile predicting an overstructuring in the adlaySe2r which compensates the lacking coordination in
+47
+48
+the third dimension for small, but not for large distances.
+49
+50
+First insights in the nature of hydrogen bonding at the metallic interface are given by the plane-
+51
+52
+averaged distributions of O and H atoms, see Figure 11(d). The onset of the hydrogen distribution
+53
+54
+is at shorter distances thanks to the reorientation induced by the polarization of the image charges,
+55
+56
+i.e. some H atoms are pointing towards the substrate, which was already observed for the water
+57
+58
+59
+60
+28
+ACS Paragon Plus Environment

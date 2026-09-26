@@ -1,0 +1,151 @@
+&GLOBAL
+  PROJECT tio2_metadyn
+  RUN_TYPE MD
+  PRINT_LEVEL MEDIUM
+
+&END GLOBAL
+&FORCE_EVAL
+  METHOD Quickstep
+  &DFT
+    PLUS_U_METHOD mulliken
+    BASIS_SET_FILE_NAME BASIS_SET
+    
+    BASIS_SET_FILE_NAME BASIS_MOLOPT
+    POTENTIAL_FILE_NAME GTH_POTENTIALS
+    CHARGE 0
+
+    &MGRID
+      NGRIDS 4
+      CUTOFF 300
+      REL_CUTOFF 60
+    &END MGRID
+    &XC
+      &XC_FUNCTIONAL PADE
+      &END XC_FUNCTIONAL
+
+    &END XC
+
+    &POISSON
+      PERIODIC NONE
+      POISSON_SOLVER WAVELET
+    &END POISSON
+    
+    &SCF
+      SCF_GUESS ATOMIC
+      EPS_SCF 1.0E-7
+      MAX_SCF 300
+        &MIXING
+          METHOD BROYDEN_MIXING
+          ALPHA 0.4
+          NBROYDEN 8
+        &END MIXING
+
+
+
+    &END SCF
+
+
+  &END DFT
+  &SUBSYS
+    &KIND Ti
+      ELEMENT Ti
+      BASIS_SET DZVP-MOLOPT-SR-GTH
+      POTENTIAL GTH-PBE-q12
+      &DFT_PLUS_U
+        EPS_U_RAMPING 1.0E-3
+        U_RAMPING 0.1
+        INIT_U_RAMPING_EACH_SCF F
+        L 2
+        U_MINUS_J [eV] 3.5
+      &END DFT_PLUS_U
+    &END KIND
+    &KIND O
+      ELEMENT O
+      BASIS_SET DZVP-GTH-PADE
+      POTENTIAL GTH-PADE-q6
+    &END KIND
+    &CELL
+      A 15.0 0.0 0.0
+      B 0.0 15.0 0.0
+      C 0.0 0.0 15.0
+    
+PERIODIC NONE
+&END CELL
+      &COORD
+Ti 7.500000 7.500000 10.000000
+O 9.120000 7.500000 10.000000
+O 6.946000 9.023000 10.000000
+  &END COORD
+    &COLVAR
+      &DISTANCE
+        ATOMS 1 2
+      &END DISTANCE
+    &END COLVAR
+    &COLVAR
+      &DISTANCE
+        ATOMS 1 3
+      &END DISTANCE
+    &END COLVAR
+  &END SUBSYS
+
+&END FORCE_EVAL
+&MOTION
+  &MD
+    ENSEMBLE NVT
+    STEPS 2000
+    TIMESTEP 0.5
+    TEMPERATURE 450.0
+    &THERMOSTAT
+      TYPE CSVR
+      REGION MASSIVE
+      &CSVR
+        TIMECON [fs] 200.0
+      &END CSVR
+    &END THERMOSTAT
+  &END MD
+  &FREE_ENERGY
+    &METADYN
+      DO_HILLS
+      NT_HILLS 50
+      WW 0.5
+      WELL_TEMPERED T
+      &METAVAR
+        SCALE 0.3
+        COLVAR 1
+        &WALL
+          TYPE QUADRATIC
+          POSITION [angstrom] 2.20
+          &QUADRATIC
+            K [kcalmol] 40.0
+            DIRECTION WALL_PLUS
+          &END QUADRATIC
+        &END WALL
+      &END METAVAR
+      &METAVAR
+        SCALE 0.3
+        COLVAR 2
+        &WALL
+          TYPE QUADRATIC
+          POSITION [angstrom] 2.20
+          &QUADRATIC
+            K [kcalmol] 40.0
+            DIRECTION WALL_PLUS
+          &END QUADRATIC
+        &END WALL
+      &END METAVAR
+    &END METADYN
+  &END FREE_ENERGY
+  &PRINT
+    &TRAJECTORY
+      &EACH
+        MD 1
+      &END EACH
+    &END TRAJECTORY
+    &VELOCITIES
+      &EACH
+        MD 1
+      &END EACH
+    &END VELOCITIES
+  &END PRINT
+
+&END MOTION

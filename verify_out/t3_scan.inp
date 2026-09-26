@@ -83,7 +83,9 @@
       A 5.43 0 0
       B 0 5.43 0
       C 0 0 5.43
-    &END CELL
+    
+PERIODIC NONE
+&END CELL
     &COORD
 # TODO: fill &COORD with 'Element x y z' per line
     &END COORD

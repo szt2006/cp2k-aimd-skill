@@ -19,6 +19,17 @@ import os
 import re
 import sys
 
+# --- 控制台编码兼容层（中文 Windows/GBK 下输出 ✓ ⑪ Å 等符号不再抛异常）---
+try:
+    import os as _os, sys as _sys
+    _here = _os.path.dirname(_os.path.abspath(__file__))
+    for _d in (_here, _os.path.join(_here, "scripts")):
+        if _d not in _sys.path:
+            _sys.path.insert(0, _d)
+    import _console  # noqa: F401  导入即生效，见 scripts/_console.py
+except Exception:
+    pass
+
 
 # ---------------------------------------------------------------------------
 # 阶段模型（数据驱动；顺序 = 项目推进顺序）
@@ -351,6 +362,40 @@ STAGES = [
         "next": "define",
         "evidence": ["*.pdf", "*report*"],
     },
+    {
+        "key": "resume",
+        "title": "↻ 续算（从检查点恢复被中断/杀掉的计算）",
+        "goal": "把被 kill / 超时 / 宕机中断的计算，从最近一次写盘的检查点接上继续跑，而不是从头重算、也不是当成已完成去后处理。",
+        "enter": "目录里有 <prefix>-1.restart（几何/MD/热浴/速度都在里面），但 .out 未见正常结束标记（无 PROGRAM ENDED）。",
+        "actions": [
+            "先判断为什么断、末步是否健康：grep -iE 'PROGRAM ENDED|not converged|ABORT|SCF run NOT converged' cp2k.out | tail —— CP2K 即使某离子步 SCF 不收敛也会继续下一步（与 Gaussian 不同），续算前要知悉末步状态。",
+            "定位最新检查点：<prefix>-1.restart 是完整可跑的输入（含坐标/速度/步数/热浴）；历史检查点在 <prefix>-1.restart.bak-* 或 RESTART_HISTORY/ 下。注意：从最后写盘的检查点续，不是被杀掉的精确那一步。",
+            "接上续算：在输入里加 &EXT_RESTART / RESTART_FILE_NAME <prefix>-1.restart / &END —— 最省事的做法是直接把 <prefix>-1.restart 当输入文件提交。",
+            "（可选）波函数续算省 SCF：&DFT 里 SCF_GUESS RESTART + WFN_RESTART_FILE_NAME ./<prefix>-RESTART.wfn（注意是 &DFT 关键字，不在 &SCF；文件缺失会自动退化 ATOMIC GUESS，非致命）。",
+            "MD 续算：EXT_RESTART 自动接上步数/速度/热浴；&MD STEPS 是‘总步数目标’而非‘再跑多少步’，按需调大后再提交。",
+        ],
+        "decisions": [
+            "从 -1.restart（最新）续，还是退回某个 .bak 历史检查点：末步不健康（SCF 崩/结构畸变）就回退上一个检查点。",
+            "要不要顺带 WFN_RESTART：想省 SCF 迭代就带；若中断后结构会大改，收益有限。",
+        ],
+        "pitfalls": [
+            "续算是从‘最后写盘的检查点’接上，不是被中断的精确步——两次检查点之间的步会丢失/重跑（这也是为什么长任务要 --restart-freq）。",
+            "WFN_RESTART_FILE_NAME 放错节（应在 &DFT，不在 &SCF）→ 不生效，白等 SCF。",
+            "&MD STEPS 写成‘增量步数’ → 若小于已完成步数，续算会立刻结束。",
+            "直接覆盖旧输出/轨迹文件 → 轨迹被截断或追加错乱；建议确认 APPEND 行为或换新目录保存续算段。",
+            "末步 SCF 未收敛就盲目续 → 误差累积（CP2K 不会像 Gaussian 那样停下来）。",
+        ],
+        "commands": [
+            "python guide.py scan <dir>                                             # 识别检查点与末步状态",
+            "grep -iE 'PROGRAM ENDED|not converged|ABORT' cp2k.out | tail          # 判断为何中断、末步是否健康",
+            "python gen_inp.py --type <...> --scf-guess RESTART --wfn-restart ./<prefix>-RESTART.wfn   # 生成带波函数续算的输入",
+            "# 或最省事：直接提交 <prefix>-1.restart 作为输入；细节见 references/run.md「续算(RESTART)」节",
+        ],
+        "outputs": ["含 &EXT_RESTART 的续算 .inp（或直接复用 <prefix>-1.restart）"],
+        "done": "计算从检查点接上并继续推进（步数/几何在原基础上前进，非从头）。",
+        "next": "postproc",
+        "evidence": ["*-1.restart", "*.restart"],
+    },
 ]
 
 STAGE_BY_KEY = {s["key"]: s for s in STAGES}
@@ -387,8 +432,38 @@ def _bullet_list(items, indent="  "):
 # ---------------------------------------------------------------------------
 # subcommand: list
 # ---------------------------------------------------------------------------
+def _stage_payload(s):
+    """把阶段字典转成可 JSON 序列化的结构。"""
+    return {
+        "key": s["key"],
+        "title": s["title"],
+        "goal": s["goal"],
+        "enter": s["enter"],
+        "actions": s["actions"],
+        "decisions": s["decisions"],
+        "pitfalls": s["pitfalls"],
+        "commands": s["commands"],
+        "outputs": s["outputs"],
+        "done": s["done"],
+        "next": s["next"],
+        "next_title": STAGE_BY_KEY.get(s["next"], {}).get("title", ""),
+    }
+
+
 def cmd_list(args):
-    print(_bold("CP2K 项目全生命周期阶段") + "（从立项到报告，共 {} 个）\n".format(len(STAGES)))
+    n_main = len([s for s in STAGES if s.get("key") != "resume"])
+    n_resume = len(STAGES) - n_main
+    if getattr(args, "json", False):
+        import json
+        print(json.dumps({
+            "ok": True,
+            "n_main": n_main,
+            "n_resume": n_resume,
+            "stages": [_stage_payload(s) for s in STAGES],
+        }, ensure_ascii=False, indent=2))
+        return 0
+    print(_bold("CP2K 项目全生命周期阶段") + "（从立项到报告，共 {} 个主线阶段{}）\n".format(
+        n_main, " + {} 个续算分支".format(n_resume) if n_resume else ""))
     for i, s in enumerate(STAGES, 1):
         nxt = STAGE_BY_KEY.get(s["next"], {}).get("title", "—")
         print("  {}. {}  {}".format(i, _cyan(s["title"]), _yellow("→ 下一步: " + nxt)))
@@ -405,8 +480,22 @@ def cmd_list(args):
 def cmd_show(args):
     s = STAGE_BY_KEY.get(args.stage)
     if not s:
+        if getattr(args, "json", False):
+            import json
+            print(json.dumps({
+                "ok": False,
+                "error": "未知阶段 '{}'".format(args.stage),
+                "available": list(STAGE_ORDER),
+            }, ensure_ascii=False, indent=2))
+            return 1
         print("未知阶段 '{}'。可用：{}".format(args.stage, ", ".join(STAGE_ORDER)))
+        print("\n提示：先跑 `python guide.py list` 看全部阶段及其含义。")
         return 1
+    if getattr(args, "json", False):
+        import json
+        print(json.dumps({"ok": True, "stage": _stage_payload(s)},
+                         ensure_ascii=False, indent=2))
+        return 0
     print("\n" + _bold("═" * 64))
     print(_bold(s["title"]))
     print(_bold("═" * 64))
@@ -460,7 +549,9 @@ def _scan_dir(path):
         "hills": [f for f in files if f.upper() == "HILLS"],
         "fes": [f for f in files if "fes" in f.lower() and f.endswith(".dat")],
         "metadyn": [f for f in files if "METADYN" in f.upper()],
-        "wfn": [f for f in files if "RESTART.wfn" in f or "RESTART" in f.upper()],
+        "wfn": [f for f in files if "RESTART.wfn" in f or f.upper().endswith(".WFN")],
+        "restart": [f for f in files if f.endswith(".restart") or f.endswith(".restart.bak")
+                    or "-1.restart" in f or ".restart.bak-" in f],
         "pp_png": [f for f in files if f.endswith(".png")],
         "pp_csv": [f for f in files if f.endswith(".csv")],
         "cif": [f for f in files if f.lower().endswith(".cif")],
@@ -473,6 +564,8 @@ def _scan_dir(path):
     signals["out_geo"] = "GEO_OPT" in ot or "GEOMETRY OPTIMIZATION" in ot or "CELL_OPT" in ot
     # 几何收敛标记
     signals["geo_converged"] = bool(re.search(r"REACH.*TOLERANCE|GEOMETRY OPTIMIZATION.*COMPLETE|CONVERGED", ot))
+    # 正常结束标记（用于区分“跑完”与“被中断/杀掉”）
+    signals["program_ended"] = ("PROGRAM ENDED" in ot or "PROGRAM STOPPED" in ot)
     # 轨迹帧数（粗略：pos-1.xyz 行数 / (natoms+2)）
     return signals, files
 
@@ -481,9 +574,9 @@ def _detect_stage(signals):
     """根据信号推断当前阶段 key。返回 (current_key, evidence_notes)"""
     s = signals
 
-    # 是否已发生计算（.out / 轨迹 / 性质产物是最强信号，优先于此前的 .inp）
+    # 是否已发生计算（.out / 轨迹 / 性质产物 / restart 检查点是最强信号，优先于此前的 .inp）
     has_run = (s["out"] or s["traj"] or s["pdos"] or s["cube"]
-               or s["acf"] or s["hills"] or s["fes"] or s["metadyn"])
+               or s["acf"] or s["hills"] or s["fes"] or s["metadyn"] or s.get("restart"))
 
     if not has_run:
         # 还没跑过：看有没有输入或结构
@@ -496,6 +589,14 @@ def _detect_stage(signals):
         return "define", ["目录里没有任何 CP2K 文件（无 .inp / .out / 结构）。从立项与构建开始。"]
 
     # 已跑过，按产物推断阶段
+    # —— 续算优先：有 restart 检查点，但计算未正常结束（无 PROGRAM ENDED）→ 像是被 kill/超时/宕机中断
+    if s.get("restart") and not s.get("program_ended"):
+        note = ["检测到 restart 检查点（{}），但 .out {}——计算像是被中断/杀掉，而非正常跑完。".format(
+            ", ".join(s["restart"])[:60],
+            "未见正常结束标记（无 PROGRAM ENDED）" if s["out"] else "缺失或为空")]
+        note.append("下一步不是后处理，而是用 &EXT_RESTART 从检查点续算；续前先 grep 末步收敛情况。")
+        return "resume", note
+
     if s["traj"] or s["out_md"]:
         return "postproc", ["检测到 AIMD/MD 轨迹（{}）。计算已跑，下一步做后处理分析。".format(
             ", ".join(s["traj"])[:60])]
@@ -558,11 +659,47 @@ def _render_scan(path, brief=False):
 
 
 def cmd_scan(args):
+    if getattr(args, "json", False):
+        return _render_scan_json(args.dir, brief=False)
     return _render_scan(args.dir, brief=False)
 
 
 def cmd_next(args):
+    if getattr(args, "json", False):
+        return _render_scan_json(args.dir, brief=True)
     return _render_scan(args.dir, brief=True)
+
+
+def _render_scan_json(path, brief=False):
+    import json
+    res = _scan_dir(path)
+    if res is None:
+        print(json.dumps({"ok": False, "dir": path,
+                          "error": "目录不存在或无法读取"},
+                         ensure_ascii=False, indent=2))
+        return 1
+    signals, files = res
+    if not files:
+        print(json.dumps({"ok": True, "dir": path, "files": [],
+                          "stage": None, "note": ["目录为空"]},
+                         ensure_ascii=False, indent=2))
+        return 0
+    current, note = _detect_stage(signals)
+    s = STAGE_BY_KEY[current]
+    payload = {
+        "ok": True,
+        "dir": path,
+        "files": files,
+        "stage": current,
+        "stage_title": s["title"],
+        "note": note,
+        "actions": s["actions"] if not brief else s["actions"][:4],
+        "commands": s["commands"] if not brief else s["commands"][:3],
+    }
+    if not brief:
+        payload["stage_detail"] = _stage_payload(s)
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 0
 
 
 # ---------------------------------------------------------------------------
@@ -573,6 +710,8 @@ def build_parser():
         description="CP2K 计算项目阶段向导：告诉你在项目的每个阶段该做什么。",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+    ap.add_argument("--json", action="store_true",
+                    help="输出 JSON（给 agent 用）")
     sub = ap.add_subparsers(dest="cmd")
 
     sub.add_parser("list", help="列出所有阶段")

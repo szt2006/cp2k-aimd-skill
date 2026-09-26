@@ -1,0 +1,584 @@
+# SOURCE: 【QMMM-庚子计算整理】Basic Usage of QMMM in CP2K.pdf
+# PAGES: 28
+# TOPIC: CP2K 中 QM/MM 的基本用法
+
+
+
+========== PAGE 1 ==========
+
+Basic Usage of QM/MM in CP2K
+Pablo Campomanes | CECAM QM/MM School
+Hybrid Quantum Mechanics / Molecular Mechanics (QM/MM)
+Approaches to Biochemistry and Beyond
+
+
+========== PAGE 2 ==========
+
+CP2K General Input Syntax
+Series of blocks (shuffling is allowed, sort them as you like)
+&SECTION
+… optional, but recommended
+&END SECTION
+Comments can be included: lines starting with # or !
+Units can be explicitly included as [UNIT]
+&CELL
+ABC [angstrom] 25.0 25.0 25.0
+&END CELL
+It is possible to split long lines using \
+
+
+========== PAGE 3 ==========
+
+CP2K Preprocessor directives
+@INCLUDE <filename.inc>: The content of the filename.inc
+file is inserted into the input file and parsed.
+Useful to avoid having a very long input file
+&FORCE_EVAL
+&SUBSYS
+&FORCE_EVAL
+@INCLUDE ‘xyz.inc’
+&SUBSYS
+&END SUBSYS
+&COORD
+&END FORCE_EVAL
+O 0.0 0.0 0.0
+H 1.0 0.0 0.0
+&COORD
+H 0.0 1.0 0.0
+O 0.0 0.0 0.0 x
+y &END COORD
+z
+H 1.0 0.0 0.0
+.
+i &END SUBSYS
+n
+c
+H 0.0 1.0 0.0
+&END FORCE_EVAL
+&END COORD
+
+
+========== PAGE 4 ==========
+
+CP2K Preprocessor directives
+@SET VAR <value>: Assigns <value> to the preprocessor
+variable VAR. All occurrences of ${VAR} statement are
+substituted by the <value> set within the input file.
+Useful if you want to set/change a value at multiple places
+@SET MD_STEPS 10
+&PRINT &PRINT
+&TRAJECTORY &TRAJECTORY
+&EACH &EACH
+MD ${MD_STEPS} MD 10
+&END EACH &END EACH
+&END TRAJECTORY &END TRAJECTORY
+&END PRINT &END PRINT
+
+
+========== PAGE 5 ==========
+
+CP2K Preprocessor directives
+@IF…@ENDIF: Conditional block. Text inside this block is
+skipped if expression is equal .false.
+Useful for using one input file while keeping multiple run characteristics
+@SET RUN_TYPE EQUIL
+&FORCE_EVAL &FORCE_EVAL
+&DFT &DFT
+&QS &QS
+@IF (${RUN_TYPE} == EQUIL) EPS_DEFAULT 1.0E-10
+EPS_DEFAULT 1.0E-10 &END QS
+@ENDIF &END DFT
+@IF (${RUN_TYPE} == PROD) &END FORCE_EVAL
+EPS_DEFAULT 1.0E-14
+@ENDIF
+&END QS
+&END DFT
+&END FORCE_EVAL
+
+
+========== PAGE 6 ==========
+
+QM/MM framework in CP2K
+QM/MM with CP2K: modular structure
+QM and MM on an equal footing (Quickstep + FIST)
+QM part:
+üDensity Functional Theory
+Interface region:
+üQM/MM interactions
+üCoupling terms
+MM part:
+üClassical force field
+üEnvironmental effects
+
+
+========== PAGE 7 ==========
+
+CP2K Input file structure
+Four main sections to deal with:
+&FORCE_EVAL (description about system
+... &
+&END [FORCE_EVAL] parameters to calculate energy/forces )
+&GLOBAL
+(kind of simulation to perform
+...
+&
+&END [GLOBAL] global program parameters )
+&MOTION
+(information about MD ensemble used
+...
+and related parameters)
+&END [MOTION]
+&EXT_RESTART
+... (restart simulation from external input file)
+&END [EXT_RESTART]
+
+
+========== PAGE 8 ==========
+
+CP2K Input file structure
+Four main sections to deal with:
+&FORCE_EVAL (description about system
+... &
+&END [FORCE_EVAL] parameters to calculate energy/forces )
+&GLOBAL
+(kind of simulation to perform
+...
+&
+&END [GLOBAL] global program parameters )
+&MOTION
+(information about MD ensemble used
+...
+and related parameters)
+&END [MOTION]
+&EXT_RESTART
+... (restart simulation from external input file)
+&END [EXT_RESTART]
+
+
+========== PAGE 9 ==========
+
+QM/MM calculations: FORCE_EVAL section
+&FORCE_EVAL
+METHOD QMMM (to activate QMMM module)
+&DFT
+... @INCLUDE ‘force_eval_qm.inc’
+&END DFT
+&MM
+... @INCLUDE ‘force_eval_mm.inc’
+&END MM
+&QMMM
+... (input for QM/MM coupling)
+&END QMMM
+&SUBSYS
+... (coordinates, topology, cell)
+&END SUBSYS
+&END FORCE_EVAL
+
+
+========== PAGE 10 ==========
+
+QM/MM calculations: FORCE_EVAL section
+&FORCE_EVAL
+METHOD QMMM (to activate QMMM module)
+&DFT
+... @INCLUDE ‘force_eval_qm.inc’
+&END DFT
+&MM
+... @INCLUDE ‘force_eval_mm.inc’
+&END MM
+&QMMM
+... (input for QM/MM coupling)
+&END QMMM
+&SUBSYS
+... (coordinates, topology, cell)
+&END SUBSYS
+&END FORCE_EVAL
+
+
+========== PAGE 11 ==========
+
+QM/MM calculations: FORCE_EVAL section
+&FORCE_EVAL
+METHOD QMMM
+&DFT (info about parameters for QM region)
+CHARGE 1 (default CHARGE=0)
+MULTIPLICITY 3 (default MULTIPLICITY=1)
+UKS (request spin-polarized calc.)
+BASIS_SET_FILE_NAME ../mypath/BS_filename
+POTENTIAL_FILE_NAME ../mypath/PP_filename
+WFN_RESTART_FILE_NAME ../mypath/WFN_filename
+&QS
+METHOD GPW (or DFTB/PM6/…)
+&END QS
+&XC
+&XC_FUNCTIONAL PBE (or BLYP/B3LYP/…)
+&END XC_FUNCTIONAL
+&END XC
+...
+
+
+========== PAGE 12 ==========
+
+QM/MM calculations: FORCE_EVAL section
+&MGRID
+CUTOFF 320 (density cutoff, in Ry)
+(equiv. to CPMD wf cutoff=80)
+&END MGRID
+&SCF
+EPS_SCF 1.0E-6
+MAX_SCF 50
+SCF_GUESS ATOMIC (or RESTART if job cont)
+&END SCF
+&PRINT (printing out rho-dependent prop)
+&MULLIKEN (or LOWDIN charges)
+FILENAME mypath/mulliken_out_filename
+&EACH
+MD 20
+Other properties that can be printed out:
+&END EACH
+q Molecular orbitals (MO_CUBES)
+&END MULLIKEN
+q Total electron or spin density (DENS_CUBE)
+&END PRINT
+q And many more… look at the CP2K “manual”
+&END DFT
+
+
+========== PAGE 13 ==========
+
+QM/MM calculations: FORCE_EVAL section
+&FORCE_EVAL
+METHOD QMMM (to activate QMMM module)
+&DFT
+... @INCLUDE ‘force_eval_qm.inc’
+&END DFT
+&MM
+... @INCLUDE ‘force_eval_mm.inc’
+&END MM
+&QMMM
+... (input for QM/MM coupling)
+&END QMMM
+&SUBSYS
+... (coordinates, topology, cell)
+&END SUBSYS
+&END FORCE_EVAL
+
+
+========== PAGE 14 ==========
+
+QM/MM calculations: FORCE_EVAL section
+U(r  ,…,r  )= ∑ k i ( r −r )2 + ∑ κ i ( θ −θ )2 + ∑ V n ⎡1+cos(nφ+δ)⎤+
+⎣ ⎦
+1 N 2 i i,0 2 i i,0 2
+bonds angles torsions
+⎡ 12 6⎤
+⎛σ ⎞ ⎛σ ⎞ 1 qq
++∑ε ⎢ ij − ij ⎥+ ∑ i j
+⎜ ⎟ ⎜ ⎟
+ij ⎢⎝ r ⎠ ⎝ r ⎠ ⎥ 4πε r
+pairs ⎣ ij ij ⎦ pairs ij
+&MM
+Loading ff parameters
+&FORCEFIELD
+from external file
+PARM_FILE_NAME parm.pot
+PARMTYPE CHM (or G96/AMBER/…)
+VDW_SCALE14 0.5
+EI_SCALE14 0.8333333
+&END FORCEFIELD
+&POISSON
+POISSON_SOLVER PERIODIC
+PERIODIC XYZ
+&EWALD
+EWALD_TYPE SPME (or EWALD/PME/…)
+&END EWALD
+(Ewald summation schemes)
+&END POISSON
+(param. controlling LR-electrostatics)
+&END MM
+
+
+========== PAGE 15 ==========
+
+QM/MM calculations: FORCE_EVAL section
+&FORCE_EVAL
+METHOD QMMM (to activate QMMM module)
+&DFT
+... @INCLUDE ‘force_eval_qm.inc’
+&END DFT
+&MM
+... @INCLUDE ‘force_eval_mm.inc’
+&END MM
+&QMMM
+... (input for QM/MM coupling)
+&END QMMM
+&SUBSYS
+... (coordinates, topology, cell)
+&END SUBSYS
+&END FORCE_EVAL
+
+
+========== PAGE 16 ==========
+
+QM/MM calculations: FORCE_EVAL section
+&QMMM
+USE_GEEP_LIB 9 (# of gaussians to be used in
+the expansion of elect. potential)
+ECOUPL GAUSS (or NONE/MULTIPOLE/…)
+(type of QM/MM elect. coupling)
+&CELL !QM box size
+ABC [angstrom] 25.0 25.0 25.0
+&END CELL
+&QM_KIND C
+MM_INDEX 1 5 (indexes following MM numbering)
+&END QM_KIND
+&QM_KIND H
+MM_INDEX 2 3 4 6 7 8
+&END QM_KIND
+&END QMMM
+
+
+========== PAGE 17 ==========
+
+QM/MM calculations: FORCE_EVAL section
+&QMMM
+USE_GEEP_LIB 9 (# of gaussians to be used in
+the expansion of elect. potential)
+ECOUPL GAUSS (or NONE/MULTIPOLE/…)
+(type of QM/MM elect. coupling)
+&CELL !QM box size
+ABC [angstrom] 25.0 25.0 25.0
+&END CELL
+&QM_KIND C
+MM_INDEX 1 5 (indexes following MM numbering)
+&END QM_KIND
+3
+2
+&QM_KIND H
+7
+MM_INDEX 2 3 4 6 7 8
+1
+5
+&END QM_KIND
+&END QMMM
+8
+4
+If covalent bonds between QM and MM
+6
+regions -> LINK atoms must be added
+
+
+========== PAGE 18 ==========
+
+QM/MM calculations: FORCE_EVAL section
+&QMMM
+...
+&QM_KIND C
+MM_INDEX 1 5 (indexes following MM numbering)
+&END QM_KIND
+&QM_KIND H
+MM_INDEX 2 3 4 6 7
+&END QM_KIND
+&LINK
+LINK_TYPE IMOMM (H-capping)
+QM_INDEX 5
+MM_INDEX 8
+&END LINK
+&END QMMM
+1 8
+5
+
+
+========== PAGE 19 ==========
+
+QM/MM calculations: FORCE_EVAL section
+&FORCE_EVAL
+METHOD QMMM (to activate QMMM module)
+&DFT
+... @INCLUDE ‘force_eval_qm.inc’
+&END DFT
+&MM
+... @INCLUDE ‘force_eval_mm.inc’
+&END MM
+&QMMM
+... (input for QM/MM coupling)
+&END QMMM
+&SUBSYS
+... (coordinates, topology, cell)
+&END SUBSYS
+&END FORCE_EVAL
+
+
+========== PAGE 20 ==========
+
+QM/MM calculations: FORCE_EVAL section
+&SUBSYS (info about the system)
+&CELL !MM BOX SIZE
+ABC [angstrom] 80.0 75.0 95.0
+PERIODIC XYZ (directions where to apply PBC)
+&END CELL
+&TOPOLOGY
+COORD_FILE_NAME sys.pdb
+COORD_FILE_FORMAT PDB (or XYZ/G96/…)
+CONN_FILE_NAME sys.psf
+CONN_FILE_FORMAT PSF (or AMBER/G96/…)
+&END TOPOLOGY
+...
+
+
+========== PAGE 21 ==========
+
+QM/MM calculations: FORCE_EVAL section
+&KIND O
+BASIS_SET DZVP-GTH-PBE
+POTENTIAL GTH-PBE-q6
+&END KIND
+&KIND C
+BASIS_SET DZVP-GTH-PBE
+POTENTIAL GTH-PBE-q4
+&END KIND
+&KIND H
+BASIS_SET DZVP-GTH-PBE
+POTENTIAL GTH-PBE-q1
+&END KIND
+&END SUBSYS
+&END FORCE_EVAL
+Different basis_set and pseudopotential files
+can be found in the CP2K distribution
+
+
+========== PAGE 22 ==========
+
+CP2K Input file structure
+Four main sections to deal with:
+&FORCE_EVAL (description about system
+... &
+&END [FORCE_EVAL] parameters to calculate energy/forces )
+&GLOBAL
+(kind of simulation to perform
+...
+&
+&END [GLOBAL] global program parameters )
+&MOTION
+(information about MD ensemble used
+...
+and related parameters)
+&END [MOTION]
+&EXT_RESTART
+... (restart simulation from external input file)
+&END [EXT_RESTART]
+
+
+========== PAGE 23 ==========
+
+QM/MM calculations: GLOBAL section
+&GLOBAL
+PRINT_LEVEL MEDIUM (or SILENT/LOW/HIGH/…)
+PROJECT_NAME MY_PROJECT
+RUN_TYPE ENERGY_FORCE (or GEO_OPT/MD/…)
+WALLTIME 86400
+...
+&END GLOBAL
+touch EXIT / touch EXIT_MD
+
+
+========== PAGE 24 ==========
+
+CP2K Input file structure
+Four main sections to deal with:
+&FORCE_EVAL (description about system
+... &
+&END [FORCE_EVAL] parameters to calculate energy/forces )
+&GLOBAL
+(kind of simulation to perform
+...
+&
+&END [GLOBAL] global program parameters )
+&MOTION
+(information about MD ensemble used
+...
+and related parameters)
+&END [MOTION]
+&EXT_RESTART
+... (restart simulation from external input file)
+&END [EXT_RESTART]
+
+
+========== PAGE 25 ==========
+
+QM/MM calculations: MOTION section
+&MOTION
+&MD (or GEO_OPT/MC/…)
+ENSEMBLE NVT (or NVE/NPT/…)
+STEPS 5000
+TIMESTEP 0.5
+TEMPERATURE 298
+&THERMOSTAT
+TYPE CSVR (or NOSE/…)
+&CSVR
+TIMECON [fs] 50.
+&END CSVR
+&END THERMOSTAT
+&CONSTRAINT
+...
+&END CONSTRAINT
+&END MD
+&END MOTION
+
+
+========== PAGE 26 ==========
+
+CP2K Input file structure
+Four main sections to deal with:
+&FORCE_EVAL (description about system
+... &
+&END [FORCE_EVAL] parameters to calculate energy/forces )
+&GLOBAL
+(kind of simulation to perform
+...
+&
+&END [GLOBAL] global program parameters )
+&MOTION
+(information about MD ensemble used
+...
+and related parameters)
+&END [MOTION]
+&EXT_RESTART
+... (restart simulation from external input file)
+&END [EXT_RESTART]
+
+
+========== PAGE 27 ==========
+
+QM/MM calculations: EXT_RESTART section
+&EXT_RESTART
+RESTART_FILE_NAME NAME-1.restart
+RESTART_DEFAULT FALSE
+RESTART_POS TRUE
+RESTART_VEL TRUE
+RESTART_THERMOSTAT TRUE
+RESTART_AVERAGES FALSE
+RESTART_COUNTERS FALSE
+...
+&END EXT_RESTART
+WFN is read if activated in &FORCE_EVAL
+
+
+========== PAGE 28 ==========
+
+Main CP2K I/O files
+Input (required)
+cp2k.popt –i NAME.inp –o NAME.out
+e.g. NAME.inp (file name and extension are arbitrary)
+Optional inputs
+POTENTIAL (pseudopotential library)
+BASIS_SET (basis set library)
+Topology, coordinates, ff param. (e.g. psf, xyz, pdb…)
+@INCLUDE (files included using preprocessor directives)
+Standard outputs
+NAME.out (standard output/log file, not overwritten)
+NAME-1.restart (all info to restart MD / GEO_OPT)
+NAME-1.ener (energies, temperature, conserved Qty)
+NAME-1.dcd (MD trajectory / GEO_OPT steps)
+NAME-1.cell (cell parameters if NPT MD / CELL_OPT)
+NAME-RESTART.wfn (optimized wfn to restart)

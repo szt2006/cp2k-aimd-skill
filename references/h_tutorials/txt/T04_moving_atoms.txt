@@ -1,0 +1,664 @@
+# SOURCE: 【bomd-庚子计算整理】cp2k_moving_atoms.pdf
+# PAGES: 35
+# TOPIC: MD 中原子如何运动（cp2k_moving_atoms）
+
+
+
+========== PAGE 1 ==========
+
+CP2K:
+MOVING ATOMS
+CP2K Summer School, 23-26 Aug 2016
+Iain Bethune
+(material from Jürg Hutter, Matt Watkins, Konstanze Hahn)
+http://tinyurl.com/CP2K2016
+#CP2KSummerSchool
+
+
+========== PAGE 2 ==========
+
+Outline
+• Geometry & cell optimisation
+• Local Minimisation
+• Molecular Dynamics
+• Born-Oppenheimer MD
+• Accuracy and stability
+• Ensembles
+• Thermostats
+
+
+========== PAGE 3 ==========
+
+Geometry & Cell optimisation
+• What do we mean by optimisation?
+• Minimising the total energy
+• aka. relaxation
+• In atomistic simulations, the total energy is a function of
+atomic positions:
+• In DFT: E [ n ( r ) ] and n ( r ) ⇔ V ( R ) (Hohenberg-Kohn)
+tot
+• In molecular mechanics there is a forcefield:
+U(R) = ∑ V (R , R )+ ∑ V (R , R , R )+...
+bond i j angle i j k
+bonds:i,j angles:i,j,k
+
+
+========== PAGE 4 ==========
+
+Optimization
+• Optimize what? Positions of the atoms
+Geometry & Cell Optimisation
+– typically the total energy of the system (potential energy + electron
+kinetic energy for DFT) at 0K
+• We can think of the potential energy as a surface in a 3N-
+– Free energy of the system at finite temperature
+dimensional space (N = number of atoms)
+• PES – Born-Oppenheimer approximation
+• Global v• s + l 9 o m ca or l e ? if we include lattice vectors for a periodic system!
+• Minimas may be
+local or global!
+Pic: Chan & Dill,
+Chan, Hue Sun, and Ken A. Dill. "Protein folding in the landscape
+Proteins (1998)
+perspective: Chevron plots and non‐Arrhenius kinetics." Proteins: Structure,
+Function, and Bioinformatics 30.1 (1998): 2-33.
+
+
+========== PAGE 5 ==========
+
+Local minimisation
+• BFGS (Broyden-Fletcher-Goldfarb-Shanno)
+• most efficient for small–medium size systems with a
+reasonable guess at the geometry
+• requires inversion/diagonalization of approximate Hessian
+matrix – Hessian matrix has dimension 3N where N is number
+of atoms being optimized
+• L-BFGS
+• A linear-scaling version of BFGS (Byrd, et al SIAM Journal on
+Scientific Computing (1995)”)
+• Conjugate gradients
+• Only uses gradients rather than approximation to curvature, should
+be more robust when far from minima
+
+
+========== PAGE 6 ==========
+
+Local minimisation
+• What can CP2K minimise with respect to?
+• MOTION%GEO_OPT – vary atomic coordinates only
+• MOTION%CELL_OPT – both atomic coordinates and lattice vectors
+• Some values may be constrained e.g. cell angles, certain atomic
+positions
+• Collective variables (distances, angles) can be constrained
+
+
+========== PAGE 7 ==========
+
+Geometry optimisation
+• RUN_TYPE GEO_OPT in GLOBAL section
+• GEO_OPT%OPTIMIZER in MOTION section
+• CG, use with poor intial guesses, noisy forces, rough optmization
+• (L)BFGS, for most QS calculations – consider switching to LBFGS
+above ~1000 atoms. Look for diagonalization routine timings at end of
+run to see relative cost
+• MAX_ITER number of optimization steps
+• Constraints may bedefined in MOTION%CONSTRAINT section:
+&FIXED_ATOMS
+COMPONENTS_TO_FIX X
+LIST 1
+&END
+&FIXED_ATOMS
+COMPONENTS_TO_FIX Y
+LIST 2
+&END
+
+
+========== PAGE 8 ==========
+
+Cell optimisation
+• CP2K can respect cell symmetry (only for CELL_OPT)
+&CELL
+ABC 9.167 9.167 11.808
+SYMMETRY ORTHORHOMBIC
+MULTIPLE_UNIT_CELL 2 2 2
+&END CELL
+...
+&CELL_OPT
+KEEP_SYMMETRY TRUE
+&END CELL_OPT
+• Also KEEP_ANGLES (e.g. allows cubic symmetry to
+break)
+
+
+========== PAGE 9 ==========
+
+Cell optimisation
+• Three algorithms in CP2K controlled by CELL_OPT%TYPE
+• GEO_OPT: Original implementation.
+• 1. Inner cycle optimize atomic positions
+• 2. Outer cycle optimize cell vectors
+• DIRECT_CELL_OPT (default): New implementation from version 2.4
+onwards
+• Cell parameters (stresses) go into the optimizer along with atomic
+coordinates
+• MD: Optimize at finite temperature.
+• Uses MD, so only of use if you have a cheap Hamiltonian
+• DIRECT_CELL_OPT should be much more efficient – try for
+yourself
+• Generally best to enforce symmetry / fix angles to start with to
+• minimize number of degrees of freedom.
+
+
+========== PAGE 10 ==========
+
+output
+Output
+grep for “Max. grad” in output file to see
+●
+the progress of the optimization – this
+•g iGveresp m foarx i“mMauxm. e ngerragdy ”g irna oduietnptu ot nfil ea ttoom s
+see the progress of the optimization
+being optimized
+Be• lothwis “gCivoensv meargxiemnucme ecnheergcyk g:r”a dtiheenrt eo nis a
+●
+atoms being optimized
+summary of the progress. Output is like
+• Below “Convergence check :” there
+Gaussian for those familiar – convergence
+is a summary of the progress
+requires Max and RMS step size and Max
+• convergence requires Max and RMS step
+and RMS gradients to be converged.
+size and Max and RMS gradients to be
+Pressure extra criteria for CELL_OPT
+● converged.
+● Th • e P croesnsvuererg eexntrcae c rcitreirtiear fioar cCaEnL Lb_eO sPeTt in the
+• & TMhOeT cIoOnNv esregcetniocne criteria can be set in
+●
+Dtehfea uMlOt MTIaOxN. %gr[aCdE iLsL e|qGuEaOl ]to_ 0O.P0T2 5s eecVti/oAn
+● • G Dooedfa eunlt oMuagxh. fgorra md oiss te pquuraplo tose 0s.025 eV/A
+• Good enough for most purposes
+• May need tighter e.g. for subsequent
+vibrational analysis
+
+
+========== PAGE 11 ==========
+
+Global optimisation
+• Brute force approach:
+• Generate a grid of points (size m) in each of 3M dimensions
+• m3N energy evaluations – exponential in system size X
+• Practical methods exploit shape of PES
+• Genetic algorithms
+• Simulated annealing (MOTION%MD%ANNEALING)
+• Monte Carlo
+• Basin Hopping (GLOBAL%SWARM%GLOBAL_OPT%METHOD)
+• Details of methods and implementation in Ole Shütt’s
+Masters Thesis
+• Linked from https://www.cp2k.org/docs
+
+
+========== PAGE 12 ==========
+
+Molecular Dynamics
+• Classical Molecular Dynamics, particles obey Newton’s
+2nd Law and move subject to a position-dependent
+interaction potential:
+dU (R)
+m !r! = F F = −
+i i i i
+dr
+i
+• For a fixed number of particles N in a volume V these
+equations of motion generate the microcanonical (NVE)
+ensemble.
+• The total energy U + the kinetic energy is conserved
+
+
+========== PAGE 13 ==========
+
+Molecular Dynamics
+• We solve the equations of motion by discretisation in time,
+given positions R and velocities V at time t
+0
+R(t ) → R(t + ∂t) → R(t + 2∂t)...
+0 0 0
+V(t ) → V(t + ∂t) → V(t + 2∂t)...
+0 0 0
+• Want a scheme which is:
+• Efficient: minimal number of force evaluations, stored data
+• Stable: minimal drift in conserved quantity
+• Accurate: minimal distance to exact trajectory
+
+
+========== PAGE 14 ==========
+
+Velocity Verlet Integrator
+2
+∂t
+r (t + ∂t) → r (t) + ∂t ⋅ v (t) + f (t)
+i i i i
+2m
+i
+∂t
+v (t + ∂t) → v (t) + [ f (t) + f (t + ∂t)]
+i i i i
+2m
+i
+• Efficient: 1 force evaluation, 3 stored quantities
+• Stable: time reversible
+• Accurate: symplectic, integration error Ο(∂t 2 )
++ extensions for constraints (SHAKE, RATTLE, ROLL)
++ multiple timesteps (r-RESPA) and thermostats
+
+
+========== PAGE 15 ==========
+
+Born-Oppenheimer MD
+• Born-Oppenheimer Approximation:
+• Ionic mass >> electron mass so equations of motion for (classical)
+nuclei and (quantum) electrons are separable
+m !r! = F dU(R)
+F = −
+i i i
+i
+dr
+i
+U(R) = min[E ({φ(r)}, R)]
+• Kohn-Sham BO potential:
+KS
+φ
+∂E ∂E ∂φ
+F (R) = KS + ∑ KS i
+KS
+∂R ∂φ ∂R
+i i
+
+
+========== PAGE 16 ==========
+
+BO-MD in CP2K
+• Benchmark system setup:
+• 64 water molecules
+• density 1gcm−3
+• Temperature ≈ 330K
+• Timestep 0.5fs
+• DFT Settings:
+• GPW, TZV2P basis (2560 basis functions), PBE functional
+• CUTOFF 280 Rydberg, ε = 10−12
+default
+• OT-DIIS, Preconditioner FULL_SINGLE_INVERSE
+• Reference trajectory (1ps), ε = 10−10
+SCF
+
+
+========== PAGE 17 ==========
+
+Stability in BOMD
+BO-MD in CP2K
+Unbiased initial guess;  (t) =   (R(t))
+0
+✏ MAE E MAE f Drift
+SCF KS
+Hartree Hartree/Bohr Kelvin/ns
+10 08 1.2 10 11 5.1 10 09 0.0
+     
+· ·
+10 07 9.5 10 10 5.6 10 08 0.1
+     
+· ·
+10 06 6.9 10 08 4.8 10 07 0.4
+     
+· ·
+10 05 7.4 10 06 5.6 10 06 2.3
+     
+· ·
+10 04 3.3 10 04 5.9 10 05 50
+     
+· ·
+Consistent with results from classical MD
+Note accuracy of forces!
+
+
+========== PAGE 18 ==========
+
+Stability in BOMD
+BO-MD in CP2K
+Unbiased initial guess;  (t) =   (R(t))
+0
+✏ MAE E MAE f Drift
+SCF KS
+Hartree Hartree/Bohr Kelvin/ns
+10 08 1.2 10 11 5.1 10 09 0.0
+     
+· ·
+10 07 9.5 10 10 5.6 10 08 0.1
+     
+· ·
+10 06 6.9 10 08 4.8 10 07 0.4
+     
+· ·
+10 05 7.4 10 06 5.6 10 06 2.3
+     
+· ·
+10 04 3.3 10 04 5.9 10 05 50
+     
+· ·
+Consistent with results from classical MD
+Note accuracy of forces!
+
+
+========== PAGE 19 ==========
+
+Efficiency: Initial Guess of Wavefunction
+BO-MD in CP2K
+DFT%QS%EXTRAPOLATION PS
+DFT%QS%EXTRAPOLATION_ORDER 4
+4th order Gear predictor (PS extrapolation in CP2K)
+Method ✏ Iterations Drift (Kelvin/ns)
+SCF
+06
+Guess 10 14.38 0.4
+ 
+07
+Gear(4) 10 6.47 5.7
+ 
+06
+Gear(4) 10 5.22 11.8
+ 
+05
+Gear(4) 10 4.60 86.8
+ 
+What is the problem?
+Time reversibility has been broken!
+
+
+========== PAGE 20 ==========
+
+Importance of Time-Reversibility
+BO-MD in CP2K
+DFT%QS%EXTRAPOLATION ASPC
+DFT%QS%EXTRAPOLATION_ORDER 3
+Method ✏ Iterations Drift (Kelvin/ns)
+SCF
+06
+Guess 10 14.38 0.4
+ 
+06
+ASPC(3) 10 5.01 0.2
+ 
+05
+ASPC(3) 10 3.02 4.5
+ 
+07
+Gear(4) 10 6.47 5.7
+ 
+06
+Gear(4) 10 5.22 11.8
+ 
+05
+Gear(4) 10 4.60 86.8
+ 
+Kolafa, JCC (2004)
+VandeVondele et al., CPC (2205)
+
+
+========== PAGE 21 ==========
+
+Efficiency and Drift
+BO-MD in CP2K
+DFT%QS%EXTRAPOLATION ASPC
+DFT%QS%EXTRAPOLATION_ORDER 4…
+Method ✏ Iterations Drift (Kelvin/ns)
+SCF
+04
+ASPC(4) 10 1.62 1742.4
+ 
+04
+ASPC(5) 10 1.63 1094.0
+ 
+04
+ASPC(6) 10 1.79 397.4
+ 
+04
+ASPC(7) 10 1.97 445.8
+ 
+04
+ASPC(8) 10 2.06 24.1
+ 
+
+
+========== PAGE 22 ==========
+
+BO-MD in CP2K : Summary
+• Defaults settings are ASPC(3)
+• SCF tolerance for ‘acceptable’ drift is system-dependent
+but EPS_SCF 1E-5 or 1E-6 is a good guess
+• Use OT and appropriate preconditioner to speed up SCF
+• Further reading:
+• “Car-Parrinello molecular dynamics”, Jürg Hutter, WIREs Comput
+Mol Sci, 2: 604-612, 2012
+• Ab Initio Molecular Dynamics: Basic Theory and Advanced
+Methods, Dominik Marx & Jürg Hutter
+
+
+========== PAGE 23 ==========
+
+Ensembles
+• Ensemble: set of all microstates
+{ r , r! }
+accessible to the
+i i
+simulation, each microstate occurring with a particular
+probability
+• Various possibilities for quantities that may be conserved
+or fixed in the simulations:
+• Number of particles N
+• Volume V
+NVE – microcanonical
+• Energy E
+NVT – canonical
+• Temperature T NPT – isotherhmal-isobaric
+• Pressure P
+µ
+• Chemical Potential (not implemented in CP2K)
+
+
+========== PAGE 24 ==========
+
+NVE – microcanonical ensemble
+- system isolated with constant number of particles N,
+Ensembles
+volume V and energy E
+• Newton’s second law applied to a set of N particles in a
+- solving equations of motion without temperature or
+fixed box of volume V produces the microcanonical (NVE)
+pressure control
+ensemble
+F = m r
+(cid:6)(cid:6)
+i i i
+• Total Energy is conserved as the system is isolated
+E
+N
+V simulation cell
+Sep 2nd, 2015 konstanze.hahn@dsf.unica.it 5
+
+
+========== PAGE 25 ==========
+
+Ensembles
+NVT – canonical ensemble
+• If the system is in thermal contact with a heat bath at
+temperature T (canonical / NVT ensemble) the total
+- constant number of particles N and volume V
+energy of the system is no longer conserved
+- system in thermal contact with heat bath
+• It may gain or lose energy from/to the heat bath
+• Instead the constant of the motion is the energy of the system + the
+energy of the bath
+simulation cell
+heat bath
+Sep 2nd, 2015 konstanze.hahn@dsf.unica.it 7
+egnahcxe
+taeh
+
+
+========== PAGE 26 ==========
+
+NPT – isothermal-isobaric ensemble
+Ensembles
+- constant number of particles N, pressure p and
+temperature T
+• If the box size/shape is allowed to change in response to
+internal stress- aunsde e oxft ethrnearml porsetsastu arned ( ibsoabroasrtica-ti sothermal /
+NPT ensemble) then energy is exchanged with the
+environment via dW = PdV
+• Cons. Quantity =
+• Energy of the system +
+simulation cell
+• Energy of the ‘thermostat’
+• Energy of the ‘barostat’
+change of volume
+heat bath
+Sep 2nd, 2015 konstanze.hahn@dsf.unica.it 8
+
+
+========== PAGE 27 ==========
+
+Ensembles
+Possible choices
+• microcanonical: NVE
+&MOTION
+• canonical: NVT
+&MD
+• canonical using Langevin
+ENSEMBLE NVE dynamics: LANGEVIN
+STEPS 1000 • isobaric-isothermal:
+NPT_F / NPT_I
+TIMESTEP 0.5
+• Constant pressure:
+TEMPERATURE 300
+NPE_F / NPE_I
+&END MD
+• Also: ISOKIN,
+&END MOTION HYDROSTATICSHOCK,
+MSST, MSST_DAMPED,
+NVT_ADIABATIC
+
+
+========== PAGE 28 ==========
+
+Thermostats in CP2K
+&MOTION
+• Rescales velocities when T < 290K
+&MD
+or T > 310K
+ENSEMBLE NVE
+• Does not produce the canonical
+STEPS 1000 ensemble
+• Use only for equilibriation
+TIMESTEP 0.5
+TEMPERATURE 300
+TEMP_TOL 10
+&END MD
+&END MOTION
+
+
+========== PAGE 29 ==========
+
+Thermostats in CP2K
+Velocity rescaling
+• Velocity rescaling
+MD step
+compute instantaneous
+kinetic energy
+rescale velocity by λ
+T
+λ= 0
+( )
+T t
+T < 290 K or T > 310 K
+Sep 2nd, 2015 konstanze.hahn@dsf.unica.it 30
+
+
+========== PAGE 30 ==========
+
+Thermostats in CP2K
+• Langevin Dynamics – adds a dissipative (frictional) force
+and a stochastic force
+∂U (r)
+m !r! = − − mΓr! + W (t)
+i i i i
+∂r
+i
+• Magnitude of the perturbation depends on the
+instantaneous temperature
+• Surprisingly useful in practice!
+
+
+========== PAGE 31 ==========
+
+Thermostats in CP2K
+• Produces canonical ensemble (NVT)
+• Local thermostat
+• Ergodic
+• Stable at large timesteps
+but
+• does not conserve momentum (due to drag force)
+• only useful for sampling, not dynamical properties (e.g.
+diffusion)
+
+
+========== PAGE 32 ==========
+
+Thermostats in CP2K
+• Nosé-Hoover (chains)
+• Define an extended system with a (set of) thermal
+reservoirs with effective ‘position’ and ‘momenta’
+• So associated potential and kinetic energies
+• Thermostat couples to the particle momenta through
+modified equations of motion
+• Integrate these variables alongside the particle positions,
+momenta
+
+
+========== PAGE 33 ==========
+
+Thermostats in CP2K
+• Produces canonical ensemble (NVT)
+• Local thermostat
+• Ergodic (N-H chain only)
+• Second order – temperature may oscillate towards target
+
+
+========== PAGE 34 ==========
+
+Thermostats in CP2K
+&MOTION
+&MD
+…
+&THERMOSTAT
+TYPE NOSE
+&NOSE
+LENGTH 3 • Defaults to 3 (1 recovers original
+Nosé thermostat
+TIMECON 1000 [fs]
+• 1000fs is the target relaxation
+&END NOSE
+time
+&END THERMOSTAT
+&END MD
+&END MOTION
+
+
+========== PAGE 35 ==========
+
+Thermostats in CP2K
+• Use a small TIMECON for rapid equilibriation
+• Default is usually OK for production MD
+• Check the PROJECT.ener file that the constant of motion
+is indeed conserved
+• Check for large fluctations in the temperature
+• Almost all of the same options apply for barostats
+• MOTION%MD%BAROSTAT

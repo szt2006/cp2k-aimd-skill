@@ -1,0 +1,234 @@
+# SOURCE: 【输入文件-庚子计算整理】cp2k_basics.pdf
+# PAGES: 14
+# DUPLICATES: Running CP2K calculations-CP2K Input Basics.pdf
+# TOPIC: CP2K 输入基础（Input Basics）
+
+
+
+========== PAGE 1 ==========
+
+Running CP2K Calculations
+BASICS
+• How to run CP2K
+• CP2K Input File
+• BasicStructure
+• MethodandSystem
+• SimulationProtocol
+• Basis Sets and Pseudopotentials
+• CP2K Output
+• ControllingtheOutput
+• OverviewofOutputStructure
+• Restarting Calculations
+
+
+========== PAGE 2 ==========
+
+How to run CP2K Calculations
+• CP2K binaries
+• sopt–serial
+• ssmp–singleprocess+multiprocessor(OpenMP)
+• popt–parallel(MPI)
+• psmp–parallel(MPI)+multiprocessor(OpenMP)
+• Available from http://www.cp2k.org/download
+• Linuxbinaries(releasedversions)
+• Linuxpackagemanagers,seealsoMACandWindows
+versions,Dockerimages
+• Sourcecode(allversions,currentdeveloperversion)from
+GITHUB
+• materialscloud.org->WORK->QuantumMobile
+• Preinstalledatyourcomputercenter
+
+
+========== PAGE 3 ==========
+
+How to run CP2K Calculations
+• Basic command line options:
+• cp2k.sopt -i input_file -o output_file
+Bydefault,outputgoestostandardoutput
+Outputtofileappends(!!)
+Inputfileisthelastargumentifnototherwisespecified
+• Other useful options:
+• cp2k.sopt -version
+• cp2k.sopt -check input_file
+• cp2k.sopt -html-manual
+• cp2k.sopt -help
+
+
+========== PAGE 4 ==========
+
+How to run CP2K Calculations
+Typical files associated with a CP2K run:
+• Input (required): e.g. H2O-32.inp(maininputfile,nameand
+extensionarearbitrary)
+• Optional inputs: (default files are in cp2k/data
+• POTENTIAL(pseudopotentiallibrary)
+• BASIS_SET(basissetlibrary)
+• Structurefile(e.g. psf,xyz,crd...)
+• Outputs:
+• PROJECT-1.restart(inputfiletorestartcalculation)
+• PROJECT-pos-1.xyz(trajectoryforMDorGEO_OPT)
+• PROJECT-1.ener(MDenergies,temperature,cons. Q...)
+• PROJECT-1.cell(cellparameters)
+• PROJECT-RESTART.wfn(orbitalsforrestart)
+
+
+========== PAGE 5 ==========
+
+CP2K Input File: Basics
+•• Full documentation available online:
+http://manual.cp2k.org
+Or generate with -html-manual
+• Sections - 13 (optional) top level sections
+&BEGIN section_name [params]
+...
+&END [section_name]
+• Keywords
+KEYWORD value
+KEYWORD [ON|OFF] [YES|NO] [TRUE|FALSE] ...
+KEYWORD
+• Nesting
+Sections may contain others sections and keywords
+
+
+========== PAGE 6 ==========
+
+CP2K Input File: Basics
+• Basic pre-processing syntax
+@INCLUDE ’filename’ copy in text from file
+@SET VAR value define a variable
+@VAR replaced with variable value
+@IF / @ENDIF simple logic
+or # comments
+• Units
+• Numericalentrieshaveadefaultunit(seemanual)
+• Specifyotherunitsbyhande.g.
+ABC [nm] 100 100 100(orbohr,defaultisangstrom)
+EMAX_SPLINE [eV] 50(orRy,defaultishartree)
+• Alsocombinationse.g. [hartree*bohrˆ-2]
+
+
+========== PAGE 7 ==========
+
+CP2K Input File: Basics
+The GLOBAL section (required)
+&GLOBAL
+PROJECT H2O-32
+RUN_TYPE MD
+PRINT_LEVEL HIGH
+&TIMINGS
+THRESHOLD 0.000001
+&END
+WALLTIME 3600
+&END GLOBAL
+
+
+========== PAGE 8 ==========
+
+CP2K Input File: Method and System
+The FORCE_EVAL section (required)
+&FORCE_EVAL
+METHOD QS (or FIST, QMMM ...)
+&DFT
+...
+&END DFT
+&SUBSYS
+...
+&END SUBSYS
+&END FORCE_EVAL
+Definition of Simulation Method and System
+(atomic coordinates and cell size)
+
+
+========== PAGE 9 ==========
+
+CP2K Input File: Simulation Protocol
+The MOTION section
+&MOTION
+&MD
+ENSEMBLE NVE
+STEPS 10
+TIMESTEP 0.5
+TEMPERATURE 300.0
+&END MD
+&END MOTION
+Used to control MD, Geometry Optimisation, NEB, Monte Carlo
+
+
+========== PAGE 10 ==========
+
+Basis Sets and Pseudopotential Libraries
+• CP2K uses seperable dual-space pseudopotentials
+Several sets of PPs and corresponding optimised basis
+sets are available, See cp2k/data or online at GITHUB
+• POTENTIAL, GTH_POTENTIALS
+Wide range of PPs for many elements
+Optimised with different XC functional: LDA (PADE), PBE,
+BLYP ...
+• BASIS_SET, GTH_BASIS_SET, BASIS_MOLOPT
+Contracted Gaussian basis sets; Various qualities / size of
+basis
+Make sure Basis and PP match (number of electrons and
+functional)
+Some documentation and references at head of each file
+
+
+========== PAGE 11 ==========
+
+Controlling the Output
+• The PRINT_LEVEL keyword in &GLOBAL
+• SILENT, LOW, MEDIUM(default),HIGH, DEBUG
+• HIGHcangivemoreinformationifyouareinterested,also
+givessomeper-processlogginginparalleljobs
+• ForlongMDruns(e.g. classical),recommendusingLOW
+• Fine grained control is available via print-keys
+• Mostinputsectionscontaina&PRINTsub-section
+• Each&PRINTsub-sectionhasfurthersubsectionsforeach
+quantitythatmaybeprinted
+
+
+========== PAGE 12 ==========
+
+Controlling the Output
+• For example, the &PRINT section in &MOTION contains
+&CELL
+&FORCES
+&TRAJECTORY
+&VELOCITIES
+...
+• Each section has parameters (and defaults) for which print
+level it is output
+&TRAJECTORY defaults to LOW
+&VELOCITIES defaults to HIGH
+
+
+========== PAGE 13 ==========
+
+Controlling the Output
+• Can also specify frequency of printing via &EACH
+sub-section, e.g.
+&PRINT
+&CELL
+&EACH
+MD 100
+&END EACH
+&END CELL
+&END PRINT
+• Control over filenames, file formats etc. in each &PRINT
+section
+
+
+========== PAGE 14 ==========
+
+Restarting a Calculation
+• If you need to restart your job
+• Hardwarefailure
+• Batchsystemtimelimit
+• Failedtoconverge
+• NeedmoreMDsampling
+• ...
+• CP2K dumps a restart input file which can be directly
+re-run
+• cp2k.sopt -i PROJECT-1.restart
+• ContinuousnumberingofMDsteps
+• Storesallstatevariables(incl. extendedsystem)
+• UseSCF_GUESS RESTART

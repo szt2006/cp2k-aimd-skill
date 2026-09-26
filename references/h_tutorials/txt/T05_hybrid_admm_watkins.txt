@@ -1,0 +1,763 @@
+# SOURCE: Hybrid Functionals, ADMM - Matt Watkins.pdf
+# PAGES: 43
+# TOPIC: 杂化泛函与 ADMM（Watkins）
+
+
+
+========== PAGE 1 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+HHyybbrriidd ffuunnccttiioonnaallss aanndd AADDMMMM
+MMaatttt WWaattkkiinnss
+SScchhooooll ooff MMaatthheemmaattiiccss aanndd PPhhyyssiiccss,, UUnniivveerrssiittyy ooff LLiinnccoollnn,, UUKK
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 1/43
+
+
+========== PAGE 2 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+WWhhaatt aarree hhyybbrriidd ffuunnccttiioonnaallss
+GGlloobbaall HHyybbrriidd ffuunnccttiioonnss
+mixing non-local Hartree-Fock exchange with semi-local DFT exchange
+E = αEHFX[ψ ] + (1 − α)EDFT [ρ] + EDFT [ρ]
+XC X i X C
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 2/43
+
+
+========== PAGE 3 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+WWhhyy ddoo wwee nneeeedd hhyybbrriiddss??
+PPrraaccttiiccaall mmoottiivvaattiioonnss
+Improved description of thermochemistry (e.g. atomizations energies, heats of formation)
+Improved description of lattice constants, surface energies, ionization potentials and band
+gaps
+Qualitatively correct description of localized and correlated states
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 3/43
+
+
+========== PAGE 4 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+TThheeoorreettiiccaall mmoottiivvaattiioonnss
+Adiabatic connection
+1-e energy level
+discontinuity
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 4/43
+
+
+========== PAGE 5 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+WWhhyy ddoo wwee nneeeedd hhyybbrriiddss??
+Functional MAE (G2) / eV
+SVWN 5.2
+LSD (SVWN5) 3.6
+PBE 0.73
+BLYP 0.31
+B3LYP 0.13
+PBE0 0.21
+Mean Absolute errors for atomization energies (eV)
+Scuseria et al., J. Chem. Phys., 110, 5029 (1999)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 5/43
+
+
+========== PAGE 6 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+WWhhyy ddoo wwee nneeeedd hhyybbrriiddss??
+Statistic LSDA PBE TPSS HSE
+ME -1.14 -1.13 -0.98 -0.17
+MAE 1.14 1.13 0.98 0.17
+rms 1.24 1.25 1.12 0.34
+Max (+) - - - 0.32
+Max (-) -2.30 -2.88 -2.66 -0.72
+Mean Absolute errors for Band Gaps (eV)
+Scuseria et al., J. Chem. Phys., 123, 174101 (2005)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 6/43
+
+
+========== PAGE 7 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+HHyybbrriidd FFuunnccttiioonnaallss wwiitthh CCPP22KK
+GGA: total energy functional of the electron
+density
+E[ρ] = T [ρ] + J[ρ] + E [ρ] + ∫ v(r)ρ(r)dr
+S XC
+hybrid: functional of density and two particle density matrix
+(orbitals)
+E = αEHFX[ψ ] + (1 − α)EDFT [ρ] + EDFT [ρ]
+XC X i X C
+Guidon, Hutter and VandeVondele, J. Chem. Theory Comput., 6, 2348 (2010)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 7/43
+
+
+========== PAGE 8 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+HHyybbrriidd FFuunnccttiioonnaallss wwiitthh CCPP22KK
+Hartree-Fock exchange
+energy
+1
+EHFX[P] = − ∑ P μσP νσ(μν|λσ)
+X 2
+λσμν
+P μν = ∑CμiCνi = CCT
+i
+(μν|λσ) = ∫ ∫ ϕ (r )ϕ (r )g(|r − r |)ϕ (r )ϕ (r )dr dr
+μ 1 ν 1 1 2 λ 2 σ 2 1 2
+O(N4)
+Four-centre two-electron integrals (ERIs) in Mulliken motation: naively scaling
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 8/43
+
+
+========== PAGE 9 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+HHyybbrriidd FFuunnccttiioonnaallss wwiitthh CCPP22KK
+permutation symmetry of the
+ERIs
+(μν|λσ) = (νμ|λσ) = (νμ|σλ) = (μν|σλ)
+= (λσ|μν) = (λσ|νμ) = (σλ|νμ) = (σλ|μν)
+O(N4) → 1 O(N4)
+8
+Guidon et al., J. Chem. Phys., 128, 214104 (2008)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 9/43
+
+
+========== PAGE 10 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+HHyybbrriidd FFuunnccttiioonnaallss wwiitthh CCPP22KK
+Integral screening: Schwarz
+inequality
+1/2 1/2
+|(μν|λσ)| ≤ |(μν|μν)| |(λσ)|λσ)|
+1 O(N4) → O(N2)
+8
+Ahlrichs et al., J. Comput. Chem., 10, 104 (1989)
+(see EPS_SCHWARZ
+(https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL/DFT/XC/HF/SCREENING.html#list_EPS_SCHWARZ) keyword
+in &SCREENING (https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL/DFT/XC/HF/SCREENING.html) subsection)
+Guidon et al., J. Chem. Phys., 128, 214104 (2008)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 10/43
+
+
+========== PAGE 11 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+HHyybbrriidd FFuunnccttiioonnaallss wwiitthh CCPP22KK
+Density matrix
+screening
+1/2 1/2
+P × |(μν|μν)| |(λσ|λσ)| ≤ ϵ
+max Schwarz
+where
+P = max{|P |,|P |,|P |,|P |}
+max μλ μσ νλ νσ
+ nally linear scaling
+O(N2) → O(N)
+(see SCREEN_ON_INITIAL_P (SCREEN_ON_INITIAL_P) keyword in &SCREENING
+(https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL/DFT/XC/HF/SCREENING.html) subsection)
+Guidon et al., J. Chem. Phys., 128, 214104 (2008)
+P
+max: largest density matrix element; usually, the density matrix from the previous SCF iteration is used for the screening in
+the next iteration, use pre-converged GGA density matrix; very useful for DFT molecular dynamics simulations using hybrid
+functionals
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 11/43
+
+
+========== PAGE 12 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+IInntteerraaccttiioonn PPootteennttiiaall
+(μν|λσ) = ∫ ∫ ϕ (r )ϕ (r )g(|r − r |)ϕ (r )ϕ (r )dr dr
+μ 1 ν 1 1 2 λ 2 σ 2 1 2
+Standard Coulomb potential gives a global
+hybrid
+1
+g(r) =
+r
+(see POTENTIAL_TYPE
+(https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL/DFT/XC/HF/INTERACTION_POTENTIAL.html#POTENTIAL_TYP
+keyword in &INTERACTION_POTENTIAL
+(https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL/DFT/XC/HF/INTERACTION_POTENTIAL.html) subsection)
+Guidon et al., J. Chem. Phys., 128, 214104 (2008)
+For gas-phase, this energy is easy to evaluate; for periodic boundary conditions, it suffers from the integratable singularity,
+k
+different approaches have been developed to obtain good convergence with respect to the -point sum.
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 12/43
+
+
+========== PAGE 13 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+IInntteerraaccttiioonn PPootteennttiiaall
+(μν|λσ) = ∫ ∫ ϕ (r )ϕ (r )g(|r − r |)ϕ (r )ϕ (r )dr dr
+μ 1 ν 1 1 2 λ 2 σ 2 1 2
+Range-separated Coulomb potential gives a range-separated
+hybrid
+erfc(ωr) erf(ωr)
+g(r) = +
+r r
+used in HSE06 etc.
+(see POTENTIAL_TYPE
+(https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL/DFT/XC/HF/INTERACTION_POTENTIAL.html#POTENTIAL_TYP
+keyword in &INTERACTION_POTENTIAL
+(https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL/DFT/XC/HF/INTERACTION_POTENTIAL.html) subsection)
+Guidon et al., J. Chem. Phys., 128, 214104 (2008)
+Γ
+If omega is not large enough very large cells might be needed for HSE calculations at the point.
+Costs are very different from plane-wave implementions - HSE is not typically cheaper than PBE0 - see next slide.
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 13/43
+
+
+========== PAGE 14 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+IInntteerraaccttiioonn PPootteennttiiaall
+(μν|λσ) = ∫ ∫ ϕ (r )ϕ (r )g(|r − r |)ϕ (r )ϕ (r )dr dr
+μ 1 ν 1 1 2 λ 2 σ 2 1 2
+truncated Coulomb potential gives a global
+hybrid
+1 if r ≤ R
+12 c
+g(r ) = { r
+12 12
+0 otherwise
+used in the snappily titles PBE0-TC family of functionals.
+R
+C is speci ed by the CUTOFF_RADIUS
+(https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL/DFT/XC/HF/INTERACTION_POTENTIAL.html#list_CUTOFF_RA
+keyword.
+(see POTENTIAL_TYPE
+(https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL/DFT/XC/HF/INTERACTION_POTENTIAL.html#POTENTIAL_TYP
+keyword in &INTERACTION_POTENTIAL
+(https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL/DFT/XC/HF/INTERACTION_POTENTIAL.html) subsection)
+Guidon et al., J. Chem. Phys., 128, 214104 (2008)
+Γ
+Truncation is mainly for solid-state environments and avoids numerical problems with point global hybrid calculations.
+R
+C must be smaller than half the smallest cell dimension.
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 14/43
+
+
+========== PAGE 15 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+IInntteerraaccttiioonn PPootteennttiiaall
+(μν|λσ) = ∫ ∫ ϕ (r )ϕ (r )g(|r − r |)ϕ (r )ϕ (r )dr dr
+μ 1 ν 1 1 2 λ 2 σ 2 1 2
+truncated Coulomb potential gives a global
+hybrid
+1 if r ≤ R
+g(r ) = { r 12 c
+12 12
+0 otherwise
+We can add in a long range correction, to replace the exchange energy lost by truncation.
+See the &PBE_HOLE_T_C_LR
+(https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL/DFT/XC/XC_FUNCTIONAL/PBE_HOLE_T_C_LR.html)
+subsection in the &XC_FUNCTIONAL
+(https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL/DFT/XC/XC_FUNCTIONAL.html) section.
+This gives the even more snappily titled PBE0-TC-LRC family of functionals.
+Guidon et al., J. Chem. Theory Comput., 5, 3010 (2008)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 15/43
+
+
+========== PAGE 16 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+AAuuxxiilliiaarryy DDeennssiittyy MMaattrriixx MMeetthhooddss ((AADDMMMM))
+E[ρ] = T [ρ] + J[ρ] + E [ρ,P] + ∫ v(r)ρ(r)dr
+S XC
+E = αEHFX[P] + (1 − α)EDFT [ρ] + EDFT [ρ]
+XC X X C
+1
+EHFX[P] = − ∑ P μσP νσ(μν|λσ)
+X 2
+λσμν
+^
+P ≈ P
+introduce auxiliary density matrix
+^ ^
+EHFX[P] = EHFX[P ] + EHFX[P] − EHFX[P ]
+X X X X
+^ ^
+≈ EHFX[P ] + EDFT [P] − EDFT [P ]
+X X X
+Guidon, Hutter and VandeVondele, J. Chem. Theory Comput., 6, 2348 (2010)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 16/43
+
+
+========== PAGE 17 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+AAuuxxiilliiaarryy DDeennssiittyy MMaattrriixx MMeetthhooddss ((AADDMMMM))
+P
+total energy functional of both and
+^
+P
+^ ^
+E = E[P] + E[P ]
+total
+still Kohn-Sham theory with
+ADMM
+^ ^
+∂E[P] ∂E[P ]
+K = +
+total
+∂P ∂P
+^ ^ ^
+∂E[P ] ∂P
+= K +
+^ ∂P
+∂P
+using a chain rule and
+K C = SCϵ
+total
+as the equation to be solved self-consistently. (Simplest case given here, ADMM1)
+Guidon, Hutter and VandeVondele, J. Chem. Theory Comput., 6, 2348 (2010)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 17/43
+
+
+========== PAGE 18 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+AAuuxxiilliiaarryy DDeennssiittyy MMaattrriixx MMeetthhooddss ((AADDMMMM))
+Construction of auxiliary density
+matrix
+^ ^μi ^
+ψ (r) = ∑C ϕ (r)
+i μ
+μ
+^μν ^μi ^νi ^ ^T
+P = ∑C C = CC
+i
+^
+C
+we  nd the that minimises the difference between occupied wavefunctions in the primary and secondary basis
+sets:
+^ 2
+∑∫ (ψ (r) − ψ (r)) dr
+j j
+i
+(see ADMM_PURIFICATION_METHOD=NONE keyword in &AUXILIARY_DENSITY_MATRIX_METHOD subsection)
+Guidon, Hutter and VandeVondele, J. Chem. Theory Comput., 6, 2348 (2010)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 18/43
+
+
+========== PAGE 19 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+AAuuxxiilliiaarryy DDeennssiittyy MMaattrriixx MMeetthhooddss ((AADDMMMM))
+Construction of auxiliary density matrix enforcing indempotent auxiliary density
+matrix
+^ ^μi ^
+ψ (r) = ∑C ϕ (r)
+i μ
+μ
+^μν ^μi ^νi ^ ^T
+P = ∑C C = CC
+i
+^
+C
+we  nd the that minimises the difference between occupied wavefunctions in the primary and secondary basis
+sets subject to the constraint that the auxiliary wavefunctions are orthonormal:
+^ 2 ^ ^
+∑∫ (ψ (r) − ψ (r)) dr + ∑Λ (∫ ψ (r)ψ (r)dr − δ )
+j j kl k l kl
+i k,l
+Λ
+The matrix contains the Lagrangian multipliers enforcing orthonormality.
+(see ADMM_PURIFICATION_METHOD=MO_DIAG keyword in &AUXILIARY_DENSITY_MATRIX_METHOD subsection)
+Guidon, Hutter and VandeVondele, J. Chem. Theory Comput., 6, 2348 (2010)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 19/43
+
+
+========== PAGE 20 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+AAuuxxiilliiaarryy DDeennssiittyy MMaattrriixx MMeetthhooddss ((AADDMMMM))
+Construction of auxiliary density matrix constraint on total
+charge
+occ ~ N occ ~
+W = ∑⟨(i − i)2⟩ + λ( − ∑⟨i2⟩)
+Q
+2
+i i
+(see EXCH_SCALING_MODEL keyword in &AUXILIARY_DENSITY_MATRIX_METHOD subsection)
+Merlot et al., J. Chem. Phys., 141, 094101 (2014)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 20/43
+
+
+========== PAGE 21 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+AADDMMMM ffoorrcceess
+^ ^
+dE dE[P] dE[P ]
+= +
+dR dR dR
+^ ^
+P C = AC
+where is de ned via . Then various chain rules ...
+^ ^ ^ ^ ^ ^
+dE[P ] dE[P ] C C
+^
++ = U
+dR ^ dR dR
+dC
+dE ^ [P ^ ] dE ^ [P ^ ] dP ^
+^ ^ ^
+U = = = KC
+^ ^ ^
+dC dP dC
+ nally
+^ ^
+dE[P ] dA dΛ−1/2
+= U ^ [ CΛ−1/2] + U ^ [AC ]
+ab ab
+dR dR dR
+ab ab
+Forces for MO_Diag and non-puri ed ADMM implemented. Linear algebra can get expensive for larger systems (reason for
+contracted auxiliary basis sets)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 21/43
+
+
+========== PAGE 22 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+AAuuxxiilliiaarryy DDeennssiittyy MMaattrriixx MMeetthhooddss ((AADDMMMM))
+several GGA exchange corrections using different
+functionals
+^ ^
+EHFX[P] = EHFX[P ] + EHFX[P] − EHFX[P ]
+X X X X
+^ ^
+≈ EHFX[P ] + EDFT [P] − EDFT [P ]
+X X X
+DFT can be B88, PBE, OPTX, KT3X
+(see EXCH_CORRECTION_FUNC keyword in &AUXILIARY_DENSITY_MATRIX_METHOD subsection)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 22/43
+
+
+========== PAGE 23 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+AADDMMMM bbaassiiss sseettss
+Initially available from H to Cl optimized against atomic calculations
+Choice of auxiliary basis set for ADMM
+FIT3: three Gaussian exponents for each valence orbital
+cFIT3: a contraction of FIT3
+pFIT3: FIT3 + polarization functions
+cpFIT3: cFIT3 + polarization functions
+aug-FIT3, aug-cFIT3, aug-pFIT3, aug-cpFIT3: augmented with a “diffuse”
+function
+(see $CP2K/cp2k/data/BASIS_ADMM)
+Guidon, Hutter and VandeVondele, J. Chem. Theory Comput., 6, 2348 (2010)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 23/43
+
+
+========== PAGE 24 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+AADDMMMM bbaassiiss sseettss
+Uncontracted basis sets for transition metals:
+FIT10: 4s + 3p + 3d
+FIT11: 4s + 3p + 3d +
+1f
+FIT12: 4s + 3p + 4d +
+1f
+FIT13: 4s + 4p + 4d +
+1f
+ζ
+Contracted basis sets (double- quality)
+cFIT10 / cFIT11 / cFIT12 /
+cFIT13
+Names of the ADMM basis sets for main group elements will differ slightly, and usually the  rst ADMM basis set will not
+contain polarisation function.
+(see $CP2K/cp2k/data/BASIS_ADMM_MOLOPT)
+Ling & Slater, unpublished
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 24/43
+
+
+========== PAGE 25 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+GGeenneerraall rreemmaarrkkss
+Always check the convergence of CUTOFF
+Always check the convergence of properties (e.g. lattice parameters, band gaps) with respect to supercell
+sizes
+Always start from pre-converged GGA (e.g. PBE) wavefunction and geometry
+Always check the convergence of primary and ADMM basis sets
+start from a small basis and gradually increase the size
+ADMM has only been implemented for use with GPW
+Only ADMM1 will work with some other functionality (smearing, TDDFPT)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 25/43
+
+
+========== PAGE 26 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+EExxaammppllee:: DDiiaammoonndd bbaanndd--ggaapp
+method number of integrals gap [eV]
+PBE (PBS) 4.17
+PBE (ABS) 4.37
+PBE0 (PBS) 40, 787, 850, 778, 591 6.07
+PBE0 (ABS) 23, 561, 509, 497 6.25
+PBE0 ADMM1 24, 816, 897, 009 6.03
+PBE0 ADMM2 24, 795, 460, 638 6.02
+Guidon, Hutter and VandeVondele, J. Chem. Theory Comput., 6, 2348 (2010)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 26/43
+
+
+========== PAGE 27 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+EExxaammppllee:: SSiilliiccoonn bbaanndd--ggaapp
+Cutoff Radius [nm] Band gap [eV] # Integrals
+a a
+0.2 1.16 77799946176
+a a
+0.4 1.54 154325979000
+a a
+0.6 1.71 265868148312
+a a
+0.8 1.78 422457823080
+PBE0-TC-LRC with cFIT3 ADMM basis, 3x3x3 supercell, 216 atoms
+ADMM basis Band gap [eV] # Integrals
+a a
+cFIT3 1.16 422457823080
+a a
+FIT3 1.80 424426850352
+a a
+pFIT3 1.98 1447428361680
+b
+Ref. (VASP) 1.93
+PBE0-TC-LRC with 8 Å cutoff radius, 3x3x3 supercell, 216 atoms
+a b
+Ling & Slater, unpublished; Paier et al., J. Chem. Phys. 124, 154709 (2006)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 27/43
+
+
+========== PAGE 28 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+FFuunnccttiioonnaallss
+PBE0-TC-LRC, Long Range Corrected truncated global
+hybrid
+EPBE0−TC−LRC = aE HF,TC (R ) + aE PBE,LRC (R ) + (1 − a)EPBE + EPBE
+XC X c X c X C
+Guidon et al., J. Chem. Theory Comput., 5, 3010 (2008) Spencer & Alavi, Phys. Rev. B, 77, 193110 (2008)
+HSE, Range separated
+hybrid
+EHSE = aE HF,SR (ω) + (1 − a)E PBE,SR (ω) + E PBE,LR (ω) + EPBE
+XC X X X C
+Scuceria et al., J. Chem. Phys., 125, 224106 (2006)
+a,R , ω
+"Empirical" parameters: c and
+(note the 0 in PBE0 stands for 0 empirical parameters...)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 28/43
+
+
+========== PAGE 29 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+IInnppuutt ssttrruuccttuurree
+Sketch of the key sections for running an ADMM calculation
+&DFT
+…
+BASIS_SET_FILE_NAME ./BASIS_MOLOPT
+BASIS_SET_FILE_NAME ./BASIS_ADMM
+WFN_RESTART_FILE_NAME ${project}-RESTART.wfn
+...
+&SCF
+...
+SCF_GUESS RESTART
+...
+&END SCF
+&AUXILIARY_DENSITY_MATRIX_METHOD
+METHOD BASIS_PROJECTION
+ADMM_PURIFICATION_METHOD MO_DIAG
+&END AUXILIARY_DENSITY_MATRIX_METHOD
+...
+&XC
+...
+&END XC
+&END DFT
+Note: The syntax for the AUX basis set changed (after 4.1?) before that it would be AUX_FIT_BASIS_SET ***
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 29/43
+
+
+========== PAGE 30 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+PPBBEE00 vvss HHSSEE
+Input structure (see examples in $CP2K/cp2k/tests/QS/regtest-admm-1/2/3/4)
+&XC &XC
+&XC_FUNCTIONAL &XC_FUNCTIONAL
+&PBE &PBE
+SCALE_X 0.75 SCALE_X 0.0
+SCALE_C 1.0 SCALE_C 1.0
+&END PBE &END PBE
+&PBE_HOLE_T_C_LR &XWPBE
+CUTOFF_RADIUS 2.0 SCALE_X -0.25
+SCALE_X 0.25 SCALE_X0 1.0
+&END PBE_HOLE_T_C_LR OMEGA 0.11
+&END XC_FUNCTIONAL &END XWPBE
+&HF &END XC_FUNCTIONAL
+&SCREENING &HF
+EPS_SCHWARZ 1.0E-6 &SCREENING
+SCREEN_ON_INITIAL_P FALSE EPS_SCHWARZ 1.0E-6
+&END SCREENING SCREEN_ON_INITIAL_P FALSE
+&INTERACTION_POTENTIAL &END SCREENING
+POTENTIAL_TYPE TRUNCATED &INTERACTION_POTENTIAL
+CUTOFF_RADIUS 2.0 POTENTIAL_TYPE SHORTRANGE
+T_C_G_DATA ./t_c_g.dat OMEGA 0.11
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 30/43
+
+
+========== PAGE 31 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+OOuuttppuutt
+Step Update method Time Convergence Total energy Change
+HFX_MEM_INFO| Est. max. program size before HFX [MiB]: 563
+*** WARNING in hfx_energy_potential.F:600 :: The Kohn Sham matrix is not ***
+*** 100% occupied. This may result in incorrect Hartree-Fock results. Try ***
+*** to decrease EPS_PGF_ORB and EPS_FILTER_MATRIX in the QS section. For ***
+*** more information see FAQ: https://www.cp2k.org/faq:hfx_eps_warning ***
+HFX_MEM_INFO| Number of cart. primitive ERI's calculated: 218851035670
+HFX_MEM_INFO| Number of sph. ERI's calculated: 152193561473
+HFX_MEM_INFO| Number of sph. ERI's stored in-core: 22711518963
+HFX_MEM_INFO| Number of sph. ERI's stored on disk: 0
+HFX_MEM_INFO| Number of sph. ERI's calculated on the fly: 0
+HFX_MEM_INFO| Total memory consumption ERI's RAM [MiB]: 21290
+HFX_MEM_INFO| Whereof max-vals [MiB]: 1516
+HFX_MEM_INFO| Total compression factor ERI's RAM: 8.14
+HFX_MEM_INFO| Total memory consumption ERI's disk [MiB]: 0
+HFX_MEM_INFO| Total compression factor ERI's disk: 0.00
+HFX_MEM_INFO| Size of density/Fock matrix [MiB]: 764
+HFX_MEM_INFO| Size of buffers [MiB]: 118
+Number of sph. ERI's calculated on the fly: should ideally be zero.
+We want to keep ERIs in memory during the SCF loop.
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 31/43
+
+
+========== PAGE 32 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+EExxttrraa rreemmaarrkkss
+Libint library is used to calculate ERIs and their analytic derivatives, see $CP2K/cp2k/INSTALL for more details on
+installation and linking with CP2K
+Hybrid DFT calculations of large systems are memory demanding, try to increase MAX_MEMORY or run the job
+with more MPI processes. Note MAX_MEMORY is the memory per MPI process for ERIs, you must leave space for
+operating system and rest of the CP2K calculation.
+For extremely large hybrid DFT calculations, try hybrid MPI/OpenMP binary (i.e. cp2k.psmp)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 32/43
+
+
+========== PAGE 33 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+EExxaammpplleess
+TiO is everyone's favourite material - hybrid calculations with ~1000 atoms and good basis sets using CP2K
+2
+Yim et al, Phys. Rev. Lett. 117, 116402 (2016)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 33/43
+
+
+========== PAGE 34 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+Yim et al, Phys. Rev. Lett. 117, 116402 (2016)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 34/43
+
+
+========== PAGE 35 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+TTiiOO22--PPoollaarroonnss
+A. R. Elmaslmane et al, J. Chem. Theory Comput., 2018, 14, 3740
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 35/43
+
+
+========== PAGE 36 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+TTiiOO22--PPoollaarroonnss
+A. R. Elmaslmane et al, J. Chem. Theory Comput., 2018, 14, 3740
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 36/43
+
+
+========== PAGE 37 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+¶
+A. R. Elmaslmane et al, J. Chem. Theory Comput., 2018, 14, 3740
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 37/43
+
+
+========== PAGE 38 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+TTiiOO22--PPoollaarroonnss
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 38/43
+
+
+========== PAGE 39 ==========
+
+A. R. Elmaslmane et al, J. Chem. Theory Comput., 2018, 14, 3740
+12/03/2019 Hybrid functionals and ADMM slides
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 39/43
+
+
+========== PAGE 40 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+TTiiOO22--PPoollaarroonnss
+A. R. Elmaslmane et al, J. Chem. Theory Comput., 2018, 14, 3740
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 40/43
+
+
+========== PAGE 41 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+FFuunn aanndd ggaammeess
+ADMM is not just an approximation to full hybrid DFT, but can be used in other ways
+embedding: smaller basis sets / no basis sets on some
+atoms
+Ling et al. "Effects of oxide roughness at metal oxide interface: MgO on Ag (001)." J. Phys. Chem. C 117.10 (2013): 5075-
+5083.
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 41/43
+
+
+========== PAGE 42 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+UUpp JJaaccoobb''ss LLaaddddeerr
+BBeeyyoonndd hhyybbrriidd ffuunnccttiioonnaallss
+Hybrid functions use information from the occupied orbitals - if we use information from the unoccupied orbitals we can
+construct more advanced functionals - double hybrids, RPA.
+Hybrid / ADMM Exercises here (https://www.cp2k.org/exercises:2017_uzh_cp2k-tutorial:hybrid)
+Note: The syntax for the AUX basis set changed, use 'BASIS_SET AUX_FIT cFIT3' instead of 'AUX_FIT_BASIS_SET ***' in the
+example.
+PPoosstt HHaarrttrreeee FFoocckk wwaavveeffuunnccttiioonn ccoorrrreellaattiioonn
+CP2K also implements several post-Hartree Fock correlation methods, MP2
+(https://www.cp2k.org/_media/exercises:2017_uzh_cp2k-tutorial:tutorial_rybkin.pdf), RPA, GW
+(https://www.cp2k.org/_media/exercises:2017_uzh_cp2k-tutorial:tutorial_wilhelm.pdf)
+MP2 exercises here (https://www.cp2k.org/exercises:2017_uzh_cp2k-tutorial:wfc)
+GW exercises here (https://www.cp2k.org/exercises:2017_uzh_cp2k-tutorial:gw)
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 42/43
+
+
+========== PAGE 43 ==========
+
+12/03/2019 Hybrid functionals and ADMM slides
+TThhaannkkss
+Sanliang Ling, University of Nottingham (these slides are basically his reformatted)
+Sanliang's notes also have details of using dispersion corrected functionals here
+(https://www.cp2k.org/_media/events:2018_summer_school:cp2k-uk-stfc-june-2018-sanliang-ling.pdf)
+CP2K developers
+https://mattatlincoln.github.io/talks/GhentWorkshop/?print-pdf#/ 43/43

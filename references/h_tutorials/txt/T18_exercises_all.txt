@@ -1,0 +1,86 @@
+# SOURCE: 【官方练习汇总-庚子计算整理】exercises.pdf
+# PAGES: 6
+# DUPLICATES: Running CP2K calculations-Exercises.pdf
+# TOPIC: 官方练习汇总（Running CP2K calculations – Exercises）
+
+
+
+========== PAGE 1 ==========
+
+CP2K Exercises
+Practical Exercises
+• Exercises are all on the web
+https://www.cp2k.org/events:2019_cp2k_workshop_ghent:index
+• Range of exercises depending on what you are interested
+in!
+
+
+========== PAGE 2 ==========
+
+For CP2K Beginners
+• ’HowTo’ exercises on various basic functions of CP2K:
+Single-point energy & force calculation using DFT
+www.cp2k.org/howto:static_calculation
+• How to converge the total energy w.r.t. the CUTOFF and
+REL_CUTOFF
+www.cp2k.org/howto:converging_cutoff
+www.cp2k.org/events:2018_summer_school:
+converging_cutoff
+• Experiment with SCF settings:
+www.cp2k.org/events:2018_summer_school:scf_setup
+• How to run geometry optimisation
+www.cp2k.org/howto:geometry_optimisation
+
+
+========== PAGE 3 ==========
+
+Intermediate Exercises
+• Geometry and cell optimisation of NaCl clusters:
+www.cp2k.org/2016_summer_school:
+geometry_and_cell_optimization
+• ’Surface Science’ using DFT with local functionals:
+www.cp2k.org/exercises:2016_summer_school:gga
+• Running ab initio MD of liquid water:
+www.cp2k.org/exercises:2016_summer_school:aimd
+• Hybrid functional calculations and dispersion corrections:
+www.cp2k.org/exercises:2016_summer_school:hfx
+
+
+========== PAGE 4 ==========
+
+Intermediate Exercises
+• Linear Scaling DFT:
+www.cp2k.org/exercises:2015_pitt:ls
+• Electron correlation: MP2 and RPA:
+www.cp2k.org/exercises:2015_pitt:mp2
+• QM/MM using GEEP:
+www.cp2k.org/exercises:2016_summer_school:qmmm
+• Excited state calculations:
+www.cp2k.org/exercises:2016_summer_school:excited
+
+
+========== PAGE 5 ==========
+
+Extended Exercises
+• Metadynamics calculations:
+www.cp2k.org/exercises:2015_cecam_tutorial:mtd1
+• QM/MM of Urea in water:
+www.cp2k.org/exercises:2015_cecam_tutorial:urea
+• Adsorption on metallic surfaces (Nudged Elastic Band):
+www.cp2k.org/exercises:2015_cecam_tutorial:neb
+• Force-field calculations on a protein:
+www.cp2k.org/exercises:2015_cecam_tutorial:forcefields
+• VIBRATIONAL_ANALYSIS, NMR, X-Ray, DFT+U:
+www.cp2k.org/
+
+
+========== PAGE 6 ==========
+
+Scaling and Performance Tests
+• Several benchmark systems are provided at:
+https://www.cp2k.org/performance
+• Suggested experiments:
+Explore the effects of simulation size, accuracy parameters
+etc. on performance
+• Try out performance ’tweaks’:
+Consult with the experts for suggestions

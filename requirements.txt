@@ -1,0 +1,22 @@
+# ============================================================================
+# cp2k-aimd skill —— 核心运行依赖
+# ============================================================================
+# 本文件只声明「日常使用 skill 必须装」的最小依赖。
+# 安装：  pip install -r requirements.txt
+#
+# 覆盖的脚本：
+#   scripts/postprocess.py   —— 后处理核心层（energy/rdf/msd/diffusion/bond/
+#                               angle/dihedral/pdos/adf/cn/zprofile/vacf/ir/power）
+#   scripts/parse_output.py  —— CP2K 输出文件快速体检（纯标准库，无第三方依赖）
+#   scripts/recommend.py / gen_inp.py / validate_inp.py / diagnose.py / guide.py
+#                            —— 纯标准库，无需安装任何东西
+#
+# 核心层设计目标是「零外部依赖、开箱即用」：除 numpy + matplotlib 外不引入
+# 任何东西，且所有后处理子命令均已用合成数据端到端校验通过。
+#
+# 开发/校验/文档相关依赖见 requirements-dev.txt。
+# ----------------------------------------------------------------------------
+
+# 数值计算与绘图：postprocess.py 的全部子命令都依赖
+numpy>=1.24
+matplotlib>=3.7

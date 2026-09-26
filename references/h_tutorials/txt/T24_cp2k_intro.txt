@@ -1,0 +1,853 @@
+# SOURCE: 【强烈推荐-庚子计算整理】CP2K使用入门.pdf
+# PAGES: 19
+# TOPIC: CP2K 使用入门（强烈推荐）
+
+
+
+========== PAGE 1 ==========
+
+CP2K入门教程
+CP2K 入门教程
+赵亚帆
+yafanzhao@163.com
+zevan.zhao@gmail.com
+CP2K 是一种先进的量子化学计算软件，可以用多种方法对固体、液体、分子
+以及生物体系进行计算。这些方法包括使用高斯和平面波混合方法的密度泛函理论
+（DFT），经典力场，半经验方法，DFTB 等。
+CP2K最大的优势在于计算速度很快。关于 CP2K，目前资料还不多。我写下这
+个入门，希望可以让更多的人了解 CP2K，使用 CP2K。我本人也只是初学者，对
+CP2K各个参数不一定能够正确理解，敬请谅解。
+1. CP2K 的安装
+1.1 直接使用二进制版本
+CP2K 的安装有很多种方法。最简单的方法是直接使用预编译版本的二进制可
+执行文件。
+用户可以选择从发行版所带的软件源安装预编译版本的CP2K：
+Debian http://packages.debian.org/search?keywords=cp2k
+Fedora https://apps.fedoraproject.org/packages/cp2k
+Ubuntu http://packages.ubuntu.com/search?keywords=cp2k
+或者直接从CP2K官方网站下载预编译可执行文件
+sourceforge.net/projects/cp2k/files/precompiled/
+预编译版本的CP2K运行比较可靠，缺点是由于其采用了没有优化过的blas 库
+和lapack库，计算速度比较慢。
+或者从CP2K源码（http://www.cp2k.org/download）进行编译，获得可执行文件。
+好处是可以使用 MKL 等速度更快的数学库，计算速度比预编译版本快很多。测试
+表明，使用 Intel 编译器以及 MKL 数学库编译的 CP2K 执行速度是预编译版本的 3
+倍左右。
+
+
+========== PAGE 2 ==========
+
+CP2K入门教程
+1.2 从源代码编译
+从源码进行编译得到的 CP2K 可执行文件有更快的运行速度。CP2K 的编译比
+较复杂。希望进行CP2K编译的话，可以参考
+www.cp2k.org/howto:compile
+下面，介绍使用Intel 编译器以及 GNU编译器编译CP2K的步骤。下面的编译
+均在Debian testing系统上完成。CPU型号为Intel(R) Core(TM) i5-4210M，内核版
+本为3.17-1-amd64。为了减少编译的工作量，可以从Debian软件源里安装各种数学
+库，如libint，elpa，fftw3，openblas, libxc等。以root权限运行：
+apt-get install libxc1 libxc-dev libint-dev libint1 libelpa-dev libelpa0 libopenblas-base libopenblas-dev libfftw3-3
+libfftw3-bin libfftw3-dev libfftw3-mpi3 openmpi-bin gcc gfortran g++
+安装-dev包可以获得数学库的静态链接库，方便进行静态编译。
+系统安装了 4.9.1 版本的 GNU 编译器，包括 gcc 以及 gfortran，openmpi 版本
+为1.6.5。
+1.2.1 使用Intel Fortran编译器以及MKL编译CP2K
+首先，安装Intel Fortran编译器以及MKL。我安装的Intel Fortran编译环境是
+composerxe-2011.3.174。其中包含了 Fortran编译器ifort以及MKL，没有Intel MPI。
+ifort版本是12.0.3 20110309。Intel编译器安装到了/opt/intel目录中。
+要使用Intel编译器，打开终端，运行
+source /opt/intel/bin/compilervars.sh intel64
+然后，编译安装MPI运行环境。如果你安装的Intel编译环境已经包含了impi，
+可以跳过该步骤。我安装的MPI环境是openmpi 1.6.5，目前最新版本是1.8.3 。从
+http://www.open-mpi.org 上下载源码，解压缩后运行：
+./configure --prefix=/opt/openmpi-1.6.5 F77=ifort FC=ifort
+make
+make install
+注意，make install时需要root权限。
+从 http://sourceforge.net/projects/cp2k/files
+下载 CP2K 2.5.1 的源码，解压缩，修改 arch 目录中的 Linux-x86-64-intel.popt 文件
+如下 ：
+CC = cc
+CPP =
+FC = /opt/openmpi-1.6.5/bin/mpif90
+LD = /opt/openmpi-1.6.5/bin/mpif90
+AR = ar -r
+INTEL_MKL = /opt/intel/mkl
+INTEL_INC = $(INTEL_MKL)/include
+INTEL_LIB = $(INTEL_MKL)/lib/intel64
+
+
+========== PAGE 3 ==========
+
+CP2K入门教程
+MKL_LIB = $(INTEL_MKL)/lib/intel64
+FFTW3_INC = /usr/include/
+FFTW3_LIB = /usr/lib/x86_64-linux-gnu/
+DFLAGS = -D__INTEL -D__FFTSG -D__parallel -D__BLACS -D__SCALAPACK -D__FFTW3 -D__LIBINT
+CPPFLAGS = -C -traditional $(DFLAGS) -I$(INTEL_INC) -I$(FFTW3_INC)
+FCFLAGS = $(DFLAGS) -I$(INTEL_INC) -I$(FFTW3_INC) -O2 -xHost -heap-arrays 64 -funroll-loops -fpp -free
+FCFLAGS2 = $(DFLAGS) -I$(INTEL_INC) -I$(FFTW3_INC) -O1 -xHost -heap-arrays 64 -fpp -free
+LDFLAGS = $(FCFLAGS) -I$(INTEL_LIB) -L$(FFTW3_LIB)
+LIBS = -L$(MKL_LIB) -lmkl_blas95_lp64 -lmkl_lapack95_lp64 -lmkl_scalapack_lp64 -lmkl_intel_lp64
+-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_openmpi_lp64 -lfftw3 -lpthread -lderiv -lint -lstdc++
+OBJECTS_ARCHITECTURE = machine_intel.o
+graphcon.o: graphcon.F
+$(FC) -c $(FCFLAGS2) $<
+et_coupling.o: et_coupling.F
+$(FC) -c $(FCFLAGS2) $<
+qs_vxc_atom.o: qs_vxc_atom.F
+$(FC) -c $(FCFLAGS2) $<
+hfx_screening_methods.o: hfx_screening_methods.F
+$(FC) -c $(FCFLAGS2) $<
+注意，如果编译使用 intelmpi，blacs 库就设置为-lmkl_blacs_intelmpi_lp64；如
+果使用openmpi，则设置为-lmkl_blacs_openmpi_lp64。在makefiles目录中运行
+make –j 4 ARCH=Linux-x86-64-intel VERSION=popt
+-j 4参数可以使编译并行进行，以加快编译速度。
+视 CPU 性能，一般 15 分钟左右即可在 exe/Linux-x86-64-intel 目录下获得编译好
+的cp2k.popt可执行文件。
+1.2.2 使用GNU Fortran编译器,MKL以及ELPA库编译CP2K
+使用 gfortran 编译器，并使用 MKL 数学库和 ELPA 库编译 CP2K，流程与上述
+类似。编辑arch目录中的Linux-x86-64-gfortran_mkl_elpa.popt文件如下：
+INTEL_MKL = /opt/intel/mkl
+INTEL_INC = $(INTEL_MKL)/include
+INTEL_MKL_LIB = $(INTEL_MKL)/lib/intel64
+FFTW3_INC = /usr/include/
+FFTW3_LIB = /usr/lib/x86_64-linux-gnu/
+ELPA_INC = /usr/include/elpa/modules
+CC = cc
+CPP =
+FC = /usr/bin/mpif90
+LD = /usr/bin/mpif90
+AR = ar -r
+CPPFLAGS =
+DFLAGS = -D__GFORTRAN -D__FFTSG -D__parallel -D__SCALAPACK -D__BLACS -D__LIBINT
+-D__LIBXC2 -D__FFTW3 -D__ELPA
+FCFLAGS = -O3 -ffast-math -funroll-loops -ftree-vectorize -march=native -ffree-form $(DFLAGS) -g
+-I$(FFTW3_INC) -I$(ELPA_INC) -I$(INTEL_INC)
+LDFLAGS = $(FCFLAGS) -L${FFTW3_LIB} -L${INTEL_MKL_LIB}
+LIBS = \
+-lmkl_scalapack_lp64 -lmkl_blacs_openmpi_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core \
+-lderiv -lint -lfftw3 -lxc -lelpa
+在makefiles目录中运行
+make -j 4 ARCH=Linux-x86-64-gfortran_mkl_elpa VERSION=popt
+
+
+========== PAGE 4 ==========
+
+CP2K入门教程
+在exe/Linux-x86-64-gfortran_mkl_elpa 目录中即可获得编译好的cp2k.popt可执行
+文件。
+经过测试，使用 gfortran 和 intel 编译器编译的 CP2K 可执行文件运行速度相当，
+后者稍微快一点点。这主要是因为它们均使用了MKL数学库。
+2. 获取帮助的途径
+CP2K 一直在发展中，目前还没有一个正式的手册，所以学习 CP2K 并不是一
+个简单的事，连自学的材料都不多。目前我所知道的途径有以下几个：
+2.1 CP2K 的 Google Group
+这里是最好的获得帮助的地方，CP2K 的开发者经常在 group 里回复用户的问
+题，非常专业。常见的问题在论坛上都能找到答案。很遗憾，拜国内恶劣的网络环
+境所赐，访问 Google Group 非常困难。可以使用 Xskywalker 浏览器等专用工具来
+访问CP2K的Google Group。
+2.2 CP2K 官方教程
+目前已经举办了多次CP2K培训教程，网站（http://www.cp2k.org/tutorials，
+http://www.cp2k.org/events） 上有不少演示文稿可以下载，很多是程序开发人员做的
+报告。要了解CP2K，读这些文稿是很好的入门材料。
+2.3. CP2K 的官方手册
+CP2K的官方手册（http://manual.cp2k.org/trunk/）实际上并不是“手册”，因为这
+个网站只是解释了各种关键词的含义以及设置，并没有教你如何使用 CP2K。手册
+本身是从 CP2K 的源码直接生成的，只要下载了源码就可以在本地生成 CP2K 的手
+册。
+2.4 CP2K 源码包中的测试文件
+最直接的例子是源码中的tests文件。CP2K源码包中的tests目录包含了各种方
+法的输入文件。这些输入文件并不是最适合计算的，其中测参数设置没有经过优化。
+但这些输入文件给了我们了解输入文件结构的途径。
+另外，学会使用 grep 命令。当你想了解 CP2K 的某个关键词（keyword）时，
+不妨使用 grep –iR keyword tests/ 命令来查看使用了该关键词的测试输入文件。仔细
+
+
+========== PAGE 5 ==========
+
+CP2K入门教程
+阅读这些输入文件，就能知道这些关键词的使用了。需要注意的是，tests 目录中的
+输入文件主要是用来测试程序运行的正常与否，往往使用了不合理的参数，用户需
+要参考手册等其他资料自行进行调整。
+2.5 CP2K 相关的文献
+有关 CP2K 中使用的各种方法，CP2K 的网站上放了一个参考文献列表
+http://manual.cp2k.org/trunk/references.html
+要想真正了解CP2K的原理，可以阅读这些文献。
+3. CP2K 的功能
+CP2K 的功能很多，其输入文件的结构也比 Gaussian 或者 VASP 等常见的计算
+化学软件更加复杂。这里，我直接给出各种 CP2K 输入文件作为例子，并说明其输
+入文件中各种参数的设置。
+3.1 CP2K 的各种运行方式（RUN_TYPE）
+(cid:1) BAND使用band方法来进行最低能量路径（MEP）以及反应过渡态的搜索，通
+常可以使用的方法有CI-NEB, IT-NEB等方法。
+(cid:1) CELL_OPT 晶胞参数的优化。
+(cid:1) ENERGY计算当前结构的能量。对于DFT 来说，就是一个SCF计算。
+(cid:1) ENERGY_FORCE 计算当前结构的能量，同时计算出每个原子上的梯度（即受
+力）。
+(cid:1) GEO_OPT 对当前结构进行几何结构的优化，以获得当前结构对应的局部极小
+点或者过渡态。GEO_OPT 有两种类型，一种是 MINIMIZATION，即优化到极
+小点；一种是TRANSITION_STATE，即优化到过渡态。过渡态的优化采用Dimer
+方法来实现。
+(cid:1) MD 分子动力学模拟。基于第一原理的分子动力学模拟是 CP2K 的一大优势。
+此外，CP2K也支持使用力场以及DFTB 等方法进行分子动力学模拟。
+(cid:1) VIBRATIONAL_ANALYSIS 对当前结构进行振动分析，也就是频率计算。频
+率计算可以计算部分原子的频率（INVOLVED_ATOMS），也可以计算某一频率
+范围内的频率计算（MODE_SELECTIVE）。
+
+
+========== PAGE 6 ==========
+
+CP2K入门教程
+3.1 影响 CP2K 计计算算精精度度的的各各种种参参数数
+很很多多参参数数都都可可以以影影响响CP2K的计算精度。下下面面我我将将介介绍绍我我所所知知道道的的参参数数。
+3.1.1 晶胞的大小
+CP2K 只支持 GGaammmmaa 点的计算，没有 K 点。因此，计计算算中中必必须须使使用用足足够够大大的的
+晶胞。如果晶胞太小，部部分分基基组组函函数数就就会会超超过过晶晶胞胞的的边边界界，导导致致重重叠叠矩矩阵阵求求逆逆过过程程
+出现问题，计计算算就就会会不不可可靠靠。不能直接使用VASP中中的的小小晶晶胞胞来来进进行行CP2K的计算。
+3.1.2 CUTOFF以及RREELL__CCUUTTOOFFFF
+CUTOFF和RREELL__CCUUTTOOFFFF两个参数用来控制网格的精度。CCPP22KK中的网格从粗
+糙到精细分为4个级别。。CUTOFF参参数数控控制制整整体体网网格格精精度度的的最最高高值值，REL_CUTOFF
+参参数数控控制制有有多多少少网网格格点点落落到到最精细的级别。CUTOFF的的设设置置取取决决于于体体系系中中元元素素的的种种
+类，默认值为280 Ry，但但对对有有些些原原子子需要设置到500 Ry甚甚至至更更高高。
+CP2K 论论坛坛中中建建议议给给不不同同的的原原子子使使用用不不同同的的 CUTOFF。下下图图给给出出了了对对不不同同原原子子
+建议使用的CUTOFF大大小小。可见，对包含Na，N，O，F，Ne，NNii，Ga等元素的计
+算，需要设置高达11000000 RRyy的CUTOFF来确保计算精度。在在计计算算中中包包含含这这些些元元素素时时，
+需要额外小心。
+REL_CUTOFF默默认认值值为为50 Ry，一般设置到 60 Ry时时精精度度就就已已经经足足够够了了。
+除此以外，还有UUSSEE__FFIINNEERR__GGRRIIDD参数等，用于提高网格的精精细细程程度度。
+3.1.3 基组和泛函
+CP2K 中中可可以以使使用用的的泛泛函函很很多多，但但并并非非每每个个基基组组都都为为相相应应的的泛泛函函进进行行了了优优化化。
+
+
+========== PAGE 7 ==========
+
+CP2K入门教程
+经常使用的泛函有 LDA（PADE），BLYP以及PBE，在CP2K的tests目录中有相应
+的优化基组。此外，CP2K中也可以使用B3LYP、HSE等杂化泛函，可以使用DFT-D3
+等色散校正。在CP2K中使用B3LYP泛函时，关键输入文件如下：
+&DFT
+BASIS_SET_FILE_NAME ./BASIS_MOLOPT
+POTENTIAL_FILE_NAME ./POTENTIAL
+CHARGE 0
+MULTIPLICITY 1
+&SCF
+SCF_GUESS ATOMIC
+EPS_SCF 1.0E-6
+MAX_SCF 50
+&OUTER_SCF
+MAX_SCF 10
+&END OUTER_SCF
+&OT
+# My scheme
+PRECONDITIONER FULL_SINGLE_INVERSE
+MINIMIZER DIIS
+N_DIIS 7
+&END OT
+&PRINT
+&RESTART
+&EACH
+MD 20
+&END EACH
+&END RESTART
+&RESTART_HISTORY OFF
+&END RESTART_HISTORY
+&END PRINT
+&END SCF
+&QS
+METHOD GAPW
+# My scheme
+EPS_DEFAULT 1.0E-12
+EPS_PGF_ORB 1.0E-32
+EPS_FILTER_MATRIX 0.0E+0
+&END QS
+&MGRID
+COMMENSURATE
+CUTOFF 300
+&END MGRID
+&POISSON
+POISSON_SOLVER MULTIPOLE
+PERIODIC NONE
+&MULTIPOLE
+RCUT 40
+&END MULTIPOLE
+&END POISSON
+&XC
+#&XC_FUNCTIONAL BLYP
+#&END XC_FUNCTIONAL
+&XC_FUNCTIONAL
+&LYP
+
+
+========== PAGE 8 ==========
+
+CP2K入门教程
+SCALE_C 0.81
+&END
+&BECKE88
+SCALE_X 0.72
+&END
+&VWN
+FUNCTIONAL_TYPE VWN3
+SCALE_C 0.19
+&END
+&XALPHA
+SCALE_X 0.08
+&END
+&END XC_FUNCTIONAL
+&HF
+&SCREENING
+EPS_SCHWARZ 1.0E-10
+&END
+&MEMORY
+MAX_MEMORY 512
+EPS_STORAGE_SCALING 1.0E-1
+&END
+FRACTION 0.20
+&END
+&XC_GRID
+XC_SMOOTH_RHO NN10
+XC_DERIV SPLINE2_SMOOTH
+&END XC_GRID
+&END XC
+&END DFT
+完整的输入文件可以在Google Group中找到
+https://groups.google.com/forum/?fromgroups#!searchin/cp2k/XC_SMOOTH_RHO|sort:
+date/cp2k/v32E3xXmgaY/-TygNY7t2msJ
+使用HSE泛函的输入文件例子：
+&XC_FUNCTIONAL
+&XWPBE
+SCALE_X -0.25
+SCALE_X0 1.0
+OMEGA 0.11
+&END
+&PBE
+SCALE_X 0.0
+SCALE_C 1.0
+&END PBE
+&END XC_FUNCTIONAL
+&HF
+EPS_SCHWARZ 1.0E-10
+MAX_MEMORY 10
+FRACTION 0.25
+SCREENING_TYPE SHORTRANGE
+OMEGA 0.11
+&END
+
+
+========== PAGE 9 ==========
+
+CP2K入门教程
+基组的大小也有很多种，如SZ，DZVP以及TZVP。一般计算中使用DZVP基
+组就足够了。
+3.1.4 SCF收敛精度
+对于一般的测试性结算，SCF收敛到1E-5就可以得到相对准确的结果。如果要
+进行比较高精度的计算，可以将SCF收敛精度设置为1E-6。对于频率计算等精度要
+求更高的计算，SCF收敛精度可以设置为1E-7。
+3.1.5 收敛算法的选择
+CP2K中主要有两种SCF的收敛算法，一种是基于轨道变换（OT）的算法，一
+种是基于对角化(DIAG)的算法。如果体系有较大带隙的，如为半导体或者绝缘体等，
+推荐使用 OT 算法，收敛速度比较快。如果体系中 HOMO-LUMO 带隙很小或者几
+乎没有，如金属体系，则建议使用对角化的方法进行计算,并使用smear方法。
+下面是一个对Rh(1 1 1)表面进行计算使用的输入文件的例子:
+&SCF
+SCF_GUESS RESTART
+EPS_SCF 5.0E-7
+MAX_SCF 500
+ADDED_MOS 500
+CHOLESKY INVERSE
+&SMEAR ON
+METHOD FERMI_DIRAC
+ELECTRONIC_TEMPERATURE [K] 300
+&END SMEAR
+&DIAGONALIZATION
+ALGORITHM STANDARD
+&END DIAGONALIZATION
+&MIXING
+METHOD BROYDEN_MIXING
+ALPHA 0.1
+BETA 1.5
+NBROYDEN 8
+&END MIXING
+&PRINT
+&RESTART
+&EACH
+QS_SCF 50
+&END
+ADD_LAST NUMERIC
+&END RESTART
+&END PRINT
+&END SCF
+注意使用对角化方法必须使用 ADDED_MOS 关键词。另外，设置正确的
+MIXING方案也是加速收敛的关键。
+实际上，即使是对于非金属体系，有时候对角化方法也会比OT算法速度更快。
+所以，在进行大规模的计算之前最好进行充分的测试。
+
+
+========== PAGE 10 ==========
+
+CP2K入门教程
+使用OT算法时，优化算法也有多重选择。常用的有CG，DIIS以及BROYDEN。
+其中，CG 算法是最为稳定的算法，一般的计算都可以使用 CG 算法。DIIS 算法速
+度比较快，但不够稳定。如果CG算法和DIIS算法收敛都有问题时，可以尝试使用
+BROYDEN算法。下面是使用BROYDEN算法的输入文件例子。
+&OT T
+MINIMIZER BROYDEN
+N_HISTORY_VEC 4
+BROYDEN_BETA 6.9999999999999996E-01
+BROYDEN_SIGMA 1.4999999999999999E-01
+LINESEARCH 2PNT
+PRECONDITIONER FULL_SINGLE_INVERSE
+&END OT
+3.1.6 EPS_DEFAULT的设置
+QS部分使用的EPS_DEFAULT为1.0E-10。根据Google Group中的建议，在进
+行比较高精度计算时，需要将 EPS_DEFAULT设为1.0E-14。
+CP2K 中有多个参数依赖 EPS_DEFAULT，包括 EPS_CORE_CHARGE，
+EPS_GVG_RSPACE，EPS_PGF_ORB，EPS_KG_ORB。各个参数的精度以及含义如
+下：
+名称 含义 默认精度
+EPS_CORE_CHARGE 核电荷映射精度 EPS_DEFAULT/100.0
+EPS_GVG_RSPACE 实空间 KS 矩阵元积分精 SQRT(EPS_DEFAULT)
+度
+EPS_PGF_ORB 重叠矩阵元精度 SQRT(EPS_DEFAULT)
+EPS_KG_ORB 使用 Kim-Gordon 方法时 SQRT(EPS_DEFAULT)
+的精度
+更多信息，可以参考：
+http://developer.berlios.de/forum/message.php?msg_id=35587
+https://groups.google.com/forum/?fromgroups#!topic/cp2k/IIp-D6AA7ME
+3.2 使用 CP2K 进行能量计算
+3.2.1 OUTER_SCF
+计算能量，需要设置 RUN_TYPE 为 ENERGY；如果还要进行梯度（受力）计
+
+
+========== PAGE 11 ==========
+
+CP2K入门教程
+算，则设置为ENERGY_FORCE。
+使用DFT方法进行能量计算，使用 OT算法，并开启OUTER_SCF，示例如下：
+&SCF
+EPS_SCF 1.0E-6
+SCF_GUESS RESTART
+MAX_SCF 100
+&OT T
+PRECONDITIONER FULL_ALL
+MINIMIZER DIIS
+LINESEARCH 3PNT
+&END OT
+&OUTER_SCF ON
+MAX_SCF 5
+EPS_SCF 5.0E-6
+&END OUTER_SCF
+&END SCF
+其中，OUTER_SCF 为加速收敛的一种方法。以上面的输入文件为例，计算过
+程中，如果 SCF 经过 100 次优化依然没有收敛，则进入 OUTER_SCF 过程,对前一
+次计算的波函数进行调整，重新进行SCF迭代。每次OUTER_SCF中优化的次数依
+然是100次，最多可以进行5次OUTER_SCF。所以，最多可以进行 500次SCF计
+算。
+更多的细节请参考：
+https://groups.google.com/forum/?fromgroups=#!topic/cp2k/6cikFLKeN34
+3.2.2 输出每个原子上的受力
+要输出每个原子上的受力，GLOBAL 部分的 RUN_TYPE 必须设置为
+ENERGY_FORCE或者GEO_OPT。要输出受力，需要在 FORCE_EVAL部分开启选
+项：
+&PRINT
+&FORCES ON
+Filename ForceFileName
+&END FORCES
+&END PRINT
+如果要将受力信息存储到文件中，则需要设定文件的名称；否则受力信息将会
+打印到out文件中。输出的受力格式如下：
+ATOMIC FORCES in [a.u.]
+# Atom Kind Element X Y Z
+1 1 O 0.08722700 -0.04704030 0.08194080
+2 2 H -0.07829459 0.00721899 -0.00996929
+3 2 H -0.01049003 0.03981616 -0.06774948
+SUM OF ATOMIC FORCES -0.00155761 -0.00000516 0.00422203 0.00450019
+
+
+========== PAGE 12 ==========
+
+CP2K入门教程
+3.3 使用 CP2K 进行几何优化计算
+要使用 CP2K 进行几何优化计算，需要设置 GLOBAL 部分的 RUN_TYPE 为
+GEO_OPT
+&GLOBAL
+PROJECT CP2K
+RUN_TYPE GEO_OPT
+&END GLOBAL
+几何优化的种类有两种，一种是正常的能量极小化优化，一种是使用 dimer 算
+法进行过渡态优化。默认为能量极小化计算。下面将分别介绍这两种计算的输入文
+件。
+3.3.1 能量极小化计算
+使用CP2K进行常规的几何优化，关键输入文件如下：
+&MOTION
+&GEO_OPT
+TYPE MINIMIZATION
+MAX_ITER 400
+OPTIMIZER LBFGS
+MAX_FORCE 4.0E-4
+&END GEO_OPT
+&END MOTION
+需要注意的是，几何优化有三种算法，分别是 CG、BFGS 和 LBFGS。其中，
+CG算法是最稳定的算法，但计算速度相对较慢；BFGS算法效率最高，计算中需要
+对Hessian矩阵进行对角化，如果初始结构不合理，BFGS算法容易出问题；LBFGS
+算法效率和BFGS类似，同时稳定性也很好。对于一般的几何优化，推荐使用LBFGS
+算法。
+如果在几何优化过程中需要固定部分原子，可以在 MOTION 部分启用
+CONSTRAINT选项。例子如下：
+&CONSTRAINT
+&FIXED_ATOMS
+LIST 1 2 3 4
+LIST 12 .. 43
+LIST 76..91
+&END FIXED_ATOMS
+&END CONSTRAINT
+3.3.2 使用Dimer算法进行过渡态优化
+使用Dimer算法进行过渡态优化的关键输入文件如下：
+&MOTION
+&GEO_OPT
+TYPE TRANSITION_STATE
+MAX_ITER 400
+
+
+========== PAGE 13 ==========
+
+CP2K入门教程
+OPTIMIZER CG
+MAX_FORCE 4.5E-4
+&CG
+&LINE_SEARCH
+TYPE 2PNT
+&END LINE_SEARCH
+&END CG
+&TRANSITION_STATE
+METHOD DIMER
+&DIMER
+DR 0.01
+ANGLE_TOLERANCE [deg] 4.0
+INTERPOLATE_GRADIENT
+&ROT_OPT
+OPTIMIZER CG
+MAX_ITER 10
+#Loose these value. Just for faster converge.
+MAX_DR 3.0E-3
+MAX_FORCE 4.5E-4
+&CG
+# MAX_STEEP_STEPS 15
+&LINE_SEARCH
+TYPE 2PNT
+&END LINE_SEARCH
+&END CG
+&END ROT_OPT
+&END DIMER
+&END TRANSITION_STATE
+&END GEO_OPT
+&END MOTION
+注意，使用 dimer 方法进行过渡态搜索计算时，只能使用 CG 优化算法，不能
+用BFGS或者LBFGS。
+使用 dimer 方法进行计算的时候，可以手工给定初始的 Dimer Vector。Dimer
+Vector 应该是指向过渡态方向的一个多维向量，使 dimer 方法在进行过渡态搜寻的
+时候沿着该方向进行搜索，可以提高搜索的效率。如果没有给定初始Dimer Vector，
+CP2K程序中会随机设定一个初始的搜索方向。
+要理解dimer算法中的各种参数的含义，请参考
+Henkelman, G; Jonsson, H. JOURNAL OF CHEMICAL PHYSICS, 111 (15),
+7010-7022 (1999). http://dx.doi.org/10.1063/1.480097
+A dimer method for finding saddle points on high dimensional potential surfaces
+using only first derivatives.
+3.4 非周期性体系的计算
+要使用CP2K对团簇等非周期性体系进行计算，需要额外进行一些设置：
+首先，%FORCE_EVAL%DFT中 POISSON部分要进行设置
+&POISSON
+PERIODIC none
+
+
+========== PAGE 14 ==========
+
+CP2K入门教程
+POISSON_SOLVER wavelet
+&END POISSON
+如果使用MT作为 POISSON_SOLVER，则设置为：
+&POISSON
+PERIODIC NONE
+POISSON_SOLVER MT
+&MT
+ALPHA 7.0
+REL_CUTOFF 1.2
+&END MT
+&END POISSON
+对于周期性计算，POISSON_SOLVER 设置为PERIODIC；对于非周期性计算，
+可以设置为 MT 或者 WAVELET，两者略有不同。如果设置为 MT，要保证计算使
+用的单胞体积足够大，至少是电荷密度的两倍。如果设置为 WAVELET，不需要设
+置非常大的单胞，但分子必须处于单胞的中心，确保单胞的边界处电子密度为 0。
+可以使用TOPOLOGY 参数来强制将分子置于单胞的中心。
+&TOPOLOGY
+&CENTER_COORDINATES
+&END CENTER_COORDINATES
+&END TOPOLOGY
+此外，CELL部分周期性也要设置为NONE。
+&CELL
+ABC 20.0 20.0 20.0
+PERIODIC NONE
+&END CELL
+3.5 使用 CP2K 进行晶胞参数的优化
+CP2K可以对晶体的晶胞参数进行直接优化。
+首先，GLOBAL部分需要设置RUN_TYPE为CELL_OPT
+&GLOBAL
+PROJECT cp2k
+RUN_TYPE CELL_OPT
+PRINT_LEVEL MEDIUM
+&END GLOBAL
+然后，在MOTION部分需要设置CELL_OPT的参数
+&CELL_OPT
+TYPE GEO_OPT
+OPTIMIZER CG
+MAX_ITER 200
+EXTERNAL_PRESSURE 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0
+PRESSURE_TOLERANCE 0.1
+KEEP_ANGLES
+KEEP_SYMMETRY
+&CG
+&LINE_SEARCH
+TYPE 2PNT
+&2PNT
+&END 2PNT
+&END LINE_SEARCH
+
+
+========== PAGE 15 ==========
+
+CP2K入门教程
+&END CG
+&END CELL_OPT
+&GEO_OPT
+MAX_ITER 400
+OPTIMIZER LBFGS
+MAX_FORCE 4.0E-4
+&END GEO_OPT
+此外，在 FORCE_EVAL 部分需要设置 STRESS_TENSOR 的计算方法为
+ANALYTICAL。如果晶胞本身有特定的对称性，可以在CELL部分增加晶胞的对称
+性限制（SYMMETRY）。
+更多细节可以参考CP2K源码包中的tests/QS/regtest-gpw-4/cell-1.inp文件。
+3.6 多重度计算
+当体系中有多个不成对电子的时候，计算的时候就需要考虑多重度问题。此时，
+计算必须是自旋非限制的，即使用 LSD或者UKS参数。多重度的计算有两种方案。
+第一种方案是手工指定多重度，使用 MUTIPLICITY 关键词设定多重度。这种
+方法最为简单可靠，但如果体系自旋多重度的可能性很多，就需要进行多次计算。
+第二种方案是自动进行多重度的猜测，使用 RELAX_MULTIPLICITY 关键词。
+类似的方法在Dmol3 程序中也有实现。下面是使用这种方法进行计算使用的输入文
+件:
+&DFT
+LSD
+BASIS_SET_FILE_NAME ./BASIS_MOLOPT
+POTENTIAL_FILE_NAME ./rr_pot
+WFN_RESTART_FILE_NAME ./cp2k-RESTART.wfn
+CHARGE 0
+RELAX_MULTIP 0.001
+&MGRID
+CUTOFF 300
+&END MGRID
+&QS
+EPS_DEFAULT 1.0E-14
+WF_INTERPOLATION ASPC
+EXTRAPOLATION_ORDER 3
+&END QS
+&SCF
+ADDED_MOS 50 50
+EPS_SCF 5.0E-7
+SCF_GUESS RESTART
+MAX_SCF 200
+CHOLESKY INVERSE
+&DIAGONALIZATION
+ALGORITHM STANDARD
+&END DIAGONALIZATION
+&MIXING
+METHOD BROYDEN_MIXING
+ALPHA 0.1
+BETA 1.5
+NBROYDEN 8
+&END MIXING
+
+
+========== PAGE 16 ==========
+
+CP2K入门教程
+&OUTER_SCF ON
+MAX_SCF 5
+EPS_SCF 1.0E-6
+&END OUTER_SCF
+&PRINT
+&RESTART
+&EACH
+QS_SCF 100
+&END EACH
+ADD_LAST NUMERIC
+&END RESTART
+&END PRINT
+&END SCF
+&XC
+&XC_FUNCTIONAL PBE
+&END XC_FUNCTIONAL
+&END XC
+&END DFT
+使用这种方法，需要注意以下几点：
+1. 必须使用自旋非限制计算，即开启UKS或者 LSD。
+2. 必须使用对角化方法，不能使用OT算法。由于使用对角化方法，也必须使
+用ADDED_MOS参数。
+3. 不能使用SMEAR 方法。
+4. RELAX_MULTIP 设置为大于0的值，就开启自旋优化模式。设置的值越大，
+自旋翻转发生的概率越大。
+综上，尽管这种方法看似很诱人，但在使用中很受限制。
+3.7 使用 NEB 方法进行过渡态搜索
+CP2K中可以使用NEB 方法进行过渡态的搜索。
+要使用 NEB 方法，首先在 GLOBAL 部分设置 RUN_TYPE 为 BAND。然后，
+需要在MOTION部分设置NEB 计算的参数。输入文件例子如下：
+&MOTION
+&BAND
+NPROC_REP 32
+BAND_TYPE IT-NEB
+NUMBER_OF_REPLICA 6
+K_SPRING 0.02
+&CONVERGENCE_CONTROL
+MAX_DR 0.01
+MAX_FORCE 0.001
+RMS_DR 0.02
+RMS_FORCE 0.0005
+&END
+ROTATE_FRAMES F
+&CI_NEB
+NSTEPS_IT 5
+&END
+&OPTIMIZE_BAND
+
+
+========== PAGE 17 ==========
+
+CP2K入门教程
+OPT_TYPE MD
+# OPTIMIZE_END_POINTS F
+OPTIMIZE_END_POINTS T
+&MD
+TIMESTEP 0.5
+TEMPERATURE 500.0
+MAX_STEPS 300
+&VEL_CONTROL
+ANNEALING 0.99
+PROJ_VELOCITY_VERLET T
+&END
+&END
+&END
+&REPLICA
+COORD_FILE_NAME ./1.xyz
+&END
+&REPLICA
+COORD_FILE_NAME ./2.xyz
+&END
+&REPLICA
+COORD_FILE_NAME ./3.xyz
+&END
+&REPLICA
+COORD_FILE_NAME ./4.xyz
+&END
+&REPLICA
+COORD_FILE_NAME ./5.xyz
+&END
+&REPLICA
+COORD_FILE_NAME ./6.xyz
+&END
+&PROGRAM_RUN_INFO
+&END
+&CONVERGENCE_INFO
+&END
+&END BAND
+&CONSTRAINT
+&FIXED_ATOMS
+LIST 1.. 4
+LIST 12 .. 43
+LIST 76..91
+&END FIXED_ATOMS
+&END CONSTRAINT
+&END MOTION
+对于以上输入文件中的参数，解释如下：
+关键词 示例中 解释
+的设置
+NPROC_REP 32 进行BAND计算时，每个REPLICA使用的CPU数目
+BAND_TYPE IT-NEB BAND计算方法类型。有IT-NEB，CI-NEB，B-NEB，D-NEB，EB，SM
+等多种。推荐使用IT-NEB以及CI-NEB
+NUMBER_OF_REPLICA 6 BAND计算中使用的REPLICA的总数目。REPLICA的数目越多，计算
+越准确。如果使用较少的REPLICA无法得到正确的结果，可以考虑增加
+REPLIA 的 数 目 。 CP2K 使 用 的 CPU 总 数 目 为
+NUMBER_OF_REPLICA*NPROC_REP。在本例中，就是32*6=192
+BAND计算中使用的弹簧劲度系数。K_SPRING越大，NEB计算收敛越
+K_SPRING 0.02
+快，但计算不准确。K_SPING越小，计算收敛越慢，但计算较为准确。
+在初步计算中，可以将K_SPRING设置为0.08左右，然后再放松至0.02
+以获得精确结果。
+
+
+========== PAGE 18 ==========
+
+CP2K入门教程
+3.8 使用 CP2K 进行振动频率分析
+用 CP2K 程 序 进 行 振 动 频 率 分 析 ， 首 先 需 要 设 置 RUN_TYPE 为
+VIBRATIONAL_ANALYSIS。输入文件例子如下：
+&GLOBAL
+PROJECT cp2k
+RUN_TYPE VIBRATIONAL_ANALYSIS
+PRINT_LEVEL medium
+&END GLOBAL
+然后，设置频率分析部分输入文件
+&VIBRATIONAL_ANALYSIS
+DX 0.01
+INTENSITIES F
+NPROC_REP 128
+FULLY_PERIODIC T
+&END VIBRATIONAL_ANALYSIS
+CP2K计算频率使用的是数值算法，即对每个原子向+x, -x, +y, -y, +z, -z 6个方
+向分别进行移动，用数值的方法得到能量的二阶导（即力常数），然后计算频率。所
+以，如果有N个原子要进行移动，总共要进行6N+1次SCF收敛计算。
+关键词 设 置 解释
+示例
+DX 0.01 每次移动原子时的步长
+INTENSITIES F 是否计算红外强度。如果设置为T，需要在DFT部分进行偶极矩的计算（关键
+词MOMENTS）。
+NPROC_REP 128 并行计算频率时，每个REPLICA使用的CPU数目
+FULLY_PERIODIC T 避免从 Hessian 矩阵中消除转动模式。开启该关键词后，对于 N 个原子的体系
+会计算出3N-3个频率，其中包含了3个转动自由度。
+要计算部分原子的振动频率，有两种办法。一种是直接在 MOTION 中使用
+CONSTRAINT 对 不 需 要 进 行 频 率 分 析的 原 子 进 行 固 定 。一 种 是 使 用
+MODE_SELECTIVE模式。例子如下：
+&VIBRATIONAL_ANALYSIS
+NPROC_REP 16
+DX 0.01
+INTENSITIES T
+&MODE_SELECTIVE
+ATOMS 82 83
+INITIAL_GUESS ATOMIC
+EPS_NORM 1.0E-5
+EPS_MAX_VAL 1.0E-6
+&INVOLVED_ATOMS
+INVOLVED_ATOMS 82 83
+&END INVOLVED_ATOMS
+&END &MODE_SELECTIVE
+&END VIBRATIONAL_ANALYSIS
+上面的例子中，对82 和83两个原子进行了振动频率分子。需要注意的是，使
+用这种方法计算频率，使用的REPLICA数目不能太少。REPLICA 的数目是这样计
+算的：NREP=总CPU 数目/NPROC_REP。上述输入文件，如果使用的总CPU数目
+为 64，则共有 NREP=4，即共有 4 个REPLICA。如果只使用一个 REPLICA，使用
+
+
+========== PAGE 19 ==========
+
+CP2K入门教程
+MODE_SELECTIVE算法计算频率时，就会只跟踪一个频率，无法得到正确的结果。
+另外，使用 CP2K 程序计算一个优化好的结构式的频率时，也常会出现多个虚
+频。这并非是几何优化出现了问题，而是 CP2K 计算使用 GTH 赝势时存在的一个
+问题。详细内容请参考：
+https://groups.google.com/forum/?fromgroups#!topic/cp2k/DVCV0epl7Wo
+解决方案有四种：
+1. 使用NLCC赝势。http://arxiv.org/abs/1212.6011 不过，NLCC赝势很不完整，
+只有B-Cl的元素有，且只提供了PBE泛函的赝势。
+2. 增大CUTOFF，使用600 Ry以上的CUTOFF。
+3. 在XC_GRID部分使用平滑参数SMOOTING。不推荐使用。
+4. 在XC_GRID部分使用 USE_FINER_GRID。加上这个参数后，XC 部分的格
+点的精度提高为4*CUTOFF。
